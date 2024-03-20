@@ -11,4 +11,4 @@ docker run \
   --workdir /home/$REMOTE_USER/arx5-python-sdk \
   --net=host \
   -it \
-  arx5-python-sdk:latest
+  arx5:latest

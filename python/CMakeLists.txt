@@ -1,7 +1,7 @@
 cmake_minimum_required( VERSION 3.16.3 )
 
 
-find_package(pybind11 REQUIRED PATHS $ENV{HOME}/miniforge3/lib/python3.10/site-packages/pybind11/share/cmake/pybind11 NO_DEFAULT_PATH)
+find_package(pybind11 REQUIRED PATHS ${PYBIND_PATH}/pybind11/share/cmake/pybind11 NO_DEFAULT_PATH)
 
 pybind11_add_module(arx5_interface 
 arx5_pybind.cpp
