@@ -100,7 +100,7 @@ public:
     bool is_damping();
 
 private:
-    const double _GRIPPER_OPEN_READOUT = 4.9;
+    const double _GRIPPER_OPEN_READOUT = 4.8;
     void _background_send_recv_task();
     void _send_recv();
     void _check_current();

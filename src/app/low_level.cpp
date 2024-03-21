@@ -116,13 +116,13 @@ void Arx5LowLevel::_update_output_cmd()
     // Gripper pos clipping
     if (_output_low_cmd.gripper_pos < 0)
     {
+        debug_printf(INFO, _log_level, "Arx5LowLevel: Gripper pos cmd clipped from %f to min: %f\n", _output_low_cmd.gripper_pos, 0.0);
         _output_low_cmd.gripper_pos = 0;
-        debug_printf(INFO, _log_level, "Arx5LowLevel: Gripper pos cmd clipped to min: %f\n", _output_low_cmd.gripper_pos);
     }
     else if (_output_low_cmd.gripper_pos > GRIPPER_WIDTH)
     {
+        debug_printf(INFO, _log_level, "Arx5LowLevel: Gripper pos cmd clipped from %f to max: %f\n", _output_low_cmd.gripper_pos, GRIPPER_WIDTH);
         _output_low_cmd.gripper_pos = GRIPPER_WIDTH;
-        debug_printf(INFO, _log_level, "Arx5LowLevel: Gripper pos cmd clipped to max: %f\n", _output_low_cmd.gripper_pos);
     }
     if (std::abs(_low_state.gripper_torque) > GRIPPER_TORQUE_MAX / 2)
     {
@@ -334,10 +334,12 @@ void Arx5LowLevel::reset_to_home()
     double init_gripper_kp = _gain.gripper_kp;
     double init_gripper_kd = _gain.gripper_kd;
     Gain target_gain = Gain(DEFAULT_KP, DEFAULT_KD, DEFAULT_GRIPPER_KP, DEFAULT_GRIPPER_KD);
+    LowState target_state;
+    target_state.gripper_pos = GRIPPER_WIDTH;
 
     // calculate the maximum joint position error
     double max_pos_error = (init_state.pos - Vec6d::Zero()).cwiseAbs().maxCoeff();
-    max_pos_error = std::max(max_pos_error, init_state.gripper_pos * 2 / GRIPPER_WIDTH);
+    max_pos_error = std::max(max_pos_error, (GRIPPER_WIDTH - init_state.gripper_pos) * 2 / GRIPPER_WIDTH);
     // interpolate from current kp kd to default kp kd in max(max_pos_error, 0.5)s
     // and keep the target for max(max_pos_error, 0.5)s
     double step_num = std::max(max_pos_error, 0.5) / CTRL_DT;
@@ -349,7 +351,7 @@ void Arx5LowLevel::reset_to_home()
     {
         double alpha = double(i) / step_num;
         gain = init_gain * (1 - alpha) + target_gain * alpha;
-        cmd = init_state * (1 - alpha);
+        cmd = init_state * (1 - alpha) + target_state * alpha;
         set_gain(gain);
         set_low_cmd(cmd);
         sleep_ms(5);

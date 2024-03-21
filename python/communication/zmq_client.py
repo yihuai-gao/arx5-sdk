@@ -218,12 +218,14 @@ class Arx5Client:
         assert reply_msg["cmd"] == "RESET_TO_HOME"
         if reply_msg["data"] != "OK":
             raise ValueError(f"Error: {reply_msg['data']}")
+        self.get_state()
 
     def set_to_damping(self):
         reply_msg = self.send_recv({"cmd": "SET_TO_DAMPING", "data": None})
         assert reply_msg["cmd"] == "SET_TO_DAMPING"
         if reply_msg["data"] != "OK":
             raise ValueError(f"Error: {reply_msg['data']}")
+        self.get_state()
 
     def get_gain(self):
         reply_msg = self.send_recv({"cmd": "GET_GAIN", "data": None})
