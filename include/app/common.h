@@ -12,8 +12,8 @@
 
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 
-const Vec6d JOINT_POS_MIN = {-3.14, -0.005, -0.1, -1.8, -1.7, -2};
-const Vec6d JOINT_POS_MAX = {2.618, 3.14, 3.24, 1.8, 1.7, 2};
+const Vec6d JOINT_POS_MIN = {-3.14, -0.005, -0.1, -1.6, -1.57, -2};
+const Vec6d JOINT_POS_MAX = {2.618, 3.14, 3.24, 1.55, 1.57, 2};
 const Vec6d DEFAULT_KP = {50, 50, 50, 40, 25, 10};
 const Vec6d DEFAULT_KD = {10.0, 7.0, 7.0, 1.0, 0.8, 1.0};
 const Vec6d JOINT_VEL_MAX = {3.0, 2.0, 2.0, 2.0, 3.0, 3.0};       // rad/s

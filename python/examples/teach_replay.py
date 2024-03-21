@@ -38,7 +38,9 @@ def start_teaching(client: Arx5Client, data_file: str):
                 traj.append(state)
                 time.sleep(CTRL_DT)
                 # print(f"Time elapsed: {time.monotonic() - start_time:.03f}s", end="\r")
-                print(f"tcp pose: {arx5_client.tcp_pose}")
+                # print(f"tcp pose: {arx5_client.tcp_pose}")
+                print(f"joint pos: {client.joint_pos}")
+
 
 
 def start_high_level_replay(client: Arx5Client, data_file: str):
@@ -70,10 +72,11 @@ def start_high_level_replay(client: Arx5Client, data_file: str):
                     client.set_ee_pose(
                         target_state["ee_pose"], target_state["gripper_pos"]
                     )
-                    print(
-                        f"Time elapsed: {time.monotonic() - start_time:.03f}s/{traj[-1]['timestamp']:.03f}",
-                        end="\r",
-                    )
+                    # print(
+                    #     f"Time elapsed: {time.monotonic() - start_time:.03f}s/{traj[-1]['timestamp']:.03f}",
+                    #     end="\r",
+                    # )
+                    print(f"joint pos: {client.joint_pos}")
                 else:
                     print(f"\nReplay finished!")
                     return
