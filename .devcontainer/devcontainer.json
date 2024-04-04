@@ -14,11 +14,11 @@
     ],
     "remoteEnv": {
       // For linux, use the following line
-      // "DISPLAY": "${localEnv:DISPLAY}"
+      "DISPLAY": "${localEnv:DISPLAY}"
       // If you are using MacOS, please first check the correct display using `ps aux | grep Xquartz`
       // The port (currently 40, may vary) comes from the line `/opt/X11/bin/Xquartz :40 -listen tcp`
       // If getting `Authorization required, but no authorization protocol specified` error, please run `xhost +` in your host machine
-      "DISPLAY": "host.docker.internal:40"
+      // "DISPLAY": "host.docker.internal:40"
     },
     "workspaceMount": "source=${localWorkspaceFolder},target=/home/arx/${localWorkspaceFolderBasename},type=bind",
     "workspaceFolder": "/home/arx/${localWorkspaceFolderBasename}", // Only for aliengo development

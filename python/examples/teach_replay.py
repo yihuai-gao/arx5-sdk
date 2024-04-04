@@ -88,4 +88,4 @@ if __name__ == "__main__":
     np.set_printoptions(precision=4, suppress=True)
     os.makedirs("data", exist_ok=True)
     start_teaching(arx5_client, "data/teach_traj.npy")
-    # start_high_level_replay(arx5_client, "data/teach_traj.npy")
+    start_high_level_replay(arx5_client, "data/teach_traj.npy")

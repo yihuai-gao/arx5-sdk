@@ -44,6 +44,7 @@ class Arx5Server:
         self.zmq_port = zmq_port
         self.last_cmd_time = time.monotonic()
         self.no_cmd_timeout = no_cmd_timeout
+        self.is_reset_to_home = False
 
     def run(self):
         print(f"Arx5ZmqServer is running on {self.zmq_ip}:{self.zmq_port}")
@@ -111,6 +112,19 @@ class Arx5Server:
                         target_gripper_pos = (
                             self.arx5_high_level.get_high_state().gripper_pos
                         )
+                    if self.is_reset_to_home:
+                        if np.linalg.norm(target_ee_pose) > 0.1:
+                            error_str = f"Error: Cannot set EE pose far away from home: {target_ee_pose} after RESET_TO_HOME. Please check the input."
+                            print(
+                                error_str
+                            )
+                            self.socket.send_pyobj(
+                                {
+                                    "cmd": "SET_EE_POSE",
+                                    "data": error_str,
+                                }
+                            )
+                            continue
 
                     self.arx5_high_level.set_high_cmd(
                         arx5.HighState(target_ee_pose, target_gripper_pos)
@@ -131,6 +145,7 @@ class Arx5Server:
                         },
                     }
                     self.socket.send_pyobj(reply_msg)
+                    self.is_reset_to_home = False
                 elif msg["cmd"] == "RESET_TO_HOME":
                     print(f"Received RESET_TO_HOME message")
                     self.arx5_high_level.reset_to_home()
@@ -139,6 +154,7 @@ class Arx5Server:
                         "data": "OK",
                     }
                     self.socket.send_pyobj(reply_msg)
+                    self.is_reset_to_home = True
                 elif msg["cmd"] == "SET_TO_DAMPING":
                     print(f"Received SET_TO_DAMPING message")
                     self.arx5_high_level.set_to_damping()
@@ -147,6 +163,7 @@ class Arx5Server:
                         "data": "OK",
                     }
                     self.socket.send_pyobj(reply_msg)
+                    self.is_reset_to_home = False
                 elif msg["cmd"] == "GET_GAIN":
                     print(f"Received GET_GAIN message")
                     gain = self.arx5_high_level.get_gain()
