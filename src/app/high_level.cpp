@@ -6,7 +6,7 @@
 Arx5HighLevel::Arx5HighLevel()
 {
     _low_level.set_to_damping();
-    std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5_gopro.urdf";
+    std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5.urdf";
     _solver.init_solver(model_path);
     _solver.set_log_level(_log_level);
     int control_mode = 0; // Keyboard control_mode
