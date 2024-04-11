@@ -23,6 +23,7 @@ add_compile_options(-pthread)
 add_executable(arx5_low_level examples/test_low_level.cpp ${cpp_source})
 
 add_executable(calibrate_gripper examples/calibrate_gripper.cpp ${cpp_source})
+add_executable(calibrate_joint examples/calibrate_joint.cpp ${cpp_source})
 
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)#include文件夹下的头文件
@@ -43,6 +44,9 @@ target_link_libraries(arx5_low_level
     ${LIB_DIR}/hardware/can.a 
     )
 target_link_libraries(calibrate_gripper 
+    ${LIB_DIR}/hardware/can.a 
+    )
+target_link_libraries(calibrate_joint 
     ${LIB_DIR}/hardware/can.a 
     )
 

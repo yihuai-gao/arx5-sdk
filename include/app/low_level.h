@@ -94,6 +94,7 @@ public:
     void set_to_damping();
 
     void calibrate_gripper();
+    void calibrate_joint(int joint_id);
     void set_log_level(LogLevel log_level);
     double get_timestamp();
 
@@ -120,6 +121,7 @@ private:
     void _update_output_cmd();
     int _log_level = INFO;
     int _start_time_us;
+    const std::array<int, 7> _MOTOR_ID = {1, 2, 4, 5, 6, 7, 8};
 };
 
 #endif

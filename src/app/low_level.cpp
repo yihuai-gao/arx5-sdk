@@ -169,20 +169,20 @@ void Arx5LowLevel::_send_recv()
     //           << _cmd.torque.transpose() << " kp: " << _gain.kp.transpose() << " kd: " << _gain.kd.transpose() << std::endl;
     _update_output_cmd();
     // _output_low_cmd = _input_low_cmd;
-    _can_handle.Send_moto_Cmd1(1, _gain.kp[0], _gain.kd[0], _output_low_cmd.pos[0], _output_low_cmd.vel[0], _output_low_cmd.torque[0] / torque_constant1);
+    _can_handle.Send_moto_Cmd1(_MOTOR_ID[0], _gain.kp[0], _gain.kd[0], _output_low_cmd.pos[0], _output_low_cmd.vel[0], _output_low_cmd.torque[0] / torque_constant1);
     usleep(200);
-    _can_handle.Send_moto_Cmd1(2, _gain.kp[1], _gain.kd[1], _output_low_cmd.pos[1], _output_low_cmd.vel[1], _output_low_cmd.torque[1] / torque_constant1);
+    _can_handle.Send_moto_Cmd1(_MOTOR_ID[1], _gain.kp[1], _gain.kd[1], _output_low_cmd.pos[1], _output_low_cmd.vel[1], _output_low_cmd.torque[1] / torque_constant1);
     usleep(200);
-    _can_handle.Send_moto_Cmd1(4, _gain.kp[2], _gain.kd[2], _output_low_cmd.pos[2], _output_low_cmd.vel[2], _output_low_cmd.torque[2] / torque_constant1);
+    _can_handle.Send_moto_Cmd1(_MOTOR_ID[2], _gain.kp[2], _gain.kd[2], _output_low_cmd.pos[2], _output_low_cmd.vel[2], _output_low_cmd.torque[2] / torque_constant1);
     usleep(200);
-    _can_handle.Send_moto_Cmd2(5, _gain.kp[3], _gain.kd[3], _output_low_cmd.pos[3], _output_low_cmd.vel[3], _output_low_cmd.torque[3] / torque_constant2);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[3], _gain.kp[3], _gain.kd[3], _output_low_cmd.pos[3], _output_low_cmd.vel[3], _output_low_cmd.torque[3] / torque_constant2);
     usleep(200);
-    _can_handle.Send_moto_Cmd2(6, _gain.kp[4], _gain.kd[4], _output_low_cmd.pos[4], _output_low_cmd.vel[4], _output_low_cmd.torque[4] / torque_constant2);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[4], _gain.kp[4], _gain.kd[4], _output_low_cmd.pos[4], _output_low_cmd.vel[4], _output_low_cmd.torque[4] / torque_constant2);
     usleep(200);
-    _can_handle.Send_moto_Cmd2(7, _gain.kp[5], _gain.kd[5], _output_low_cmd.pos[5], _output_low_cmd.vel[5], _output_low_cmd.torque[5] / torque_constant2);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[5], _gain.kp[5], _gain.kd[5], _output_low_cmd.pos[5], _output_low_cmd.vel[5], _output_low_cmd.torque[5] / torque_constant2);
     usleep(200);
     double gripper_motor_pos = _output_low_cmd.gripper_pos / GRIPPER_WIDTH * _GRIPPER_OPEN_READOUT;
-    _can_handle.Send_moto_Cmd2(8, _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos, 0, 0);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[6], _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos, 0, 0);
 
     _low_state.pos[0] = rv_motor_msg[0].angle_actual_rad;
     _low_state.pos[1] = rv_motor_msg[1].angle_actual_rad;
@@ -430,6 +430,43 @@ void Arx5LowLevel::calibrate_gripper()
     }
     std::cout << "Arx5LowLevel: Fully-open joint position readout: " << rv_motor_msg[7].angle_actual_rad << std::endl;
     std::cout << "  Please update the _GRIPPER_OPEN_READOUT value in low_level.h to finish gripper calibration." << std::endl;
+    if (prev_running)
+    {
+        _background_send_recv_running = true;
+    }
+}
+
+void Arx5LowLevel::calibrate_joint(int joint_id)
+{
+    bool prev_running = _background_send_recv_running;
+    _background_send_recv_running = false;
+    usleep(1000);
+    int motor_id = _MOTOR_ID[joint_id];
+    for (int i = 0; i < 10; ++i)
+    {
+        if (joint_id < 3)
+            _can_handle.Send_moto_Cmd1(motor_id, 0, 0, 0, 0, 0);
+        else
+            _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
+        usleep(400);
+    }
+    debug_printf(INFO, _log_level, "Arx5LowLevel: Start calibrating joint %d. Please move the joint to the home position and press enter to continue\n", joint_id);
+    std::cin.get();
+    if (joint_id < 3)
+        _can_handle.CAN_cmd_init(motor_id, 0x03);
+    else
+        _can_handle.Set_Zero(motor_id);
+    usleep(400);
+    for (int i = 0; i < 10; ++i)
+    {
+        if (joint_id < 3)
+            _can_handle.Send_moto_Cmd1(motor_id, 0, 0, 0, 0, 0);
+        else
+            _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
+        usleep(400);
+    }
+    usleep(400);
+    debug_printf(INFO, _log_level, "Arx5LowLevel: Finish setting zero point for joint %d.\n", joint_id);
     if (prev_running)
     {
         _background_send_recv_running = true;
