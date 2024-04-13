@@ -19,14 +19,14 @@ fi
 docker build \
   --build-arg USER_UID=$USER_UID \
   --build-arg USER_GID=$USER_GID \
-  -t arx5-python-sdk:latest $SCRIPT_DIR
+  -t arx5-sdk:latest $SCRIPT_DIR
 
 # Check devcontainer.json for detailed explanation of the following arguments
 docker run \
   -v /tmp/.X11-unix/:/tmp/.X11-unix/ \
-  -v $WORKSPACE_DIR:/home/$REMOTE_USER/arx5-python-sdk \
+  -v $WORKSPACE_DIR:/home/$REMOTE_USER/arx5-sdk \
   -v ~/.zsh_history:/home/$REMOTE_USER/.zsh_history \
-  --workdir /home/$REMOTE_USER/arx5-python-sdk \
+  --workdir /home/$REMOTE_USER/arx5-sdk \
   --net=host \
   -it \
-  arx5-python-sdk:latest
+  arx5-sdk:latest

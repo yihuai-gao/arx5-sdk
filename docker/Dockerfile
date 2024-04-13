@@ -8,8 +8,8 @@ RUN apt-get update &&\
 RUN apt-get install ca-certificates --reinstall -y
 
 ARG USERNAME=arx
-ARG USER_UID=1000
-ARG USER_GID=$USER_UID
+ARG USER_UID
+ARG USER_GID
 
 RUN groupadd -g ${USER_GID} ${USERNAME} && \
     useradd ${USERNAME}  -u ${USER_UID} -g ${USER_GID} -m -p "$(openssl passwd -1 ${USERNAME})"

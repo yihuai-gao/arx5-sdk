@@ -14,6 +14,7 @@ ${CMAKE_CURRENT_SOURCE_DIR}/../src/utils.cpp
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../include/libcan)
+add_compile_options(-pthread)
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.*|arm|aarch64")
     set(LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../lib/aarch64)
@@ -27,6 +28,7 @@ ${LIB_DIR}/hardware/can.a
 ${LIB_DIR}/app/solver.a
 /usr/local/lib/libkdl_parser.so
 orocos-kdl
+pthread
 )
 
 # # Optional: set the output directory for the built module

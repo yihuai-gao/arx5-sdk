@@ -11,14 +11,13 @@
 #include <cstdarg>
 
 using Vec6d = Eigen::Matrix<double, 6, 1>;
-
-const Vec6d JOINT_POS_MIN = {-3.14, -0.005, -0.1, -1.6, -1.57, -2};
-const Vec6d JOINT_POS_MAX = {2.618, 3.14, 3.24, 1.55, 1.57, 2};
-const Vec6d DEFAULT_KP = {80, 80, 80, 50, 40, 20};
-const Vec6d DEFAULT_KD = {10.0, 7.0, 7.0, 1.0, 0.8, 1.0};
-const Vec6d JOINT_VEL_MAX = {3.0, 2.0, 2.0, 2.0, 3.0, 3.0};       // rad/s
-const Vec6d JOINT_TORQUE_MAX = {16.0, 16.0, 16.0, 7.0, 5.0, 5.0}; // N*m
-const Vec6d EE_VEL_MAX = {0.6, 0.6, 0.6, 1.8, 1.8, 1.8};          // end effector speed: m/s for (x, y, z), rad/s for (roll, pitch, yaw)
+const Vec6d JOINT_POS_MIN = (Vec6d() << -3.14, -0.005, -0.1, -1.6, -1.57, -2).finished();
+const Vec6d JOINT_POS_MAX = (Vec6d() << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished();
+const Vec6d DEFAULT_KP = (Vec6d() << 80, 80, 80, 50, 40, 20).finished();
+const Vec6d DEFAULT_KD = (Vec6d() << 10.0, 7.0, 7.0, 1.0, 0.8, 1.0).finished();
+const Vec6d JOINT_VEL_MAX = (Vec6d() << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished();       // rad/s
+const Vec6d JOINT_TORQUE_MAX = (Vec6d() << 16.0, 16.0, 16.0, 7.0, 5.0, 5.0).finished(); // N*m
+const Vec6d EE_VEL_MAX = (Vec6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished();          // end effector speed: m/s for (x, y, z), rad/s for (roll, pitch, yaw)
 const std::vector<std::string> EE_POSE_NAMES = {"x", "y", "z", "roll", "pitch", "yaw"};
 const double CTRL_DT = 0.005;
 const double GRIPPER_VEL_MAX = 0.1; // m/s

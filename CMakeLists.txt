@@ -18,6 +18,7 @@ set(high_level_src
 
 set(ARX_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 add_definitions(-DARX_DIRECTORY="${ARX_DIRECTORY}")
+add_compile_options(-pthread)
 
 add_executable(arx5_low_level examples/test_low_level.cpp ${cpp_source})
 

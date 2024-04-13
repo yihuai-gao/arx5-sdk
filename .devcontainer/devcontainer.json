@@ -1,13 +1,13 @@
 {
     "name": "arx5-sdk",
-    // "dockerFile": "${localWorkspaceFolder}/docker/Dockerfile",
-    // "build": {
-    //   "args": {
-    //     "USER_UID": "1000", // Please check your user id using `id -u` in your host machine
-    //     "USER_GID": "1000", // Please check your group id using `id -g` in your host machine
-    //   },
-    // },
-    "image": "yihuai1013/arx5:latest",
+    "dockerFile": "${localWorkspaceFolder}/docker/Dockerfile",
+    "build": {
+      "args": {
+        // "USER_UID": "1001", // Please check your user id using `id -u` in your host machine
+        // "USER_GID": "1002", // Please check your group id using `id -g` in your host machine
+      },
+    },
+    // "image": "yihuai1013/arx5:latest",
     "runArgs": [
       "--volume=/tmp/.X11-unix/:/tmp/.X11-unix/", // For GUI display
       "--network=host"
