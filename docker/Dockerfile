@@ -84,9 +84,43 @@ RUN git clone https://github.com/ros/kdl_parser.git && \
     mkdir build && cd build && \
     cmake .. && make -j$(($(nproc)-1)) && make install
 
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null && \
+    apt-get update && \
+    apt-get install -y ros-humble-desktop ros-dev-tools \
+    ros-humble-rmw-cyclonedds-cpp ros-humble-rosidl-generator-dds-idl \
+    ros-humble-geometry-msgs ros-humble-ament-lint-auto ros-humble-rosidl-default-generators \
+    ros-humble-rviz2
+
+
+
 USER ${USERNAME}
 
 RUN ${HOME}/miniforge3/bin/pip install pybind11 numpy pyzmq atomics 
+
+
+# Install unitree ros
+RUN git clone https://github.com/unitreerobotics/unitree_ros2.git && \
+    cd unitree_ros2/cyclonedds_ws/src && \
+    git clone https://github.com/ros2/rmw_cyclonedds -b humble && \
+    git clone https://github.com/eclipse-cyclonedds/cyclonedds -b releases/0.10.x && \
+    cd .. && \
+    colcon build --packages-select cyclonedds
+
+RUN cd unitree_ros2/cyclonedds_ws && \
+    /home/${USERNAME}/miniforge3/bin/pip install empy==3.3.2 catkin_pkg pyparsing lark && \
+    /bin/zsh -c "cd ~/unitree_ros2/cyclonedds_ws && source /opt/ros/humble/setup.zsh && colcon build"
+
+
+RUN echo "source /opt/ros/humble/install/setup.zsh" >> /home/${USERNAME}/.zshrc && \
+    echo "source /home/\${USERNAME}/unitree_ros2/cyclonedds_ws/install/setup.zsh" >> /home/${USERNAME}/.zshrc && \
+    echo "export CYCLONEDDS_URI=/home/\${USERNAME}/unitree_ros2/cyclonedds_ws/src/cyclonedds.xml" >> /home/${USERNAME}/.zshrc && \
+    sed -i "s/enp2s0/eth0/g" /home/${USERNAME}/unitree_ros2/cyclonedds_ws/src/cyclonedds.xml
+
+
+
 
 # RUN ${HOME}/miniforge3/bin/pip install \
 #     https://github.com/cheng-chi/spnav/archive/c1c938ebe3cc542db4685e0d13850ff1abfdb943.tar.gz

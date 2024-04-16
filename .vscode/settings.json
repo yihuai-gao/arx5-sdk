@@ -82,7 +82,8 @@
         "utils.h": "c"
     },
     "python.analysis.extraPaths": [
-        "python"
+        "python",
+        "/opt/ros/humble/lib/python3.10/site-packages", 
     ],
     "cSpell.words": [
         "urdf"
