@@ -5,9 +5,6 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
-#ifndef ARX_DIRECTORY
-#define ARX_DIRECTORY "/home/arx/arx5-python-sdk/models/arx5.urdf"
-#endif
 
 struct HighState
 {

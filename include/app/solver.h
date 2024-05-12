@@ -57,8 +57,6 @@ public:
     std::tuple<bool, Vec6d> inverse_kinematics(Vec6d target_pose_6d, Vec6d current_joint_pos);
     Vec6d forward_kinematics(Vec6d joint_pos);
 
-    void set_log_level(LogLevel log_level);
-
 private:
     // parameters for ik solver
     const double _EPS = 1E-5;
@@ -79,8 +77,6 @@ private:
     std::shared_ptr<KDL::ChainIdSolver_RNE> _id_solver;
 
     KDL::Frame _init_frame;
-
-    LogLevel _log_level;
 };
 
 #endif

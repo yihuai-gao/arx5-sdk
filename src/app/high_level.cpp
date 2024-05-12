@@ -9,7 +9,6 @@ Arx5HighLevel::Arx5HighLevel()
     // std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5.urdf";
     std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5_gopro.urdf";
     _solver.init_solver(model_path);
-    _solver.set_log_level(_log_level);
     int control_mode = 0; // Keyboard control_mode
     _high_state.pose_6d = _solver.forward_kinematics(_low_level.get_state().pos);
     _high_state.gripper_pos = _low_level.get_state().gripper_pos;
@@ -274,5 +273,4 @@ void Arx5HighLevel::set_log_level(LogLevel log_level)
     }
     _log_level = log_level;
     _low_level.set_log_level(log_level);
-    _solver.set_log_level(log_level);
 }

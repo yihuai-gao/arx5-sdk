@@ -15,10 +15,10 @@ int main()
 {
     HighState cmd;
     Arx5Solver solver;
-    solver.init_solver(std::string(ARX_DIRECTORY) + "/models/arx5.urdf");
+    solver.init_solver(std::string(ARX_DIRECTORY) + "/models/arx5_gopro.urdf");
     int loop_cnt = 0;
     Gain gain = Gain();
-    gain.kp = DEFAULT_KP / 30;
+    // gain.kp = DEFAULT_KP / 30;
     gain.kd = DEFAULT_KD / 10;
     std::signal(SIGINT, signal_handler);
     arx5_high_level->set_gain(gain);

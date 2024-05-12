@@ -6,8 +6,6 @@ find_package(pybind11 REQUIRED PATHS ${PYBIND_PATH}/pybind11/share/cmake/pybind1
 pybind11_add_module(arx5_interface 
 arx5_pybind.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/low_level.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/../src/hardware/motor.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/../src/hardware/math_ops.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/high_level.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/../src/utils.cpp
 )
@@ -24,8 +22,8 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64)|(^i686)")
 endif()
 
 target_link_libraries(arx5_interface PRIVATE 
-${LIB_DIR}/hardware/can.a
-${LIB_DIR}/app/solver.a
+${LIB_DIR}/libhardware.so
+${LIB_DIR}/libsolver.so
 /usr/local/lib/libkdl_parser.so
 orocos-kdl
 pthread
