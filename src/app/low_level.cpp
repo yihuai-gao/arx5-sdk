@@ -336,11 +336,10 @@ void Arx5LowLevel::reset_to_home()
     double init_gripper_kd = _gain.gripper_kd;
     Gain target_gain = Gain(DEFAULT_KP, DEFAULT_KD, DEFAULT_GRIPPER_KP, DEFAULT_GRIPPER_KD);
     LowState target_state;
-    target_state.gripper_pos = GRIPPER_WIDTH;
 
     // calculate the maximum joint position error
     double max_pos_error = (init_state.pos - Vec6d::Zero()).cwiseAbs().maxCoeff();
-    max_pos_error = std::max(max_pos_error, (GRIPPER_WIDTH - init_state.gripper_pos) * 2 / GRIPPER_WIDTH);
+    max_pos_error = std::max(max_pos_error, init_state.gripper_pos * 2 / GRIPPER_WIDTH);
     // interpolate from current kp kd to default kp kd in max(max_pos_error, 0.5)s
     // and keep the target for max(max_pos_error, 0.5)s
     double step_num = std::max(max_pos_error, 0.5) / CTRL_DT;

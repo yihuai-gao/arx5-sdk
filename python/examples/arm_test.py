@@ -46,7 +46,7 @@ def main():
         cmd = arx5.LowState()
         # i = 0
         cmd.pos()[0:4] = easeInOutQuad(float(i) / step_num) * target_joint_poses[0:4]
-        cmd.gripper_pos = easeInOutQuad((1 - (i / (step_num - 1)))) * 0.08
+        cmd.gripper_pos = easeInOutQuad((i / (step_num - 1))) * 0.08
         arx5_low_level.set_low_cmd(cmd)
         if not USE_TIMER:
             arx5_low_level.send_recv_once()
@@ -62,7 +62,7 @@ def main():
         cmd.pos()[0:4] = (
             easeInOutQuad((1 - float(i) / step_num)) * target_joint_poses[0:4]
         )
-        cmd.gripper_pos = easeInOutQuad((i / (step_num - 1))) * 0.08
+        cmd.gripper_pos = easeInOutQuad((1 - i / (step_num - 1))) * 0.08
         arx5_low_level.set_low_cmd(cmd)
         if not USE_TIMER:
             arx5_low_level.send_recv_once()
