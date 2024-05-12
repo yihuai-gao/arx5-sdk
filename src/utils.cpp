@@ -2,16 +2,6 @@
 #include "utils.h"
 #include <cstdarg>
 #include <cstdio>
-void debug_printf(int msg_level, int log_level, const char *fmt, ...)
-{
-    if (msg_level >= log_level)
-    {
-        va_list args;
-        va_start(args, fmt);
-        vprintf(fmt, args);
-        va_end(args);
-    }
-}
 
 MovingAverage6d::MovingAverage6d(int window_size)
 {

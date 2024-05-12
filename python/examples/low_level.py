@@ -4,6 +4,7 @@ import os
 import sys
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
+print(ROOT_DIR)
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
 import arx5_interface as arx5
@@ -38,12 +39,6 @@ for i in range(step_num):
     lowstate = arx5_low_level.get_state()
     print(f"torque: {lowstate.torque()}")
     time.sleep(arx5.CTRL_DT)
-
-
-# while True:
-#     lowstate = arx5_low_level.get_state()
-#     print(f"torque: {lowstate.torque()}")
-#     time.sleep(0.1)
 
 for i in range(step_num):
     cmd = arx5.LowState()

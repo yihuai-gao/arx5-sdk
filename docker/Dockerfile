@@ -114,7 +114,7 @@ RUN cd unitree_ros2/cyclonedds_ws && \
     /bin/zsh -c "cd ~/unitree_ros2/cyclonedds_ws && source /opt/ros/humble/setup.zsh && colcon build"
 
 
-RUN echo "source /opt/ros/humble/install/setup.zsh" >> /home/${USERNAME}/.zshrc && \
+RUN echo "source /opt/ros/humble/setup.zsh" >> /home/${USERNAME}/.zshrc && \
     echo "source /home/\${USERNAME}/unitree_ros2/cyclonedds_ws/install/setup.zsh" >> /home/${USERNAME}/.zshrc && \
     echo "export CYCLONEDDS_URI=/home/\${USERNAME}/unitree_ros2/cyclonedds_ws/src/cyclonedds.xml" >> /home/${USERNAME}/.zshrc && \
     sed -i "s/enp2s0/eth0/g" /home/${USERNAME}/unitree_ros2/cyclonedds_ws/src/cyclonedds.xml

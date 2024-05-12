@@ -4,6 +4,7 @@
 #include "app/low_level.h"
 #include "app/high_level.h"
 #include "utils.h"
+#include "spdlog/spdlog.h"
 namespace py = pybind11;
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 PYBIND11_MODULE(arx5_interface, m)
@@ -20,12 +21,12 @@ PYBIND11_MODULE(arx5_interface, m)
     m.attr("GRIPPER_VEL_MAX") = GRIPPER_VEL_MAX;
     m.attr("GRIPPER_WIDTH") = GRIPPER_WIDTH;
     m.attr("CTRL_DT") = CTRL_DT;
-    py::enum_<LogLevel>(m, "LogLevel")
-        .value("DEBUG", LogLevel::DEBUG)
-        .value("INFO", LogLevel::INFO)
-        .value("WARNING", LogLevel::WARNING)
-        .value("ERROR", LogLevel::ERROR)
-        .export_values();
+    // py::enum_<LogLevel>(m, "LogLevel")
+    //     .value("DEBUG", LogLevel::DEBUG)
+    //     .value("INFO", LogLevel::INFO)
+    //     .value("WARNING", LogLevel::WARNING)
+    //     .value("ERROR", LogLevel::ERROR)
+    //     .export_values();
     py::class_<LowState>(m, "LowState")
         .def(py::init<>())
         .def(py::init<Vec6d, Vec6d, Vec6d, double>())

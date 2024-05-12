@@ -5,7 +5,6 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
-                "~/miniforge3/lib/python3.10/site-packages/pybind11/include/",
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

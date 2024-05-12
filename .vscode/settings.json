@@ -79,7 +79,8 @@
         "valarray": "cpp",
         "variant": "cpp",
         "csignal": "cpp",
-        "utils.h": "c"
+        "utils.h": "c",
+        "bitset": "cpp"
     },
     "python.analysis.extraPaths": [
         "python",

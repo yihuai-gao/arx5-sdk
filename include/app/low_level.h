@@ -1,9 +1,9 @@
 #ifndef LOW_LEVEL_H
 #define LOW_LEVEL_H
 #include <stdlib.h>
-#include "../hardware/arx_can.h"
-#include "../hardware/motor.h"
-#include "common.h"
+#include "hardware/arx_can.h"
+#include "hardware/motor.h"
+#include "app/common.h"
 #include "utils.h"
 #include <array>
 #include <unistd.h>
@@ -11,6 +11,7 @@
 #include <thread>
 #include <chrono>
 #include <mutex>
+#include "spdlog/spdlog.h"
 
 struct LowState
 {
@@ -96,6 +97,8 @@ public:
     void calibrate_gripper();
     void calibrate_joint(int joint_id);
     double get_timestamp();
+
+    // void set_log_level(spdlog::level log_level);
 
     bool is_damping();
 

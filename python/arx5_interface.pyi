@@ -14,11 +14,11 @@ GRIPPER_VEL_MAX: float
 GRIPPER_WIDTH: float
 CTRL_DT: float
 
-class LogLevel:
-    DEBUG: "LogLevel"
-    INFO: "LogLevel"
-    WARNING: "LogLevel"
-    ERROR: "LogLevel"
+# class LogLevel:
+#     DEBUG: "LogLevel"
+#     INFO: "LogLevel"
+#     WARNING: "LogLevel"
+#     ERROR: "LogLevel"
 
 class Gain:
     def kp(self) -> npt.NDArray[np.float64]: ...

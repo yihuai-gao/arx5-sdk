@@ -36,7 +36,7 @@ Arx5HighLevel::~Arx5HighLevel()
     _background_gravity_compensation.join();
     std::cout << "Arx5HighLevel: background gravity compensation task joined" << std::endl;
     _low_level.enable_background_send_recv();
-    spdlog::info("Arx5HighLevel: Enabled low level communication\n");
+    spdlog::info("Arx5HighLevel: Enabled low level communication");
 }
 
 void Arx5HighLevel::set_high_cmd(HighState new_cmd)
@@ -44,7 +44,7 @@ void Arx5HighLevel::set_high_cmd(HighState new_cmd)
     std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
     if (new_cmd.gripper_vel != 0 || new_cmd.gripper_torque != 0)
     {
-        spdlog::warn("Arx5HighLevel: Gripper velocity and torque control is not supported yet. Will be ignored\n");
+        spdlog::warn("Arx5HighLevel: Gripper velocity and torque control is not supported yet. Will be ignored");
         new_cmd.gripper_vel = 0;
         new_cmd.gripper_torque = 0;
     }
@@ -56,7 +56,7 @@ void Arx5HighLevel::set_high_cmd(HighState new_cmd)
     else
     {
         // TODO: support scheduling future targets
-        spdlog::warn("Arx5HighLevel: Timestamp is set to {:.3f}, will be ignored\n", new_cmd.timestamp);
+        spdlog::warn("Arx5HighLevel: Timestamp is set to {:.3f}, will be ignored", new_cmd.timestamp);
         double t = get_timestamp();
         new_cmd.timestamp = t + _LOOK_AHEAD_TIME;
     }
@@ -169,7 +169,7 @@ void Arx5HighLevel::_update_output_cmd()
     else
     {
         // double alpha = (_input_high_cmd.timestamp - t - CTRL_DT) / _LOOK_AHEAD_TIME;
-        // //spdlog::debug("Arx5HighLevel: alpha: %.3f\n", alpha);
+        // //spdlog::debug("Arx5HighLevel: alpha: %.3f", alpha);
 
         // double alpha = 0.95;
         // _output_high_cmd = _input_high_cmd * (1 - alpha) + prev_output_high_cmd * alpha;
@@ -192,7 +192,7 @@ void Arx5HighLevel::_update_output_cmd()
                 {
                     if (_output_high_cmd.pose_6d[i] > max_ee_pose + _clipping_output_threshold)
                     {
-                        spdlog::debug("Arx5HighLevel: Clipping {} from {:.3f} to {:.3f} (current {:.3f})\n",
+                        spdlog::debug("Arx5HighLevel: Clipping {} from {:.3f} to {:.3f} (current {:.3f})",
                                       EE_POSE_NAMES[i].c_str(), _output_high_cmd.pose_6d[i], max_ee_pose, prev_ee_pose[i]);
                     }
                     _output_high_cmd.pose_6d[i] = max_ee_pose;
@@ -201,7 +201,7 @@ void Arx5HighLevel::_update_output_cmd()
                 {
                     if (_output_high_cmd.pose_6d[i] < min_ee_pose - _clipping_output_threshold)
                     {
-                        spdlog::debug("Arx5HighLevel: Clipping %s from {:.3f} to {:.3f} (current {:.3f})\n",
+                        spdlog::debug("Arx5HighLevel: Clipping %s from {:.3f} to {:.3f} (current {:.3f})",
                                       EE_POSE_NAMES[i].c_str(), _output_high_cmd.pose_6d[i], min_ee_pose, prev_ee_pose[i]);
                     }
                     _output_high_cmd.pose_6d[i] = min_ee_pose;
@@ -241,7 +241,7 @@ void Arx5HighLevel::_background_gravity_compensation_task()
                 Vec6d joint_torque = _solver.inverse_dynamics(low_state.pos, Vec6d(), Vec6d());
                 low_cmd.torque = _joint_torque_filter.filter(joint_torque);
                 _low_level.set_low_cmd(low_cmd);
-                // printf("Arx5HighLevel: Joint positions: %.3f %.3f %.3f %.3f %.3f %.3f, cmd: %.3f %.3f %.3f %.3f %.3f %.3f, Torque: %.3f %.3f %.3f %.3f %.3f %.3f\n",
+                // printf("Arx5HighLevel: Joint positions: %.3f %.3f %.3f %.3f %.3f %.3f, cmd: %.3f %.3f %.3f %.3f %.3f %.3f, Torque: %.3f %.3f %.3f %.3f %.3f %.3f",
                 //        low_state.pos[0], low_state.pos[1], low_state.pos[2], low_state.pos[3], low_state.pos[4], low_state.pos[5],
                 //        joint_pos[0], joint_pos[1], joint_pos[2], joint_pos[3], joint_pos[4], joint_pos[5],
                 //        low_cmd.torque[0], low_cmd.torque[1], low_cmd.torque[2], low_cmd.torque[3], low_cmd.torque[4], low_cmd.torque[5]);
@@ -260,7 +260,7 @@ void Arx5HighLevel::_background_gravity_compensation_task()
             std::this_thread::sleep_for(std::chrono::microseconds(int(CTRL_DT * 1e6) - solve_time_us));
         else
         {
-            spdlog::warn("Arx5HighLevel: Background gravity compensation task takes {:.3f} ms\n", solve_time_us / 1000.0);
+            spdlog::warn("Arx5HighLevel: Background gravity compensation task takes {:.3f} ms", solve_time_us / 1000.0);
         }
     }
 }
