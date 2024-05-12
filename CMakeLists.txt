@@ -35,6 +35,7 @@ target_link_libraries(arx5_low_level
     ${LIB_DIR}/libhardware.so 
     Eigen3::Eigen
     Threads::Threads
+    spdlog::spdlog
 )
 target_include_directories(arx5_low_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(arx5_low_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
@@ -48,6 +49,7 @@ add_executable(arx5_high_level examples/test_high_level.cpp
 target_link_libraries(arx5_high_level 
     ${LIB_DIR}/libhardware.so 
     ${LIB_DIR}/libsolver.so 
+    spdlog::spdlog
     Eigen3::Eigen
     Threads::Threads
     kdl_parser

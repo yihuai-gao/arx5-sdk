@@ -29,11 +29,8 @@ class Arx5Server:
         zmq_ip: str,
         zmq_port: int,
         no_cmd_timeout: float = 60.0,
-        log_level: arx5.LogLevel = arx5.LogLevel.INFO,
     ):
         self.arx5_high_level = arx5.Arx5HighLevel()
-        self.log_level = log_level
-        self.arx5_high_level.set_log_level(log_level)
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://{zmq_ip}:{zmq_port}")
@@ -212,5 +209,5 @@ class Arx5Server:
 
 
 if __name__ == "__main__":
-    server = Arx5Server(zmq_ip="0.0.0.0", zmq_port=8765, log_level=arx5.LogLevel.DEBUG)
+    server = Arx5Server(zmq_ip="0.0.0.0", zmq_port=8765)
     server.run()

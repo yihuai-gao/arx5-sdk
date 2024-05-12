@@ -95,7 +95,6 @@ public:
 
     void calibrate_gripper();
     void calibrate_joint(int joint_id);
-    void set_log_level(LogLevel log_level);
     double get_timestamp();
 
     bool is_damping();

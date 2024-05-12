@@ -47,8 +47,6 @@ public:
     void reset_to_home();
     void set_to_damping();
 
-    void set_log_level(LogLevel log_level);
-
 private:
     Arx5LowLevel _low_level;
     Arx5Solver _solver;

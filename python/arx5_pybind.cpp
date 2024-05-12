@@ -65,8 +65,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("clip_joint_pos", &Arx5LowLevel::clip_joint_pos)
         .def("reset_to_home", &Arx5LowLevel::reset_to_home)
         .def("set_to_damping", &Arx5LowLevel::set_to_damping)
-        .def("calibrate_gripper", &Arx5LowLevel::calibrate_gripper)
-        .def("set_log_level", &Arx5LowLevel::set_log_level);
+        .def("calibrate_gripper", &Arx5LowLevel::calibrate_gripper);
     py::class_<HighState>(m, "HighState")
         .def(py::init<>())
         .def(py::init<Vec6d, double>())
@@ -90,8 +89,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("set_gain", &Arx5HighLevel::set_gain)
         .def("get_gain", &Arx5HighLevel::get_gain)
         .def("reset_to_home", &Arx5HighLevel::reset_to_home)
-        .def("set_to_damping", &Arx5HighLevel::set_to_damping)
-        .def("set_log_level", &Arx5HighLevel::set_log_level);
+        .def("set_to_damping", &Arx5HighLevel::set_to_damping);
     py::class_<Arx5Solver>(m, "Arx5Solver")
         .def(py::init<>())
         .def("init_solver", &Arx5Solver::init_solver)

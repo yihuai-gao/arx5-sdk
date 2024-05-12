@@ -30,11 +30,12 @@ endif()
 target_link_libraries(arx5_interface PRIVATE 
 ${LIB_DIR}/libhardware.so
 ${LIB_DIR}/libsolver.so
-Eigen3::Eigen
-Threads::Threads
-kdl_parser
-orocos-kdl
-pthread
+    spdlog::spdlog
+    Eigen3::Eigen
+    Threads::Threads
+    kdl_parser
+    orocos-kdl
+    pthread
 )
 target_include_directories(arx5_interface PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
