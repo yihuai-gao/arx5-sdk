@@ -1,0 +1,16 @@
+name: arx
+channels:
+  - robostack
+  - conda-forge
+dependencies:
+  - cxx-compiler
+  - cmake
+  - ninja
+  - ros-noetic-kdl-parser
+  - orocos-kdl
+  - eigen
+  - boost
+  - spdlog
+  - pybind11
+  - numpy
+  - click

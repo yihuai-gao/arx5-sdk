@@ -10,9 +10,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON) # global PIC
 find_package(Threads REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(orocos_kdl REQUIRED)
-# find_package(kdl_parser REQUIRED)
+find_package(kdl_parser REQUIRED)
 find_package(fmt REQUIRED)
-# find_package(spdlog REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(Boost REQUIRED COMPONENTS container)
 
 set(ARX_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -33,8 +33,12 @@ add_executable(arx5_low_level examples/test_low_level.cpp ${cpp_source})
 
 target_link_libraries(arx5_low_level 
     ${LIB_DIR}/libhardware.so 
+    Eigen3::Eigen
+    Threads::Threads
 )
 target_include_directories(arx5_low_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(arx5_low_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
+
 
 
 add_executable(arx5_high_level examples/test_high_level.cpp 
@@ -44,11 +48,13 @@ add_executable(arx5_high_level examples/test_high_level.cpp
 target_link_libraries(arx5_high_level 
     ${LIB_DIR}/libhardware.so 
     ${LIB_DIR}/libsolver.so 
-    /usr/local/lib/libkdl_parser.so
+    Eigen3::Eigen
+    Threads::Threads
+    kdl_parser
     orocos-kdl
     pthread
 )
 target_include_directories(arx5_high_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
-
+target_include_directories(arx5_high_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
 add_subdirectory(python)

@@ -1,7 +1,7 @@
 #ifndef LOW_LEVEL_H
 #define LOW_LEVEL_H
 #include <stdlib.h>
-#include "../hardware/can.h"
+#include "../hardware/arx_can.h"
 #include "../hardware/motor.h"
 #include "common.h"
 #include "utils.h"
