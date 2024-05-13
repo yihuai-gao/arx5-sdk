@@ -22,6 +22,7 @@ Arx5LowLevel::Arx5LowLevel()
     set_gain(gain); // set to damping by default
     _send_recv();
     _background_send_recv = std::thread(&Arx5LowLevel::_background_send_recv_task, this);
+    spdlog::set_pattern("[%H:%M:%S %n %^%l%$] %v");
     spdlog::info("Arx5LowLevel: Background send_recv task is running at ID: {}", syscall(SYS_gettid));
 }
 
@@ -474,5 +475,4 @@ void Arx5LowLevel::calibrate_joint(int joint_id)
 
 // void Arx5LowLevel::set_log_level(spdlog::level log_level)
 // {
-//     spdlog::set_level(log_level);
 // }

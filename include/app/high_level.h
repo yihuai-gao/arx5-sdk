@@ -64,7 +64,6 @@ private:
     bool _enable_ee_vel_clipping = true;
     std::mutex _cmd_mutex;
     std::mutex _state_mutex;
-    LogLevel _log_level = INFO;
 
     int _moving_window_size = 1; // 1 for no filtering
     double _LOOK_AHEAD_TIME = 0.1;

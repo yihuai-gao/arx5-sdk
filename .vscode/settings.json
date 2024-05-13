@@ -80,7 +80,8 @@
         "variant": "cpp",
         "csignal": "cpp",
         "utils.h": "c",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "shared_mutex": "cpp"
     },
     "python.analysis.extraPaths": [
         "python",

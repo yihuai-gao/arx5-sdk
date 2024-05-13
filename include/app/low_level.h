@@ -98,7 +98,7 @@ public:
     void calibrate_joint(int joint_id);
     double get_timestamp();
 
-    // void set_log_level(spdlog::level log_level);
+    // void set_log_level(spdlog::level::enum log_level);
 
     bool is_damping();
 
@@ -121,7 +121,6 @@ private:
     bool _enable_vel_clipping = true;
     bool _enable_torque_clipping = true;
     void _update_output_cmd();
-    int _log_level = INFO;
     int _start_time_us;
     const std::array<int, 7> _MOTOR_ID = {1, 2, 4, 5, 6, 7, 8};
 };

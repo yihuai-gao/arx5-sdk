@@ -40,6 +40,9 @@ ${LIB_DIR}/libsolver.so
 )
 target_include_directories(arx5_interface PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
+# Hack for py310
+target_include_directories(arx5_interface PUBLIC /home/unitree/miniforge3/envs/arx-py310/include/kdl_parser  /home/unitree/miniforge3/envs/arx-py310/include/urdfdom_headers)
+
 # # Optional: set the output directory for the built module
 set_target_properties(arx5_interface PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 set_target_properties(arx5_interface PROPERTIES PREFIX "")
