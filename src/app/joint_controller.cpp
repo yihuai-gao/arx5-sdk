@@ -9,6 +9,12 @@ Arx5JointController::Arx5JointController(std::string can_name)
 {
 
     // Enable motor 5, 6, 7
+    _can_handle.Enable_Moto(0x01);
+    usleep(1000);
+    _can_handle.Enable_Moto(0x02);
+    usleep(1000);
+    _can_handle.Enable_Moto(0x04);
+    usleep(1000);
     _can_handle.Enable_Moto(0x05);
     usleep(1000);
     _can_handle.Enable_Moto(0x06);
@@ -183,19 +189,19 @@ void Arx5JointController::_send_recv()
     int communicate_sleep_us = 150;
 
     int start_send_motor_0_time_us = get_time_us();
-    _can_handle.Send_moto_Cmd1(_MOTOR_ID[0], _gain.kp[0], _gain.kd[0], _output_joint_cmd.pos[0], _output_joint_cmd.vel[0], _output_joint_cmd.torque[0] / torque_constant1);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[0], _gain.kp[0], _gain.kd[0], _output_joint_cmd.pos[0], _output_joint_cmd.vel[0], _output_joint_cmd.torque[0] / torque_constant1);
     int send_motor_0_time_us = get_time_us();
 
     sleep_us(communicate_sleep_us - (send_motor_0_time_us - start_send_motor_0_time_us));
 
     int start_send_motor_1_time_us = get_time_us();
-    _can_handle.Send_moto_Cmd1(_MOTOR_ID[1], _gain.kp[1], _gain.kd[1], _output_joint_cmd.pos[1], _output_joint_cmd.vel[1], _output_joint_cmd.torque[1] / torque_constant1);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[1], _gain.kp[1], _gain.kd[1], _output_joint_cmd.pos[1], _output_joint_cmd.vel[1], _output_joint_cmd.torque[1] / torque_constant1);
     int send_motor_1_time_us = get_time_us();
 
     sleep_us(communicate_sleep_us - (send_motor_1_time_us - start_send_motor_1_time_us));
 
     int start_send_motor_2_time_us = get_time_us();
-    _can_handle.Send_moto_Cmd1(_MOTOR_ID[2], _gain.kp[2], _gain.kd[2], _output_joint_cmd.pos[2], _output_joint_cmd.vel[2], _output_joint_cmd.torque[2] / torque_constant1);
+    _can_handle.Send_moto_Cmd2(_MOTOR_ID[2], _gain.kp[2], _gain.kd[2], _output_joint_cmd.pos[2], _output_joint_cmd.vel[2], _output_joint_cmd.torque[2] / torque_constant1);
     int send_motor_2_time_us = get_time_us();
 
     sleep_us(communicate_sleep_us - (send_motor_2_time_us - start_send_motor_2_time_us));
@@ -494,10 +500,7 @@ void Arx5JointController::calibrate_joint(int joint_id)
     int motor_id = _MOTOR_ID[joint_id];
     for (int i = 0; i < 10; ++i)
     {
-        if (joint_id < 3)
-            _can_handle.Send_moto_Cmd1(motor_id, 0, 0, 0, 0, 0);
-        else
-            _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
+        _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
         usleep(400);
     }
     _logger->info("Start calibrating joint {}. Please move the joint to the home position and press enter to continue", joint_id);
