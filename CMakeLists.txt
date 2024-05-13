@@ -59,6 +59,6 @@ target_link_libraries(arx5_high_level
 target_include_directories(arx5_high_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(arx5_high_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
 # Hack for py310
-target_include_directories(arx5_high_level PUBLIC /home/unitree/miniforge3/envs/arx-py310/include/kdl_parser  /home/unitree/miniforge3/envs/arx-py310/include/urdfdom_headers)
+target_include_directories(arx5_high_level PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
 
 add_subdirectory(python)
