@@ -107,7 +107,7 @@ void Arx5HighLevel::reset_to_home()
     max_pos_error = std::max(max_pos_error, (GRIPPER_WIDTH - init_state.gripper_pos) * 2 / GRIPPER_WIDTH);
     // interpolate from current kp kd to default kp kd in max(max_pos_error*2, 0.5)s
     // and keep the target for 0.5s
-    double step_num = std::max(max_pos_error * 2, 0.5) / CTRL_DT;
+    double step_num = std::max(max_pos_error * 2, 0.5) / HIGH_LEVEL_DT;
     std::cout << "Arx5HighLevel: Start reset to home in " << std::max(max_pos_error, double(0.5)) + 0.5 << " s, max_pos_error:" << max_pos_error << std::endl;
 
     for (int i = 0; i <= step_num; ++i)
@@ -162,13 +162,13 @@ void Arx5HighLevel::_update_output_cmd()
     HighState prev_output_high_cmd = _output_high_cmd;
     // Interpolate the output command according to look ahead time
     double t = get_timestamp();
-    if (t + CTRL_DT >= _input_high_cmd.timestamp)
+    if (t + HIGH_LEVEL_DT >= _input_high_cmd.timestamp)
     {
         _output_high_cmd = _input_high_cmd;
     }
     else
     {
-        // double alpha = (_input_high_cmd.timestamp - t - CTRL_DT) / _LOOK_AHEAD_TIME;
+        // double alpha = (_input_high_cmd.timestamp - t - HIGH_LEVEL_DT) / _LOOK_AHEAD_TIME;
         // //spdlog::debug("Arx5HighLevel: alpha: %.3f", alpha);
 
         // double alpha = 0.95;
@@ -178,7 +178,7 @@ void Arx5HighLevel::_update_output_cmd()
 
     if (_enable_ee_vel_clipping)
     {
-        double dt = CTRL_DT;
+        double dt = HIGH_LEVEL_DT;
         Vec6d prev_ee_pose = prev_output_high_cmd.pose_6d;
         Gain gain = get_gain();
         for (int i = 0; i < 6; ++i)
@@ -256,8 +256,8 @@ void Arx5HighLevel::_background_gravity_compensation_task()
         }
         int solve_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - start_time_us;
         // Usually takes 3ms
-        if (solve_time_us < CTRL_DT * 1e6)
-            std::this_thread::sleep_for(std::chrono::microseconds(int(CTRL_DT * 1e6) - solve_time_us));
+        if (solve_time_us < HIGH_LEVEL_DT * 1e6)
+            std::this_thread::sleep_for(std::chrono::microseconds(int(HIGH_LEVEL_DT * 1e6) - solve_time_us));
         else
         {
             spdlog::warn("Arx5HighLevel: Background gravity compensation task takes {:.3f} ms", solve_time_us / 1000.0);

@@ -20,7 +20,7 @@ PYBIND11_MODULE(arx5_interface, m)
     m.attr("EE_VEL_MAX") = EE_VEL_MAX;
     m.attr("GRIPPER_VEL_MAX") = GRIPPER_VEL_MAX;
     m.attr("GRIPPER_WIDTH") = GRIPPER_WIDTH;
-    m.attr("CTRL_DT") = CTRL_DT;
+    m.attr("LOW_LEVEL_DT") = LOW_LEVEL_DT;
     // py::enum_<LogLevel>(m, "LogLevel")
     //     .value("DEBUG", LogLevel::DEBUG)
     //     .value("INFO", LogLevel::INFO)

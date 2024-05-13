@@ -66,7 +66,7 @@ void Arx5LowLevel::_update_output_cmd()
     _output_low_cmd = _input_low_cmd;
     if (_enable_vel_clipping)
     {
-        double dt = CTRL_DT;
+        double dt = LOW_LEVEL_DT;
         for (int i = 0; i < 6; ++i)
         {
             if (_gain.kp[i] > 0)
@@ -166,10 +166,7 @@ void Arx5LowLevel::_send_recv()
     const double torque_constant1 = 1.4;   // Nm/A, only for the bottom 3 motors
     const double torque_constant2 = 0.424; // Nm/A, only for the top 3 motors
 
-    // std::cout << "Arx5LowLevel: send_recv pos: " << _cmd.pos.transpose() << " vel: " << _cmd.vel.transpose() << " torque: "
-    //           << _cmd.torque.transpose() << " kp: " << _gain.kp.transpose() << " kd: " << _gain.kd.transpose() << std::endl;
     _update_output_cmd();
-    // _output_low_cmd = _input_low_cmd;
     _can_handle.Send_moto_Cmd1(_MOTOR_ID[0], _gain.kp[0], _gain.kd[0], _output_low_cmd.pos[0], _output_low_cmd.vel[0], _output_low_cmd.torque[0] / torque_constant1);
     usleep(200);
     _can_handle.Send_moto_Cmd1(_MOTOR_ID[1], _gain.kp[1], _gain.kd[1], _output_low_cmd.pos[1], _output_low_cmd.vel[1], _output_low_cmd.torque[1] / torque_constant1);
@@ -275,7 +272,8 @@ void Arx5LowLevel::_background_send_recv_task()
             _check_current();
         }
         int send_recv_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - start_time_us;
-        std::this_thread::sleep_for(std::chrono::microseconds(int(CTRL_DT * 1e6) - send_recv_time_us));
+        int sleep_time_us = int(LOW_LEVEL_DT * 1e6) - send_recv_time_us;
+        std::this_thread::sleep_for(std::chrono::microseconds(sleep_time_us));
     }
 }
 
@@ -342,7 +340,7 @@ void Arx5LowLevel::reset_to_home()
     max_pos_error = std::max(max_pos_error, init_state.gripper_pos * 2 / GRIPPER_WIDTH);
     // interpolate from current kp kd to default kp kd in max(max_pos_error, 0.5)s
     // and keep the target for max(max_pos_error, 0.5)s
-    double step_num = std::max(max_pos_error, 0.5) / CTRL_DT;
+    double step_num = std::max(max_pos_error, 0.5) / LOW_LEVEL_DT;
     spdlog::info("Arx5LowLevel: Start reset to home in {:.3f}s, max_pos_error: {:.3f}", std::max(max_pos_error, double(0.5)) + 0.5, max_pos_error);
 
     bool prev_running = _background_send_recv_running;

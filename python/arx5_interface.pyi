@@ -12,13 +12,7 @@ DEFAULT_GRIPPER_KD: float
 JOINT_VEL_MAX: npt.NDArray[np.float64]
 GRIPPER_VEL_MAX: float
 GRIPPER_WIDTH: float
-CTRL_DT: float
-
-# class LogLevel:
-#     DEBUG: "LogLevel"
-#     INFO: "LogLevel"
-#     WARNING: "LogLevel"
-#     ERROR: "LogLevel"
+LOW_LEVEL_DT: float
 
 class Gain:
     def kp(self) -> npt.NDArray[np.float64]: ...
@@ -64,7 +58,6 @@ class Arx5LowLevel:
     JOINT_POS_MAX: npt.NDArray[np.float64]
     DEFAULT_KP: npt.NDArray[np.float64]
     DEFAULT_KD: npt.NDArray[np.float64]
-    CTRL_DT: float
     TORQUE_LIM: float
     DEFAULT_GRIPPER_KP: float
     DEFAULT_GRIPPER_KD: float

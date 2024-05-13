@@ -55,7 +55,7 @@ def main():
         arm_dof_vel = lowstate.vel().copy()
         # print(arm_dof_pos, arm_dof_vel)
         # print(f"gripper: {lowstate.gripper_pos:.05f}")
-        time.sleep(arx5.CTRL_DT)
+        time.sleep(arx5.LOW_LEVEL_DT)
 
     for i in range(step_num):
         cmd = arx5.LowState()
@@ -66,7 +66,7 @@ def main():
         arx5_low_level.set_low_cmd(cmd)
         if not USE_TIMER:
             arx5_low_level.send_recv_once()
-        time.sleep(arx5.CTRL_DT)
+        time.sleep(arx5.LOW_LEVEL_DT)
         lowstate = arx5_low_level.get_state()
         # print(f"gripper: {lowstate.gripper_pos:.05f}")
 
