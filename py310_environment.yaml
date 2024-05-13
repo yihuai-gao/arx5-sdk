@@ -1,0 +1,18 @@
+name: arx-py310
+channels:
+  - robostack-staging
+  - conda-forge
+dependencies:
+  - python=3.10 # Specify your desired python version
+  - ros-humble-kdl-parser # for python 3.10
+  - ros-humble-ament-cmake
+  - cxx-compiler
+  - cmake
+  - ninja
+  - orocos-kdl
+  - eigen
+  - boost
+  - spdlog
+  - pybind11
+  - numpy
+  - click

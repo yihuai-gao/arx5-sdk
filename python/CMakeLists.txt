@@ -2,6 +2,7 @@ cmake_minimum_required( VERSION 3.16.3 )
 
 find_package(pybind11 REQUIRED)
 find_package(Threads REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development)
 find_package(Eigen3 REQUIRED)
 find_package(orocos_kdl REQUIRED)
 find_package(kdl_parser REQUIRED)

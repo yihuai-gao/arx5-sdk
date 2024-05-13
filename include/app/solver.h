@@ -17,7 +17,7 @@
 #include <kdl/chainiksolverpos_lma.hpp>
 #include <kdl/chainiksolverpos_nr.hpp>
 #include <kdl/chainiksolverpos_nr_jl.hpp>
-#include <kdl_parser/kdl_parser.hpp>
+#include <kdl_parser/kdl_parser/kdl_parser.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
 #include <kdl/chainfksolvervel_recursive.hpp>
 #include <kdl/chainiksolvervel_pinv.hpp>

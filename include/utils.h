@@ -1,18 +1,6 @@
 #ifndef UTILS_H
 #define UTILS_H
 #include "app/common.h"
-enum LogLevel
-{
-    DEBUG = 0,
-    INFO = 1,
-    WARNING = 2,
-    ERROR = 3
-};
-#ifndef LOG_LEVEL
-#define LOG_LEVEL 1
-#endif
-
-void debug_printf(int msg_level, int log_level, const char *fmt, ...);
 
 class MovingAverage6d
 {
