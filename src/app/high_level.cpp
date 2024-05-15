@@ -4,12 +4,11 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
-Arx5HighLevel::Arx5HighLevel()
+Arx5HighLevel::Arx5HighLevel(std::string can_name, std::string urdf_path)
+    : _low_level(can_name), _solver(urdf_path)
 {
     _low_level.set_to_damping();
     // std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5.urdf";
-    std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5_gopro.urdf";
-    _solver.init_solver(model_path);
     int control_mode = 0; // Keyboard control_mode
     _high_state.pose_6d = _solver.forward_kinematics(_low_level.get_state().pos);
     _high_state.gripper_pos = _low_level.get_state().gripper_pos;

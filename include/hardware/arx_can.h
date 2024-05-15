@@ -7,13 +7,13 @@
 #include "../libcan/SocketCAN.h"
 #include "motor.h"
 
-class can
+class ArxCan
 {
 public:
-    can(std::string socket_name = "can0");
-    ~can();
+    ArxCan(std::string socket_name);
+    ~ArxCan();
 
-    void can0_ReceiveFrame(can_frame_t *frame);
+    void can_receive_frame(can_frame_t *frame);
 
     void CAN_cmd_readMotorID(void);
     void CAN_cmd_getMotorParam(uint16_t motor_id, uint8_t param_cmd); // 主循环不间断获得电机数据

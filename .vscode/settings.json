@@ -81,7 +81,12 @@
         "csignal": "cpp",
         "utils.h": "c",
         "bitset": "cpp",
-        "shared_mutex": "cpp"
+        "shared_mutex": "cpp",
+        "charconv": "cpp",
+        "source_location": "cpp",
+        "hash_map": "cpp",
+        "hash_set": "cpp",
+        "slist": "cpp"
     },
     "python.analysis.extraPaths": [
         "python",

@@ -13,4 +13,5 @@ dependencies:
   - spdlog
   - pybind11
   - numpy
+  - pyzmq
   - click

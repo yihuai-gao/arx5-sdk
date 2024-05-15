@@ -3,7 +3,7 @@
 #include <chrono>
 #include <csignal>
 
-Arx5HighLevel *arx5_high_level = new Arx5HighLevel();
+Arx5HighLevel *arx5_high_level = new Arx5HighLevel("can0", "models/arx5.urdf");
 
 void signal_handler(int signal)
 {
@@ -14,8 +14,7 @@ void signal_handler(int signal)
 int main()
 {
     HighState cmd;
-    Arx5Solver solver;
-    solver.init_solver(std::string(ARX_DIRECTORY) + "/models/arx5_gopro.urdf");
+    Arx5Solver solver("models/arx5.urdf");
     int loop_cnt = 0;
     Gain gain = Gain();
     // gain.kp = DEFAULT_KP / 30;

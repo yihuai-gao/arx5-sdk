@@ -20,7 +20,7 @@ def easeInOutQuad(t):
 
 def main():
     np.set_printoptions(precision=3, suppress=True)
-    arx5_low_level = arx5.Arx5LowLevel()
+    arx5_low_level = arx5.Arx5LowLevel("can1")
 
     arx5_low_level.enable_background_send_recv()
     arx5_low_level.reset_to_home()

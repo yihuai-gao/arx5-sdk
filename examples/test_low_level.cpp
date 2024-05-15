@@ -3,7 +3,7 @@
 #include <chrono>
 #include <csignal>
 
-Arx5LowLevel *arx5_low_level = new Arx5LowLevel();
+Arx5LowLevel *arx5_low_level = new Arx5LowLevel("can0");
 
 void signal_handler(int signal)
 {

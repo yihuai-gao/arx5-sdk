@@ -32,7 +32,7 @@ struct HighState
 class Arx5HighLevel
 {
 public:
-    Arx5HighLevel();
+    Arx5HighLevel(std::string can_name, std::string urdf_path);
     ~Arx5HighLevel();
 
     void set_high_cmd(HighState new_cmd);

@@ -5,6 +5,7 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "${workspaceFolder}/include",
+                "${HOME}/miniforge3/envs/arx-py310/include",
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

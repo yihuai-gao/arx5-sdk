@@ -2,7 +2,6 @@
 #define SOLVER_H
 
 #include "common.h"
-#include "utils.h"
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
@@ -33,6 +32,13 @@
 #include <dirent.h>
 #include <vector>
 
+enum arx5_state
+{
+    NORMAL,
+    OUT_RANGE,
+    OUT_BOUNDARY
+}; // NORMAL：正常 OUT_RANGE：超出机械臂控制距离 OUT_BOUNDARY：关节锁死
+
 #define FORWARD 0
 #define DOWNWARD 1
 
@@ -42,10 +48,9 @@ class Arx5Solver
 {
 
 public:
-    Arx5Solver(void) = default;
+    Arx5Solver(std::string urdf_path);
     ~Arx5Solver() = default;
 
-    void init_solver(std::string urdf_file);
     Vec6d inverse_dynamics(Vec6d joint_pos, Vec6d joint_vel, Vec6d joint_acc);
     std::tuple<bool, Vec6d> inverse_kinematics(Vec6d target_pose_6d, Vec6d current_joint_pos);
     Vec6d forward_kinematics(Vec6d joint_pos);

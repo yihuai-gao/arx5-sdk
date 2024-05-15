@@ -4,7 +4,8 @@
 #include <sys/types.h>
 extern OD_Motor_Msg rv_motor_msg[10];
 
-Arx5LowLevel::Arx5LowLevel()
+Arx5LowLevel::Arx5LowLevel(std::string can_name)
+    : _can_handle(can_name)
 {
 
     // Enable motor 5, 6, 7
@@ -22,8 +23,8 @@ Arx5LowLevel::Arx5LowLevel()
     set_gain(gain); // set to damping by default
     _send_recv();
     _background_send_recv = std::thread(&Arx5LowLevel::_background_send_recv_task, this);
-    spdlog::set_pattern("[%H:%M:%S %n %^%l%$] %v");
-    spdlog::info("Arx5LowLevel: Background send_recv task is running at ID: {}", syscall(SYS_gettid));
+    _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
+    _logger->info("Background send_recv task is running at ID: {}", syscall(SYS_gettid));
 }
 
 Arx5LowLevel::~Arx5LowLevel()
@@ -33,13 +34,13 @@ Arx5LowLevel::~Arx5LowLevel()
     damping_gain.kd[1] *= 3;
     damping_gain.kd[2] *= 3;
     damping_gain.kd[3] *= 1.5;
-    spdlog::info("Arx5LowLevel: Set to damping before exit");
+    _logger->info("Set to damping before exit");
     set_gain(damping_gain);
     set_low_cmd(LowState());
     sleep_ms(2000);
     _destroy_background_threads = true;
     _background_send_recv.join();
-    spdlog::info("Arx5LowLevel: background send_recv task joined");
+    _logger->info("background send_recv task joined");
 }
 
 LowState Arx5LowLevel::get_state()
@@ -52,7 +53,7 @@ void Arx5LowLevel::send_recv_once()
 {
     if (_background_send_recv_running)
     {
-        std::cout << "Arx5LowLevel: send_recv task is already running in background. send_recv_once is ignored." << std::endl;
+        std::cout << "send_recv task is already running in background. send_recv_once is ignored." << std::endl;
         return;
     }
     _send_recv();
@@ -77,7 +78,7 @@ void Arx5LowLevel::_update_output_cmd()
                 if (std::abs(delta_pos) > max_vel * dt)
                 {
                     _output_low_cmd.pos[i] = prev_output_cmd.pos[i] + max_vel * dt * delta_pos / std::abs(delta_pos);
-                    spdlog::debug("Arx5LowLevel: Joint {} pos {:.3f} pos cmd clipped: {:.3f} to {:.3f}", i, _low_state.pos[i], _input_low_cmd.pos[i], _output_low_cmd.pos[i]);
+                    _logger->debug("Joint {} pos {:.3f} pos cmd clipped: {:.3f} to {:.3f}", i, _low_state.pos[i], _input_low_cmd.pos[i], _output_low_cmd.pos[i]);
                 }
             }
             else
@@ -91,7 +92,7 @@ void Arx5LowLevel::_update_output_cmd()
             if (std::abs(gripper_delta_pos) / dt > GRIPPER_VEL_MAX)
             {
                 _output_low_cmd.gripper_pos = prev_output_cmd.gripper_pos + GRIPPER_VEL_MAX * dt * gripper_delta_pos / std::abs(gripper_delta_pos);
-                spdlog::debug("Arx5LowLevel: Gripper pos cmd clipped: {:.3f} to {:.3f}", _input_low_cmd.gripper_pos, _output_low_cmd.gripper_pos);
+                _logger->debug("Gripper pos cmd clipped: {:.3f} to {:.3f}", _input_low_cmd.gripper_pos, _output_low_cmd.gripper_pos);
             }
         }
         else
@@ -105,24 +106,24 @@ void Arx5LowLevel::_update_output_cmd()
     {
         if (_output_low_cmd.pos[i] < JOINT_POS_MIN[i])
         {
-            spdlog::debug("Arx5LowLevel: Joint {} pos {:.3f} pos cmd clipped from {:.3f} to min {:.3f}", i, _low_state.pos[i], _output_low_cmd.pos[i], JOINT_POS_MIN[i]);
+            _logger->debug("Joint {} pos {:.3f} pos cmd clipped from {:.3f} to min {:.3f}", i, _low_state.pos[i], _output_low_cmd.pos[i], JOINT_POS_MIN[i]);
             _output_low_cmd.pos[i] = JOINT_POS_MIN[i];
         }
         else if (_output_low_cmd.pos[i] > JOINT_POS_MAX[i])
         {
-            spdlog::debug("Arx5LowLevel: Joint {} pos {:.3f} pos cmd clipped from {:.3f} to max {:.3f}", i, _low_state.pos[i], _output_low_cmd.pos[i], JOINT_POS_MAX[i]);
+            _logger->debug("Joint {} pos {:.3f} pos cmd clipped from {:.3f} to max {:.3f}", i, _low_state.pos[i], _output_low_cmd.pos[i], JOINT_POS_MAX[i]);
             _output_low_cmd.pos[i] = JOINT_POS_MAX[i];
         }
     }
     // Gripper pos clipping
     if (_output_low_cmd.gripper_pos < 0)
     {
-        spdlog::debug("Arx5LowLevel: Gripper pos cmd clipped from {:.3f} to min: {:.3f}", _output_low_cmd.gripper_pos, 0.0);
+        _logger->debug("Gripper pos cmd clipped from {:.3f} to min: {:.3f}", _output_low_cmd.gripper_pos, 0.0);
         _output_low_cmd.gripper_pos = 0;
     }
     else if (_output_low_cmd.gripper_pos > GRIPPER_WIDTH)
     {
-        spdlog::debug("Arx5LowLevel: Gripper pos cmd clipped from {:.3f} to max: {:.3f}", _output_low_cmd.gripper_pos, GRIPPER_WIDTH);
+        _logger->debug("Gripper pos cmd clipped from {:.3f} to max: {:.3f}", _output_low_cmd.gripper_pos, GRIPPER_WIDTH);
         _output_low_cmd.gripper_pos = GRIPPER_WIDTH;
     }
     if (std::abs(_low_state.gripper_torque) > GRIPPER_TORQUE_MAX / 2)
@@ -131,7 +132,7 @@ void Arx5LowLevel::_update_output_cmd()
         double delta_pos = _output_low_cmd.gripper_pos - prev_output_cmd.gripper_pos; // negative for closing, positive for opening
         if (delta_pos * sign > 0)
         {
-            spdlog::debug("Arx5LowLevel: Gripper torque is too large, gripper pos cmd is not updated");
+            _logger->debug("Gripper torque is too large, gripper pos cmd is not updated");
             _output_low_cmd.gripper_pos = prev_output_cmd.gripper_pos;
         }
     }
@@ -143,12 +144,12 @@ void Arx5LowLevel::_update_output_cmd()
         {
             if (_output_low_cmd.torque[i] > JOINT_TORQUE_MAX[i])
             {
-                spdlog::debug("Arx5LowLevel: Joint {} torque cmd clipped from {:.3f} to max {:.3f}", i, _output_low_cmd.torque[i], JOINT_TORQUE_MAX[i]);
+                _logger->debug("Joint {} torque cmd clipped from {:.3f} to max {:.3f}", i, _output_low_cmd.torque[i], JOINT_TORQUE_MAX[i]);
                 _output_low_cmd.torque[i] = JOINT_TORQUE_MAX[i];
             }
             else if (_output_low_cmd.torque[i] < -JOINT_TORQUE_MAX[i])
             {
-                spdlog::debug("Arx5LowLevel: Joint {} torque cmd clipped from {:.3f} to min {:.3f}", i, _output_low_cmd.torque[i], -JOINT_TORQUE_MAX[i]);
+                _logger->debug("Joint {} torque cmd clipped from {:.3f} to min {:.3f}", i, _output_low_cmd.torque[i], -JOINT_TORQUE_MAX[i]);
                 _output_low_cmd.torque[i] = -JOINT_TORQUE_MAX[i];
             }
         }
@@ -217,21 +218,21 @@ void Arx5LowLevel::_check_current()
         if (std::abs(_low_state.torque[i]) > JOINT_TORQUE_MAX[i])
         {
             over_current = true;
-            spdlog::error("Arx5LowLevel: Over current detected once on joint {}, current: {:.3f}", i, _low_state.torque[i]);
+            _logger->error("Over current detected once on joint {}, current: {:.3f}", i, _low_state.torque[i]);
             break;
         }
     }
     if (std::abs(_low_state.gripper_torque) > GRIPPER_TORQUE_MAX)
     {
         over_current = true;
-        spdlog::error("Arx5LowLevel: Over current detected once on gripper, current: {:.3f}", _low_state.gripper_torque);
+        _logger->error("Over current detected once on gripper, current: {:.3f}", _low_state.gripper_torque);
     }
     if (over_current)
     {
         _over_current_cnt++;
         if (_over_current_cnt > OVER_CURRENT_CNT_MAX)
         {
-            spdlog::error("Arx5LowLevel: Over current detected, robot is set to damping. Please restart the program.");
+            _logger->error("Over current detected, robot is set to damping. Please restart the program.");
             Gain damping_gain;
             damping_gain.kd = DEFAULT_KD;
             damping_gain.kd[1] *= 3;
@@ -248,7 +249,7 @@ void Arx5LowLevel::_check_current()
                 // loop_cnt++;
                 // if (loop_cnt % 20 == 0)
                 // {
-                //     spdlog::error("Arx5LowLevel: Over current detected, robot is set to damping. Please restart the program.");
+                //     _logger->error("Over current detected, robot is set to damping. Please restart the program.");
                 // }
             }
         }
@@ -279,13 +280,13 @@ void Arx5LowLevel::_background_send_recv_task()
 
 void Arx5LowLevel::enable_background_send_recv()
 {
-    spdlog::info("Arx5LowLevel: Enable background send_recv");
+    _logger->info("Enable background send_recv");
     _background_send_recv_running = true;
 }
 
 void Arx5LowLevel::disable_background_send_recv()
 {
-    spdlog::info("Arx5LowLevel: Disable background send_recv");
+    _logger->info("Disable background send_recv");
     _background_send_recv_running = false;
 }
 
@@ -294,7 +295,7 @@ void Arx5LowLevel::set_low_cmd(LowState new_cmd)
     std::lock_guard<std::mutex> guard(_cmd_mutex);
     if (new_cmd.gripper_vel != 0 || new_cmd.gripper_torque != 0)
     {
-        spdlog::warn("Arx5LowLevel: Gripper vel and torque control is not supported yet.");
+        _logger->warn("Gripper vel and torque control is not supported yet.");
         new_cmd.gripper_vel = 0;
         new_cmd.gripper_torque = 0;
     }
@@ -314,7 +315,7 @@ Gain Arx5LowLevel::get_gain()
 
 void Arx5LowLevel::set_gain(Gain new_gain)
 {
-    // std::cout << "Arx5LowLevel: Set new gain: kp: " << new_gain.kp.transpose() << ", kd: " << new_gain.kd.transpose() << std::endl;
+    // std::cout << "Set new gain: kp: " << new_gain.kp.transpose() << ", kd: " << new_gain.kd.transpose() << std::endl;
     _gain = new_gain;
 }
 
@@ -341,7 +342,7 @@ void Arx5LowLevel::reset_to_home()
     // interpolate from current kp kd to default kp kd in max(max_pos_error, 0.5)s
     // and keep the target for max(max_pos_error, 0.5)s
     double step_num = std::max(max_pos_error, 0.5) / LOW_LEVEL_DT;
-    spdlog::info("Arx5LowLevel: Start reset to home in {:.3f}s, max_pos_error: {:.3f}", std::max(max_pos_error, double(0.5)) + 0.5, max_pos_error);
+    _logger->info("Start reset to home in {:.3f}s, max_pos_error: {:.3f}", std::max(max_pos_error, double(0.5)) + 0.5, max_pos_error);
 
     bool prev_running = _background_send_recv_running;
     _background_send_recv_running = true;
@@ -356,7 +357,7 @@ void Arx5LowLevel::reset_to_home()
     }
     // Hardcode 0.5 s
     sleep_ms(500);
-    spdlog::info("Arx5LowLevel: Finish reset to home");
+    _logger->info("Finish reset to home");
     _background_send_recv_running = prev_running;
 }
 
@@ -369,7 +370,7 @@ void Arx5LowLevel::set_to_damping()
     Gain init_gain = get_gain();
     Gain target_gain;
     target_gain.kd = DEFAULT_KD;
-    spdlog::info("Arx5LowLevel: Start set to damping");
+    _logger->info("Start set to damping");
     //  interpolate from current kp kd to default kp kd in 0.5s
     bool prev_running = _background_send_recv_running;
     int step_num = 20; // 0.1s in total
@@ -387,7 +388,7 @@ void Arx5LowLevel::set_to_damping()
         sleep_ms(5);
     }
     sleep_ms(500);
-    spdlog::info("Arx5LowLevel: Finish set to damping");
+    _logger->info("Finish set to damping");
     _background_send_recv_running = prev_running;
 }
 
@@ -408,7 +409,7 @@ void Arx5LowLevel::calibrate_gripper()
         _can_handle.Send_moto_Cmd2(8, 0, 0, 0, 0, 0);
         usleep(400);
     }
-    spdlog::info("Arx5LowLevel: Start calibrating gripper. Please fully close the gripper and press enter to continue");
+    _logger->info("Start calibrating gripper. Please fully close the gripper and press enter to continue");
     std::cin.get();
     _can_handle.Set_Zero(0x08);
     usleep(400);
@@ -418,7 +419,7 @@ void Arx5LowLevel::calibrate_gripper()
         usleep(400);
     }
     usleep(400);
-    spdlog::info("Arx5LowLevel: Finish setting zero point. Please fully open the gripper and press enter to continue");
+    _logger->info("Finish setting zero point. Please fully open the gripper and press enter to continue");
     std::cin.get();
 
     for (int i = 0; i < 10; ++i)
@@ -426,7 +427,7 @@ void Arx5LowLevel::calibrate_gripper()
         _can_handle.Send_moto_Cmd2(8, 0, 0, 0, 0, 0);
         usleep(400);
     }
-    std::cout << "Arx5LowLevel: Fully-open joint position readout: " << rv_motor_msg[7].angle_actual_rad << std::endl;
+    std::cout << "Fully-open joint position readout: " << rv_motor_msg[7].angle_actual_rad << std::endl;
     std::cout << "  Please update the _GRIPPER_OPEN_READOUT value in low_level.h to finish gripper calibration." << std::endl;
     if (prev_running)
     {
@@ -448,7 +449,7 @@ void Arx5LowLevel::calibrate_joint(int joint_id)
             _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
         usleep(400);
     }
-    spdlog::info("Arx5LowLevel: Start calibrating joint {}. Please move the joint to the home position and press enter to continue", joint_id);
+    _logger->info("Start calibrating joint {}. Please move the joint to the home position and press enter to continue", joint_id);
     std::cin.get();
     if (joint_id < 3)
         _can_handle.CAN_cmd_init(motor_id, 0x03);
@@ -464,13 +465,13 @@ void Arx5LowLevel::calibrate_joint(int joint_id)
         usleep(400);
     }
     usleep(400);
-    spdlog::info("Arx5LowLevel: Finish setting zero point for joint {}.", joint_id);
+    _logger->info("Finish setting zero point for joint {}.", joint_id);
     if (prev_running)
     {
         _background_send_recv_running = true;
     }
 }
 
-// void Arx5LowLevel::set_log_level(spdlog::level log_level)
+// void Arx5LowLevel::set_log_level(_logger->level log_level)
 // {
 // }

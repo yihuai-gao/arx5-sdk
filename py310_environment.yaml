@@ -16,3 +16,4 @@ dependencies:
   - pybind11
   - numpy
   - click
+  - pyzmq

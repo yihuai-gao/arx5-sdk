@@ -30,7 +30,7 @@ class Arx5Server:
         zmq_port: int,
         no_cmd_timeout: float = 60.0,
     ):
-        self.arx5_high_level = arx5.Arx5HighLevel()
+        self.arx5_high_level = arx5.Arx5HighLevel("can0", "../models/arx5_gopro.urdf")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://{zmq_ip}:{zmq_port}")
@@ -52,8 +52,7 @@ class Arx5Server:
                     msg: dict[str, Any] = self.socket.recv_pyobj()
                     if self.arx5_high_level is None:
                         print(f"Reestablishing high level controller")
-                        self.arx5_high_level = arx5.Arx5HighLevel()
-                        self.arx5_high_level.set_log_level(self.log_level)
+                        self.arx5_high_level = arx5.Arx5HighLevel("can0", "../models/arx5_gopro.urdf")
                 else:
 
                     if self.arx5_high_level is not None:

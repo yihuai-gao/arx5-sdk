@@ -12,7 +12,7 @@
 #include <chrono>
 #include <mutex>
 #include "spdlog/spdlog.h"
-
+#include "spdlog/sinks/stdout_color_sinks.h"
 struct LowState
 {
     double timestamp = 0.0f;
@@ -76,7 +76,7 @@ struct Gain
 class Arx5LowLevel
 {
 public:
-    Arx5LowLevel();
+    Arx5LowLevel(std::string can_name);
     ~Arx5LowLevel();
 
     void send_recv_once();
@@ -112,7 +112,8 @@ private:
     LowState _input_low_cmd;
     LowState _low_state;
     Gain _gain;
-    can _can_handle;
+    ArxCan _can_handle;
+    std::shared_ptr<spdlog::logger> _logger = spdlog::stdout_color_mt("Arx5LowLevel");
     std::thread _background_send_recv;
     bool _background_send_recv_running = false;
     bool _destroy_background_threads = false;
