@@ -113,7 +113,7 @@ private:
     LowState _low_state;
     Gain _gain;
     ArxCan _can_handle;
-    std::shared_ptr<spdlog::logger> _logger = spdlog::stdout_color_mt("Arx5LowLevel");
+    std::shared_ptr<spdlog::logger> _logger;
     std::thread _background_send_recv;
     bool _background_send_recv_running = false;
     bool _destroy_background_threads = false;

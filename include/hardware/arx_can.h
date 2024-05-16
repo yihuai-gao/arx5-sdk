@@ -6,6 +6,7 @@
 #include <iostream>
 #include "../libcan/SocketCAN.h"
 #include "motor.h"
+#include <mutex>
 
 class ArxCan
 {
@@ -37,10 +38,13 @@ public:
     void clear(uint16_t ID);
     // util variabels
     bool transmit(can_frame_t &frame);
+    const std::array<OD_Motor_Msg, 10> get_motor_msg();
 
 private:
     SocketCAN m_can_adapter;
     std::string m_socket_name;
+    std::array<OD_Motor_Msg, 10> m_motor_msg;
+    std::mutex m_motor_msg_mutex;
 };
 
 #endif

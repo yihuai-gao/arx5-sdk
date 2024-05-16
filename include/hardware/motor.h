@@ -17,7 +17,7 @@
 #include <iostream>
 #include <stdint.h>
 #include "math_ops.h"
-
+#include <array>
 typedef struct
 {
     uint16_t motor_id;
@@ -64,26 +64,16 @@ typedef struct
 
 } OD_Motor_Msg;
 
-extern OD_Motor_Msg rv_motor_msg[10];
-extern uint16_t motor_id_check;
-extern float magic_pos[3];
-extern float magic_angle[3];
-extern int magic_switch[2];
-
 void MotorSetting(uint16_t motor_id, uint8_t cmd);
 void MotorIDReading(uint8_t *pData, uint32_t *pCanID, uint8_t *pDataBufferLen);
 void GetMotorParameter(uint16_t motor_id, uint8_t param_cmd, uint8_t *pData, uint32_t *pCanID, uint8_t *pDataBufferLen);
 void send_motor_ctrl_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor, uint8_t *Data, uint32_t *canID);
 void send_motor_dm_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor, uint8_t *Data, uint32_t *canID);
 
-void Gripper_can_data_repack(uint32_t msgID, uint8_t *Data);
+void Gripper_can_data_repack(uint32_t msgID, uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
 
-void RV_can_data_repack(uint32_t msgID, uint8_t *Data, int32_t databufferlen, uint8_t comm_mode);
-void DM_can_data_repack(uint8_t *Data);
-void Swicth_DM_Moto(uint32_t msgID, uint8_t *Data);
+void RV_can_data_repack(uint32_t msgID, uint8_t *Data, int32_t databufferlen, uint8_t comm_mode, std::array<OD_Motor_Msg, 10> &motor_msg);
+void DM_can_data_repack(uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
 void send_motor_position(uint16_t motor_id, float pos, uint16_t spd, uint16_t cur, uint8_t ack_status, uint8_t *Data, uint32_t *canID);
-void magic_pos_repack(uint32_t msgID, uint8_t *Data);
-void magic_angle_repack(uint32_t msgID, uint8_t *Data);
-void magic_switch_repack(uint32_t msgID, uint8_t *Data);
 
 #endif

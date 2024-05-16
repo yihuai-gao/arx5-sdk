@@ -2,10 +2,10 @@
 #include "utils.h"
 #include <sys/syscall.h>
 #include <sys/types.h>
-extern OD_Motor_Msg rv_motor_msg[10];
 
 Arx5LowLevel::Arx5LowLevel(std::string can_name)
-    : _can_handle(can_name)
+    : _can_handle(can_name),
+      _logger(spdlog::stdout_color_mt(std::string("Arx5LowLevel_") + can_name))
 {
 
     // Enable motor 5, 6, 7
@@ -182,31 +182,32 @@ void Arx5LowLevel::_send_recv()
     usleep(200);
     double gripper_motor_pos = _output_low_cmd.gripper_pos / GRIPPER_WIDTH * _GRIPPER_OPEN_READOUT;
     _can_handle.Send_moto_Cmd2(_MOTOR_ID[6], _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos, 0, 0);
+    usleep(200);
+    std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
+    _low_state.pos[0] = motor_msg[0].angle_actual_rad;
+    _low_state.pos[1] = motor_msg[1].angle_actual_rad;
+    _low_state.pos[2] = motor_msg[3].angle_actual_rad;
+    _low_state.pos[3] = motor_msg[4].angle_actual_rad;
+    _low_state.pos[4] = motor_msg[5].angle_actual_rad;
+    _low_state.pos[5] = motor_msg[6].angle_actual_rad;
+    _low_state.gripper_pos = motor_msg[7].angle_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
 
-    _low_state.pos[0] = rv_motor_msg[0].angle_actual_rad;
-    _low_state.pos[1] = rv_motor_msg[1].angle_actual_rad;
-    _low_state.pos[2] = rv_motor_msg[3].angle_actual_rad;
-    _low_state.pos[3] = rv_motor_msg[4].angle_actual_rad;
-    _low_state.pos[4] = rv_motor_msg[5].angle_actual_rad;
-    _low_state.pos[5] = rv_motor_msg[6].angle_actual_rad;
-    _low_state.gripper_pos = rv_motor_msg[7].angle_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
-
-    _low_state.vel[0] = rv_motor_msg[0].speed_actual_rad;
-    _low_state.vel[1] = rv_motor_msg[1].speed_actual_rad;
-    _low_state.vel[2] = rv_motor_msg[3].speed_actual_rad;
-    _low_state.vel[3] = rv_motor_msg[4].speed_actual_rad;
-    _low_state.vel[4] = rv_motor_msg[5].speed_actual_rad;
-    _low_state.vel[5] = rv_motor_msg[6].speed_actual_rad;
-    _low_state.gripper_vel = rv_motor_msg[7].speed_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
+    _low_state.vel[0] = motor_msg[0].speed_actual_rad;
+    _low_state.vel[1] = motor_msg[1].speed_actual_rad;
+    _low_state.vel[2] = motor_msg[3].speed_actual_rad;
+    _low_state.vel[3] = motor_msg[4].speed_actual_rad;
+    _low_state.vel[4] = motor_msg[5].speed_actual_rad;
+    _low_state.vel[5] = motor_msg[6].speed_actual_rad;
+    _low_state.gripper_vel = motor_msg[7].speed_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
 
     // HACK: just to match the values (there must be something wrong)
-    _low_state.torque[0] = rv_motor_msg[0].current_actual_float * torque_constant1 * torque_constant1;
-    _low_state.torque[1] = rv_motor_msg[1].current_actual_float * torque_constant1 * torque_constant1;
-    _low_state.torque[2] = rv_motor_msg[3].current_actual_float * torque_constant1 * torque_constant1;
-    _low_state.torque[3] = rv_motor_msg[4].current_actual_float * torque_constant2;
-    _low_state.torque[4] = rv_motor_msg[5].current_actual_float * torque_constant2;
-    _low_state.torque[5] = rv_motor_msg[6].current_actual_float * torque_constant2;
-    _low_state.gripper_torque = rv_motor_msg[7].current_actual_float * torque_constant2;
+    _low_state.torque[0] = motor_msg[0].current_actual_float * torque_constant1 * torque_constant1;
+    _low_state.torque[1] = motor_msg[1].current_actual_float * torque_constant1 * torque_constant1;
+    _low_state.torque[2] = motor_msg[3].current_actual_float * torque_constant1 * torque_constant1;
+    _low_state.torque[3] = motor_msg[4].current_actual_float * torque_constant2;
+    _low_state.torque[4] = motor_msg[5].current_actual_float * torque_constant2;
+    _low_state.torque[5] = motor_msg[6].current_actual_float * torque_constant2;
+    _low_state.gripper_torque = motor_msg[7].current_actual_float * torque_constant2;
     _low_state.timestamp = get_timestamp();
 }
 
@@ -427,7 +428,8 @@ void Arx5LowLevel::calibrate_gripper()
         _can_handle.Send_moto_Cmd2(8, 0, 0, 0, 0, 0);
         usleep(400);
     }
-    std::cout << "Fully-open joint position readout: " << rv_motor_msg[7].angle_actual_rad << std::endl;
+    std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
+    std::cout << "Fully-open joint position readout: " << motor_msg[7].angle_actual_rad << std::endl;
     std::cout << "  Please update the _GRIPPER_OPEN_READOUT value in low_level.h to finish gripper calibration." << std::endl;
     if (prev_running)
     {
