@@ -20,7 +20,7 @@ solver = arx5.Arx5Solver()
 solver.init_solver("../models/arx5_gopro.urdf")
 # while True:
 #     high_state = arx5_high_level.get_high_state()
-#     low_state = arx5_high_level.get_low_state()
+#     low_state = arx5_high_level.get_joint_state()
 #     print(f"low_state: {low_state.pos()}")
 #     # print(f"pose_6d: {state.pose_6d()}")
 #     est_torque = solver.inverse_dynamics(

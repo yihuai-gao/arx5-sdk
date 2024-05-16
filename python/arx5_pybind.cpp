@@ -1,7 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
-#include "app/low_level.h"
+#include "app/joint_controller.h"
 #include "app/high_level.h"
 #include "utils.h"
 #include "spdlog/spdlog.h"
@@ -20,27 +20,27 @@ PYBIND11_MODULE(arx5_interface, m)
     m.attr("EE_VEL_MAX") = EE_VEL_MAX;
     m.attr("GRIPPER_VEL_MAX") = GRIPPER_VEL_MAX;
     m.attr("GRIPPER_WIDTH") = GRIPPER_WIDTH;
-    m.attr("LOW_LEVEL_DT") = LOW_LEVEL_DT;
+    m.attr("JOINT_CONTROLLER_DT") = JOINT_CONTROLLER_DT;
     // py::enum_<LogLevel>(m, "LogLevel")
     //     .value("DEBUG", LogLevel::DEBUG)
     //     .value("INFO", LogLevel::INFO)
     //     .value("WARNING", LogLevel::WARNING)
     //     .value("ERROR", LogLevel::ERROR)
     //     .export_values();
-    py::class_<LowState>(m, "LowState")
+    py::class_<JointState>(m, "JointState")
         .def(py::init<>())
         .def(py::init<Vec6d, Vec6d, Vec6d, double>())
-        .def_readwrite("timestamp", &LowState::timestamp)
-        .def_readwrite("gripper_pos", &LowState::gripper_pos)
-        .def_readwrite("gripper_vel", &LowState::gripper_vel)
-        .def_readwrite("gripper_torque", &LowState::gripper_torque)
-        .def("__add__", [](const LowState &self, const LowState &other)
+        .def_readwrite("timestamp", &JointState::timestamp)
+        .def_readwrite("gripper_pos", &JointState::gripper_pos)
+        .def_readwrite("gripper_vel", &JointState::gripper_vel)
+        .def_readwrite("gripper_torque", &JointState::gripper_torque)
+        .def("__add__", [](const JointState &self, const JointState &other)
              { return self + other; })
-        .def("__mul__", [](const LowState &self, const float &scalar)
+        .def("__mul__", [](const JointState &self, const float &scalar)
              { return self * scalar; })
-        .def("pos", &LowState::get_pos_ref, py::return_value_policy::reference)
-        .def("vel", &LowState::get_vel_ref, py::return_value_policy::reference)
-        .def("torque", &LowState::get_torque_ref, py::return_value_policy::reference);
+        .def("pos", &JointState::get_pos_ref, py::return_value_policy::reference)
+        .def("vel", &JointState::get_vel_ref, py::return_value_policy::reference)
+        .def("torque", &JointState::get_torque_ref, py::return_value_policy::reference);
     py::class_<Gain>(m, "Gain")
         .def(py::init<>())
         .def(py::init<Vec6d, Vec6d, double, double>())
@@ -52,21 +52,23 @@ PYBIND11_MODULE(arx5_interface, m)
              { return self * scalar; })
         .def("kp", &Gain::get_kp_ref, py::return_value_policy::reference)
         .def("kd", &Gain::get_kd_ref, py::return_value_policy::reference);
-    py::class_<Arx5LowLevel>(m, "Arx5LowLevel")
+    py::class_<Arx5JointController>(m, "Arx5JointController")
         .def(py::init<const std::string &>())
-        .def("send_recv_once", &Arx5LowLevel::send_recv_once)
-        .def("enable_background_send_recv", &Arx5LowLevel::enable_background_send_recv)
-        .def("disable_background_send_recv", &Arx5LowLevel::disable_background_send_recv)
-        .def("get_state", &Arx5LowLevel::get_state)
-        .def("get_timestamp", &Arx5LowLevel::get_timestamp)
-        .def("set_low_cmd", &Arx5LowLevel::set_low_cmd)
-        .def("get_low_cmd", &Arx5LowLevel::get_low_cmd)
-        .def("set_gain", &Arx5LowLevel::set_gain)
-        .def("get_gain", &Arx5LowLevel::get_gain)
-        .def("clip_joint_pos", &Arx5LowLevel::clip_joint_pos)
-        .def("reset_to_home", &Arx5LowLevel::reset_to_home)
-        .def("set_to_damping", &Arx5LowLevel::set_to_damping)
-        .def("calibrate_gripper", &Arx5LowLevel::calibrate_gripper);
+        .def("send_recv_once", &Arx5JointController::send_recv_once)
+        .def("enable_background_send_recv", &Arx5JointController::enable_background_send_recv)
+        .def("disable_background_send_recv", &Arx5JointController::disable_background_send_recv)
+        .def("enable_gravity_compensation", &Arx5JointController::enable_gravity_compensation)
+        .def("disable_gravity_compensation", &Arx5JointController::disable_gravity_compensation)
+        .def("get_state", &Arx5JointController::get_state)
+        .def("get_timestamp", &Arx5JointController::get_timestamp)
+        .def("set_joint_cmd", &Arx5JointController::set_joint_cmd)
+        .def("get_joint_cmd", &Arx5JointController::get_joint_cmd)
+        .def("set_gain", &Arx5JointController::set_gain)
+        .def("get_gain", &Arx5JointController::get_gain)
+        .def("clip_joint_pos", &Arx5JointController::clip_joint_pos)
+        .def("reset_to_home", &Arx5JointController::reset_to_home)
+        .def("set_to_damping", &Arx5JointController::set_to_damping)
+        .def("calibrate_gripper", &Arx5JointController::calibrate_gripper);
     py::class_<HighState>(m, "HighState")
         .def(py::init<>())
         .def(py::init<Vec6d, double>())
@@ -83,9 +85,9 @@ PYBIND11_MODULE(arx5_interface, m)
         .def(py::init<const std::string &, const std::string &>())
         .def("set_high_cmd", &Arx5HighLevel::set_high_cmd)
         .def("get_high_state", &Arx5HighLevel::get_high_state)
-        .def("get_low_state", &Arx5HighLevel::get_low_state)
+        .def("get_joint_state", &Arx5HighLevel::get_joint_state)
         .def("get_high_cmd", &Arx5HighLevel::get_high_cmd)
-        .def("get_low_cmd", &Arx5HighLevel::get_low_cmd)
+        .def("get_joint_cmd", &Arx5HighLevel::get_joint_cmd)
         .def("get_timestamp", &Arx5HighLevel::get_timestamp)
         .def("set_gain", &Arx5HighLevel::set_gain)
         .def("get_gain", &Arx5HighLevel::get_gain)

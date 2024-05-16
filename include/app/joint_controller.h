@@ -1,9 +1,10 @@
-#ifndef LOW_LEVEL_H
-#define LOW_LEVEL_H
+#ifndef JOINT_CONTROLLER_H
+#define JOINT_CONTROLLER_H
 #include <stdlib.h>
 #include "hardware/arx_can.h"
 #include "hardware/motor.h"
 #include "app/common.h"
+#include "app/solver.h"
 #include "utils.h"
 #include <array>
 #include <unistd.h>
@@ -13,7 +14,7 @@
 #include <mutex>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
-struct LowState
+struct JointState
 {
     double timestamp = 0.0f;
     Vec6d pos;
@@ -22,15 +23,15 @@ struct LowState
     double gripper_pos = 0.0f;    // m; 0 for close, GRIPPER_WIDTH for fully open
     double gripper_vel = 0.0f;    // s^{-1}
     double gripper_torque = 0.0f; // Nm
-    LowState() : pos(Vec6d::Zero()), vel(Vec6d::Zero()), torque(Vec6d::Zero()) {}
-    LowState(Vec6d pos, Vec6d vel, Vec6d torque, double gripper_pos) : pos(pos), vel(vel), torque(torque), gripper_pos(gripper_pos) {}
-    LowState operator+(const LowState &other) const
+    JointState() : pos(Vec6d::Zero()), vel(Vec6d::Zero()), torque(Vec6d::Zero()) {}
+    JointState(Vec6d pos, Vec6d vel, Vec6d torque, double gripper_pos) : pos(pos), vel(vel), torque(torque), gripper_pos(gripper_pos) {}
+    JointState operator+(const JointState &other) const
     {
-        return LowState(pos + other.pos, vel + other.vel, torque + other.torque, gripper_pos + other.gripper_pos);
+        return JointState(pos + other.pos, vel + other.vel, torque + other.torque, gripper_pos + other.gripper_pos);
     }
-    LowState operator*(const double &scalar) const
+    JointState operator*(const double &scalar) const
     {
-        return LowState(pos * scalar, vel * scalar, torque * scalar, gripper_pos * scalar);
+        return JointState(pos * scalar, vel * scalar, torque * scalar, gripper_pos * scalar);
     }
     // For pybind11 to update values
     Vec6d &get_pos_ref()
@@ -73,19 +74,21 @@ struct Gain
     }
 };
 
-class Arx5LowLevel
+class Arx5JointController
 {
 public:
-    Arx5LowLevel(std::string can_name);
-    ~Arx5LowLevel();
+    Arx5JointController(std::string can_name);
+    ~Arx5JointController();
 
     void send_recv_once();
     void enable_background_send_recv();
     void disable_background_send_recv();
+    void enable_gravity_compensation(std::string urdf_path);
+    void disable_gravity_compensation();
 
-    void set_low_cmd(LowState new_cmd);
-    std::tuple<LowState, LowState> get_low_cmd();
-    LowState get_state();
+    void set_joint_cmd(JointState new_cmd);
+    std::tuple<JointState, JointState> get_joint_cmd();
+    JointState get_state();
 
     void set_gain(Gain new_gain);
     Gain get_gain();
@@ -108,9 +111,9 @@ private:
     void _send_recv();
     void _check_current();
     int _over_current_cnt = 0;
-    LowState _output_low_cmd;
-    LowState _input_low_cmd;
-    LowState _low_state;
+    JointState _output_joint_cmd;
+    JointState _input_joint_cmd;
+    JointState _joint_state;
     Gain _gain;
     ArxCan _can_handle;
     std::shared_ptr<spdlog::logger> _logger;
@@ -124,6 +127,8 @@ private:
     void _update_output_cmd();
     int _start_time_us;
     const std::array<int, 7> _MOTOR_ID = {1, 2, 4, 5, 6, 7, 8};
+    bool _enable_gravity_compensation = false;
+    std::shared_ptr<Arx5Solver> _solver;
 };
 
 #endif

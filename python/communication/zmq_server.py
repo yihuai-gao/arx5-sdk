@@ -83,7 +83,7 @@ class Arx5Server:
                 if msg["cmd"] == "GET_STATE":
                     # print(f"Received GET_STATE message")
                     high_state = self.arx5_high_level.get_high_state()
-                    low_state = self.arx5_high_level.get_low_state()
+                    low_state = self.arx5_high_level.get_joint_state()
                     reply_msg = {
                         "cmd": "GET_STATE",
                         "data": {
@@ -126,7 +126,7 @@ class Arx5Server:
                         arx5.HighState(target_ee_pose, target_gripper_pos)
                     )
                     high_state = self.arx5_high_level.get_high_state()
-                    low_state = self.arx5_high_level.get_low_state()
+                    low_state = self.arx5_high_level.get_joint_state()
                     reply_msg = {
                         "cmd": "SET_EE_POSE",
                         "data": {

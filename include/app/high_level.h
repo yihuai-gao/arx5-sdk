@@ -1,6 +1,6 @@
 #ifndef HIGH_LEVEL_H
 #define HIGH_LEVEL_H
-#include "low_level.h"
+#include "joint_controller.h"
 #include "solver.h"
 #include <thread>
 #include <chrono>
@@ -37,9 +37,9 @@ public:
 
     void set_high_cmd(HighState new_cmd);
     std::tuple<HighState, HighState> get_high_cmd();
-    std::tuple<LowState, LowState> get_low_cmd();
+    std::tuple<JointState, JointState> get_joint_cmd();
     HighState get_high_state();
-    LowState get_low_state();
+    JointState get_joint_state();
     double get_timestamp();
     void set_gain(Gain new_gain);
     Gain get_gain();
@@ -48,12 +48,12 @@ public:
     void set_to_damping();
 
 private:
-    Arx5LowLevel _low_level;
+    Arx5JointController _joint_controller;
     Arx5Solver _solver;
     HighState _input_high_cmd;
     HighState _output_high_cmd;
     HighState _high_state;
-    LowState _low_state;
+    JointState _joint_state;
     double _clipping_output_threshold = 0.001;
 
     void _background_gravity_compensation_task();

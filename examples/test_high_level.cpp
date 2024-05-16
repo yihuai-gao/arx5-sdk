@@ -25,7 +25,7 @@ int main()
     while (true)
     {
         HighState high_state = arx5_high_level->get_high_state();
-        LowState low_state = arx5_high_level->get_low_state();
+        JointState low_state = arx5_high_level->get_joint_state();
         loop_cnt++;
         // printf("raw x: %.2f, y: %.2f, z: %.2f, r: %.2f, p: %.2f, y: %.2f, gripper: %.2f\n", high_state.pose_6d[0], high_state.pose_6d[1], high_state.pose_6d[2], high_state.pose_6d[3], high_state.pose_6d[4], high_state.pose_6d[5], high_state.gripper_pos);
         printf("raw joint pos: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n", low_state.pos[0], low_state.pos[1], low_state.pos[2], low_state.pos[3], low_state.pos[4], low_state.pos[5]);

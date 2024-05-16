@@ -26,19 +26,23 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86_64)|(AMD64)|(^i686)")
 endif()
 
 set(cpp_source
-    src/app/low_level.cpp
+    src/app/joint_controller.cpp
     src/utils.cpp
 )
 add_executable(arx5_low_level examples/test_low_level.cpp ${cpp_source})
 
 target_link_libraries(arx5_low_level 
     ${LIB_DIR}/libhardware.so 
+    ${LIB_DIR}/libsolver.so 
     Eigen3::Eigen
     Threads::Threads
     spdlog::spdlog
+    kdl_parser
+    orocos-kdl
 )
 target_include_directories(arx5_low_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(arx5_low_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(arx5_low_level PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
 
 
 
@@ -54,7 +58,6 @@ target_link_libraries(arx5_high_level
     Threads::Threads
     kdl_parser
     orocos-kdl
-    pthread
 )
 target_include_directories(arx5_high_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
 target_include_directories(arx5_high_level PUBLIC ${EIGEN3_INCLUDE_DIRS})

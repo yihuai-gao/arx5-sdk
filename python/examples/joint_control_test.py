@@ -20,10 +20,11 @@ def easeInOutQuad(t):
 
 def main():
     np.set_printoptions(precision=3, suppress=True)
-    arx5_low_level = arx5.Arx5LowLevel("can0")
+    arx5_joint_controller = arx5.Arx5JointController("can1")
 
-    arx5_low_level.enable_background_send_recv()
-    arx5_low_level.reset_to_home()
+    arx5_joint_controller.enable_background_send_recv()
+    arx5_joint_controller.reset_to_home()
+    arx5_joint_controller.enable_gravity_compensation("../models/arx5_gopro.urdf")
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
     gain = arx5.Gain()
@@ -36,39 +37,44 @@ def main():
     gain.kp()[:] = [70.0, 70.0, 70.0, 30.0, 30, 5.0]
     gain.kd()[:] = [10.0, 10.0, 10.0, 1.0, 1.0, 0.5]
 
-    arx5_low_level.set_gain(gain)
+    arx5_joint_controller.set_gain(gain)
     step_num = 800  # 5s
     USE_TIMER = True
     if not USE_TIMER:
-        arx5_low_level.disable_background_send_recv()
+        arx5_joint_controller.disable_background_send_recv()
 
     for i in range(step_num):
-        cmd = arx5.LowState()
+        cmd = arx5.JointState()
         # i = 0
         cmd.pos()[0:4] = easeInOutQuad(float(i) / step_num) * target_joint_poses[0:4]
         cmd.gripper_pos = easeInOutQuad((i / (step_num - 1))) * 0.08
-        arx5_low_level.set_low_cmd(cmd)
+        arx5_joint_controller.set_joint_cmd(cmd)
         if not USE_TIMER:
-            arx5_low_level.send_recv_once()
-        lowstate = arx5_low_level.get_state()
-        arm_dof_pos = lowstate.pos().copy()
-        arm_dof_vel = lowstate.vel().copy()
+            arx5_joint_controller.send_recv_once()
+        JointState = arx5_joint_controller.get_state()
+        arm_dof_pos = JointState.pos().copy()
+        arm_dof_vel = JointState.vel().copy()
         # print(arm_dof_pos, arm_dof_vel)
-        # print(f"gripper: {lowstate.gripper_pos:.05f}")
-        time.sleep(arx5.LOW_LEVEL_DT)
+        # print(f"gripper: {JointState.gripper_pos:.05f}")
+        time.sleep(arx5.JOINT_CONTROLLER_DT)
 
     for i in range(step_num):
-        cmd = arx5.LowState()
+        cmd = arx5.JointState()
         cmd.pos()[0:4] = (
             easeInOutQuad((1 - float(i) / step_num)) * target_joint_poses[0:4]
         )
         cmd.gripper_pos = easeInOutQuad((1 - i / (step_num - 1))) * 0.08
-        arx5_low_level.set_low_cmd(cmd)
+        arx5_joint_controller.set_joint_cmd(cmd)
         if not USE_TIMER:
-            arx5_low_level.send_recv_once()
-        time.sleep(arx5.LOW_LEVEL_DT)
-        lowstate = arx5_low_level.get_state()
-        # print(f"gripper: {lowstate.gripper_pos:.05f}")
+            arx5_joint_controller.send_recv_once()
+        time.sleep(arx5.JOINT_CONTROLLER_DT)
+        JointState = arx5_joint_controller.get_state()
+        # print(f"gripper: {JointState.gripper_pos:.05f}")
 
+    gain = arx5.Gain()
+    gain.kd()[:] = np.array([10.0, 10.0, 10.0, 1.0, 1.0, 0.5]) * 0.1
+    arx5_joint_controller.set_gain(gain)
+    while True:
+        time.sleep(1.0)
 
 main()

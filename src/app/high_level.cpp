@@ -5,21 +5,21 @@
 #include <sys/types.h>
 
 Arx5HighLevel::Arx5HighLevel(std::string can_name, std::string urdf_path)
-    : _low_level(can_name), _solver(urdf_path)
+    : _joint_controller(can_name), _solver(urdf_path)
 {
-    _low_level.set_to_damping();
+    _joint_controller.set_to_damping();
     // std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5.urdf";
     int control_mode = 0; // Keyboard control_mode
-    _high_state.pose_6d = _solver.forward_kinematics(_low_level.get_state().pos);
-    _high_state.gripper_pos = _low_level.get_state().gripper_pos;
-    _high_state.gripper_vel = _low_level.get_state().gripper_vel;
-    _high_state.gripper_torque = _low_level.get_state().gripper_torque;
+    _high_state.pose_6d = _solver.forward_kinematics(_joint_controller.get_state().pos);
+    _high_state.gripper_pos = _joint_controller.get_state().gripper_pos;
+    _high_state.gripper_vel = _joint_controller.get_state().gripper_vel;
+    _high_state.gripper_torque = _joint_controller.get_state().gripper_torque;
     _background_gravity_compensation = std::thread(&Arx5HighLevel::_background_gravity_compensation_task, this);
     std::cout << "Arx5HighLevel: Background send_recv task is running at ID:" << syscall(SYS_gettid) << std::endl;
     _background_gravity_compensation_running = true;
 
     // Init filters
-    LowState low_state = _low_level.get_state();
+    JointState low_state = _joint_controller.get_state();
     for (int i = 0; i < _moving_window_size; ++i)
     {
         _joint_pos_filter.filter(low_state.pos);
@@ -34,7 +34,7 @@ Arx5HighLevel::~Arx5HighLevel()
     _destroy_background_threads = true;
     _background_gravity_compensation.join();
     std::cout << "Arx5HighLevel: background gravity compensation task joined" << std::endl;
-    _low_level.enable_background_send_recv();
+    _joint_controller.enable_background_send_recv();
     spdlog::info("Arx5HighLevel: Enabled low level communication");
 }
 
@@ -68,9 +68,9 @@ std::tuple<HighState, HighState> Arx5HighLevel::get_high_cmd()
     return std::make_tuple(_input_high_cmd, _output_high_cmd);
 }
 
-std::tuple<LowState, LowState> Arx5HighLevel::get_low_cmd()
+std::tuple<JointState, JointState> Arx5HighLevel::get_joint_cmd()
 {
-    return _low_level.get_low_cmd();
+    return _joint_controller.get_joint_cmd();
 }
 
 HighState Arx5HighLevel::get_high_state()
@@ -79,26 +79,26 @@ HighState Arx5HighLevel::get_high_state()
     return _high_state;
 }
 
-LowState Arx5HighLevel::get_low_state()
+JointState Arx5HighLevel::get_joint_state()
 {
-    return _low_state;
+    return _joint_state;
 }
 
 double Arx5HighLevel::get_timestamp()
 {
-    return _low_state.timestamp;
+    return _joint_state.timestamp;
 }
 
 void Arx5HighLevel::reset_to_home()
 {
 
-    LowState low_cmd;
+    JointState low_cmd;
     HighState high_cmd;
     Gain gain;
-    LowState init_state = get_low_state();
+    JointState init_state = get_joint_state();
     Gain init_gain = get_gain();
     Gain target_gain = Gain(DEFAULT_KP, DEFAULT_KD, DEFAULT_GRIPPER_KP, DEFAULT_GRIPPER_KD);
-    LowState target_state;
+    JointState target_state;
     target_state.gripper_pos = GRIPPER_WIDTH;
 
     // calculate the maximum joint position error
@@ -126,17 +126,17 @@ void Arx5HighLevel::reset_to_home()
 
 void Arx5HighLevel::set_to_damping()
 {
-    LowState low_cmd;
+    JointState low_cmd;
     HighState high_cmd;
-    LowState low_state;
+    JointState low_state;
     Gain gain;
-    LowState init_state = get_low_state();
+    JointState init_state = get_joint_state();
     Gain init_gain = get_gain();
     Gain target_gain;
     target_gain.kd = DEFAULT_KD;
     std::cout << "Arx5HighLevel: Start set to damping" << std::endl;
 
-    low_state = get_low_state();
+    low_state = get_joint_state();
     high_cmd.pose_6d = _solver.forward_kinematics(low_state.pos);
     high_cmd.gripper_pos = low_state.gripper_pos;
     set_gain(target_gain);
@@ -149,12 +149,12 @@ void Arx5HighLevel::set_to_damping()
 void Arx5HighLevel::set_gain(Gain new_gain)
 {
     // std::cout << "Arx5HighLevel: Set gain to kp: " << new_gain.kp.transpose() << " kd: " << new_gain.kd.transpose() << std::endl;
-    _low_level.set_gain(new_gain);
+    _joint_controller.set_gain(new_gain);
 }
 
 Gain Arx5HighLevel::get_gain()
 {
-    return _low_level.get_gain();
+    return _joint_controller.get_gain();
 }
 void Arx5HighLevel::_update_output_cmd()
 {
@@ -221,8 +221,8 @@ void Arx5HighLevel::_background_gravity_compensation_task()
         if (_background_gravity_compensation_running)
         {
 
-            LowState low_cmd;
-            LowState low_state = _low_level.get_state();
+            JointState low_cmd;
+            JointState low_state = _joint_controller.get_state();
             std::tuple<bool, Vec6d> ik_results;
             {
                 std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
@@ -239,19 +239,19 @@ void Arx5HighLevel::_background_gravity_compensation_task()
                 // Use the torque of the current joint positions
                 Vec6d joint_torque = _solver.inverse_dynamics(low_state.pos, Vec6d(), Vec6d());
                 low_cmd.torque = _joint_torque_filter.filter(joint_torque);
-                _low_level.set_low_cmd(low_cmd);
+                _joint_controller.set_joint_cmd(low_cmd);
                 // printf("Arx5HighLevel: Joint positions: %.3f %.3f %.3f %.3f %.3f %.3f, cmd: %.3f %.3f %.3f %.3f %.3f %.3f, Torque: %.3f %.3f %.3f %.3f %.3f %.3f",
                 //        low_state.pos[0], low_state.pos[1], low_state.pos[2], low_state.pos[3], low_state.pos[4], low_state.pos[5],
                 //        joint_pos[0], joint_pos[1], joint_pos[2], joint_pos[3], joint_pos[4], joint_pos[5],
                 //        low_cmd.torque[0], low_cmd.torque[1], low_cmd.torque[2], low_cmd.torque[3], low_cmd.torque[4], low_cmd.torque[5]);
             }
-            _low_level.send_recv_once();
-            _low_state = _low_level.get_state();
-            _high_state.pose_6d = _solver.forward_kinematics(_low_state.pos);
-            _high_state.gripper_pos = _low_state.gripper_pos;
-            _high_state.gripper_vel = _low_state.gripper_vel;
-            _high_state.gripper_torque = _low_state.gripper_torque;
-            _high_state.timestamp = _low_state.timestamp;
+            _joint_controller.send_recv_once();
+            _joint_state = _joint_controller.get_state();
+            _high_state.pose_6d = _solver.forward_kinematics(_joint_state.pos);
+            _high_state.gripper_pos = _joint_state.gripper_pos;
+            _high_state.gripper_vel = _joint_state.gripper_vel;
+            _high_state.gripper_torque = _joint_state.gripper_torque;
+            _high_state.timestamp = _joint_state.timestamp;
         }
         int solve_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - start_time_us;
         // Usually takes 3ms

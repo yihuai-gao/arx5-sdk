@@ -1,33 +1,33 @@
-#include "app/low_level.h"
+#include "app/joint_controller.h"
 #include <unistd.h>
 #include <chrono>
 #include <csignal>
 
-Arx5LowLevel *arx5_low_level = new Arx5LowLevel("can0");
+Arx5JointController *arx5_joint_controller = new Arx5JointController("can0");
 
 void signal_handler(int signal)
 {
     std::cout << "SIGINT received" << std::endl;
-    delete arx5_low_level;
+    delete arx5_joint_controller;
     exit(signal);
 }
 
 int main()
 {
     std::signal(SIGINT, signal_handler);
-    arx5_low_level->enable_background_send_recv();
-    LowState cmd;
+    arx5_joint_controller->enable_background_send_recv();
+    JointState cmd;
     int loop_cnt = 0;
     while (true)
     {
-        LowState state = arx5_low_level->get_state();
+        JointState state = arx5_joint_controller->get_state();
         std::cout << "Gripper: " << state.gripper_pos << " Pos: " << state.pos[0] << " " << state.pos[1] << " " << state.pos[2] << " " << state.pos[3] << " " << state.pos[4] << " " << state.pos[5] << " " << std::endl;
         usleep(10000); // 10ms
         loop_cnt++;
         if (loop_cnt % 200 == 0)
         {
-            arx5_low_level->reset_to_home();
-            arx5_low_level->set_to_damping();
+            arx5_joint_controller->reset_to_home();
+            arx5_joint_controller->set_to_damping();
         }
     }
     return 0;
