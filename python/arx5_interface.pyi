@@ -14,6 +14,15 @@ GRIPPER_VEL_MAX: float
 GRIPPER_WIDTH: float
 JOINT_CONTROLLER_DT: float
 
+class LogLevel:
+    TRACE: "LogLevel"
+    DEBUG: "LogLevel"
+    INFO: "LogLevel"
+    WARNING: "LogLevel"
+    ERROR: "LogLevel"
+    CRITICAL: "LogLevel"
+    OFF: "LogLevel"
+
 class Gain:
     def kp(self) -> npt.NDArray[np.float64]: ...
     def kd(self) -> npt.NDArray[np.float64]: ...
@@ -80,6 +89,7 @@ class Arx5JointController:
     def reset_to_home(self) -> None: ...
     def set_to_damping(self) -> None: ...
     def calibrate_gripper(self) -> None: ...
+    def set_log_level(self, level: LogLevel) -> None: ...
 
 class HighState:
     timestamp: float

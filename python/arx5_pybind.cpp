@@ -21,12 +21,15 @@ PYBIND11_MODULE(arx5_interface, m)
     m.attr("GRIPPER_VEL_MAX") = GRIPPER_VEL_MAX;
     m.attr("GRIPPER_WIDTH") = GRIPPER_WIDTH;
     m.attr("JOINT_CONTROLLER_DT") = JOINT_CONTROLLER_DT;
-    // py::enum_<LogLevel>(m, "LogLevel")
-    //     .value("DEBUG", LogLevel::DEBUG)
-    //     .value("INFO", LogLevel::INFO)
-    //     .value("WARNING", LogLevel::WARNING)
-    //     .value("ERROR", LogLevel::ERROR)
-    //     .export_values();
+    py::enum_<spdlog::level::level_enum>(m, "LogLevel")
+        .value("TRACE", spdlog::level::level_enum::trace)
+        .value("DEBUG", spdlog::level::level_enum::debug)
+        .value("INFO", spdlog::level::level_enum::info)
+        .value("WARNING", spdlog::level::level_enum::warn)
+        .value("ERROR", spdlog::level::level_enum::err)
+        .value("CRITICAL", spdlog::level::level_enum::critical)
+        .value("OFF", spdlog::level::level_enum::off)
+        .export_values();
     py::class_<JointState>(m, "JointState")
         .def(py::init<>())
         .def(py::init<Vec6d, Vec6d, Vec6d, double>())
@@ -68,6 +71,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("clip_joint_pos", &Arx5JointController::clip_joint_pos)
         .def("reset_to_home", &Arx5JointController::reset_to_home)
         .def("set_to_damping", &Arx5JointController::set_to_damping)
+        .def("set_log_level", &Arx5JointController::set_log_level)
         .def("calibrate_gripper", &Arx5JointController::calibrate_gripper);
     py::class_<HighState>(m, "HighState")
         .def(py::init<>())

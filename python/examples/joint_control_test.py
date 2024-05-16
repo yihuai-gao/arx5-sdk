@@ -21,6 +21,7 @@ def easeInOutQuad(t):
 def main():
     np.set_printoptions(precision=3, suppress=True)
     arx5_joint_controller = arx5.Arx5JointController("can1")
+    arx5_joint_controller.set_log_level(arx5.LogLevel.TRACE)
 
     arx5_joint_controller.enable_background_send_recv()
     arx5_joint_controller.reset_to_home()
@@ -38,7 +39,7 @@ def main():
     gain.kd()[:] = [10.0, 10.0, 10.0, 1.0, 1.0, 0.5]
 
     arx5_joint_controller.set_gain(gain)
-    step_num = 800  # 5s
+    step_num = 3000
     USE_TIMER = True
     if not USE_TIMER:
         arx5_joint_controller.disable_background_send_recv()
@@ -74,7 +75,5 @@ def main():
     gain = arx5.Gain()
     gain.kd()[:] = np.array([10.0, 10.0, 10.0, 1.0, 1.0, 0.5]) * 0.1
     arx5_joint_controller.set_gain(gain)
-    while True:
-        time.sleep(1.0)
 
 main()

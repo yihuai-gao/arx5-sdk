@@ -25,8 +25,10 @@ def main():
 
     arx5_0.enable_background_send_recv()
     arx5_0.reset_to_home()
+    arx5_0.enable_gravity_compensation("../models/arx5_gopro.urdf")
     arx5_1.enable_background_send_recv()
     arx5_1.reset_to_home()
+    arx5_1.enable_gravity_compensation("../models/arx5_gopro.urdf")
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
     gain = arx5.Gain()
@@ -40,7 +42,7 @@ def main():
     gain.kd()[:] = [10.0, 10.0, 10.0, 1.0, 1.0, 0.5]
 
     arx5_0.set_gain(gain)
-    step_num = 800  # 5s
+    step_num = 1500  # 3s
     USE_TIMER = True
     if not USE_TIMER:
         arx5_0.disable_background_send_recv()

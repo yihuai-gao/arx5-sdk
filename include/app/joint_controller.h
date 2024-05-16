@@ -101,7 +101,7 @@ public:
     void calibrate_joint(int joint_id);
     double get_timestamp();
 
-    // void set_log_level(spdlog::level::enum log_level);
+    void set_log_level(spdlog::level::level_enum level);
 
     bool is_damping();
 

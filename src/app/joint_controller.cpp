@@ -5,7 +5,7 @@
 
 Arx5JointController::Arx5JointController(std::string can_name)
     : _can_handle(can_name),
-      _logger(spdlog::stdout_color_mt(std::string("Arx5JointController_") + can_name))
+      _logger(spdlog::stdout_color_mt(std::string("ARX5_") + can_name))
 {
 
     // Enable motor 5, 6, 7
@@ -37,6 +37,7 @@ Arx5JointController::~Arx5JointController()
     _logger->info("Set to damping before exit");
     set_gain(damping_gain);
     set_joint_cmd(JointState());
+    _enable_gravity_compensation = false;
     sleep_ms(2000);
     _destroy_background_threads = true;
     _background_send_recv.join();
@@ -62,6 +63,8 @@ void Arx5JointController::send_recv_once()
 
 void Arx5JointController::_update_output_cmd()
 {
+    std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
+
     JointState prev_output_cmd = _output_joint_cmd;
 
     _output_joint_cmd = _input_joint_cmd;
@@ -165,7 +168,7 @@ void Arx5JointController::_update_output_cmd()
 
 double Arx5JointController::get_timestamp()
 {
-    return double(std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - _start_time_us) / 1e6;
+    return double(get_time_us() - _start_time_us) / 1e6;
 }
 
 void Arx5JointController::_send_recv()
@@ -174,24 +177,64 @@ void Arx5JointController::_send_recv()
     const double torque_constant1 = 1.4;   // Nm/A, only for the bottom 3 motors
     const double torque_constant2 = 0.424; // Nm/A, only for the top 3 motors
 
+    int start_time_us = get_time_us();
     _update_output_cmd();
+    int update_cmd_time_us = get_time_us();
+    int communicate_sleep_us = 150;
 
+    int start_send_motor_0_time_us = get_time_us();
     _can_handle.Send_moto_Cmd1(_MOTOR_ID[0], _gain.kp[0], _gain.kd[0], _output_joint_cmd.pos[0], _output_joint_cmd.vel[0], _output_joint_cmd.torque[0] / torque_constant1);
-    usleep(200);
+    int send_motor_0_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_0_time_us - start_send_motor_0_time_us));
+
+    int start_send_motor_1_time_us = get_time_us();
     _can_handle.Send_moto_Cmd1(_MOTOR_ID[1], _gain.kp[1], _gain.kd[1], _output_joint_cmd.pos[1], _output_joint_cmd.vel[1], _output_joint_cmd.torque[1] / torque_constant1);
-    usleep(200);
+    int send_motor_1_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_1_time_us - start_send_motor_1_time_us));
+
+    int start_send_motor_2_time_us = get_time_us();
     _can_handle.Send_moto_Cmd1(_MOTOR_ID[2], _gain.kp[2], _gain.kd[2], _output_joint_cmd.pos[2], _output_joint_cmd.vel[2], _output_joint_cmd.torque[2] / torque_constant1);
-    usleep(200);
+    int send_motor_2_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_2_time_us - start_send_motor_2_time_us));
+
+    int start_send_motor_3_time_us = get_time_us();
     _can_handle.Send_moto_Cmd2(_MOTOR_ID[3], _gain.kp[3], _gain.kd[3], _output_joint_cmd.pos[3], _output_joint_cmd.vel[3], _output_joint_cmd.torque[3] / torque_constant2);
-    usleep(200);
+    int send_motor_3_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_3_time_us - start_send_motor_3_time_us));
+
+    int start_send_motor_4_time_us = get_time_us();
     _can_handle.Send_moto_Cmd2(_MOTOR_ID[4], _gain.kp[4], _gain.kd[4], _output_joint_cmd.pos[4], _output_joint_cmd.vel[4], _output_joint_cmd.torque[4] / torque_constant2);
-    usleep(200);
+    int send_motor_4_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_4_time_us - start_send_motor_4_time_us));
+
+    int start_send_motor_5_time_us = get_time_us();
     _can_handle.Send_moto_Cmd2(_MOTOR_ID[5], _gain.kp[5], _gain.kd[5], _output_joint_cmd.pos[5], _output_joint_cmd.vel[5], _output_joint_cmd.torque[5] / torque_constant2);
-    usleep(200);
+    int send_motor_5_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_5_time_us - start_send_motor_5_time_us));
+
+    int start_send_motor_6_time_us = get_time_us();
     double gripper_motor_pos = _output_joint_cmd.gripper_pos / GRIPPER_WIDTH * _GRIPPER_OPEN_READOUT;
     _can_handle.Send_moto_Cmd2(_MOTOR_ID[6], _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos, 0, 0);
-    usleep(200);
+    int send_motor_6_time_us = get_time_us();
+
+    sleep_us(communicate_sleep_us - (send_motor_6_time_us - start_send_motor_6_time_us));
+
+    int start_get_motor_msg_time_us = get_time_us();
     std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
+    int get_motor_msg_time_us = get_time_us();
+
+    _logger->trace("update_cmd: {} us, send_motor_0: {} us, send_motor_1: {} us, send_motor_2: {} us, send_motor_3: {} us, send_motor_4: {} us, send_motor_5: {} us, send_motor_6: {} us, get_motor_msg: {} us",
+                   update_cmd_time_us - start_time_us, send_motor_0_time_us - start_send_motor_0_time_us, send_motor_1_time_us - start_send_motor_1_time_us, send_motor_2_time_us - start_send_motor_2_time_us,
+                   send_motor_3_time_us - start_send_motor_3_time_us, send_motor_4_time_us - start_send_motor_4_time_us, send_motor_5_time_us - start_send_motor_5_time_us, send_motor_6_time_us - start_send_motor_6_time_us, get_motor_msg_time_us - start_get_motor_msg_time_us);
+
+    std::lock_guard<std::mutex> guard_state(_state_mutex);
+
     _joint_state.pos[0] = motor_msg[0].angle_actual_rad;
     _joint_state.pos[1] = motor_msg[1].angle_actual_rad;
     _joint_state.pos[2] = motor_msg[3].angle_actual_rad;
@@ -249,17 +292,10 @@ void Arx5JointController::_check_current()
             damping_gain.kd[3] *= 1.5;
             set_gain(damping_gain);
 
-            // int loop_cnt = 0;
-            // Set the robot to damping immediately
             while (true)
             {
                 _send_recv();
                 sleep_ms(5);
-                // loop_cnt++;
-                // if (loop_cnt % 20 == 0)
-                // {
-                //     _logger->error("Over current detected, robot is set to damping. Please restart the program.");
-                // }
             }
         }
     }
@@ -273,17 +309,22 @@ void Arx5JointController::_background_send_recv_task()
 {
     while (!_destroy_background_threads)
     {
-        int start_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+        int start_time_us = get_time_us();
         if (_background_send_recv_running)
         {
-            std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
-            std::lock_guard<std::mutex> guard_state(_state_mutex);
             _send_recv();
             _check_current();
         }
-        int send_recv_time_us = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() - start_time_us;
-        int sleep_time_us = int(JOINT_CONTROLLER_DT * 1e6) - send_recv_time_us;
-        std::this_thread::sleep_for(std::chrono::microseconds(sleep_time_us));
+        int elapsed_time_us = get_time_us() - start_time_us;
+        int sleep_time_us = int(JOINT_CONTROLLER_DT * 1e6) - elapsed_time_us;
+        if (sleep_time_us > 0)
+        {
+            std::this_thread::sleep_for(std::chrono::microseconds(sleep_time_us));
+        }
+        else
+        {
+            _logger->warn("Background send_recv task is running too slow, time: {} us", elapsed_time_us);
+        }
     }
 }
 
@@ -482,9 +523,10 @@ void Arx5JointController::calibrate_joint(int joint_id)
     }
 }
 
-// void Arx5JointController::set_log_level(_logger->level log_level)
-// {
-// }
+void Arx5JointController::set_log_level(spdlog::level::level_enum log_level)
+{
+    _logger->set_level(log_level);
+}
 
 void Arx5JointController::enable_gravity_compensation(std::string urdf_path)
 {
