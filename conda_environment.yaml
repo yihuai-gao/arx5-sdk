@@ -1,6 +1,6 @@
 name: arx
 channels:
-  - robostack
+  - robostack-staging
   - conda-forge
 dependencies:
   - cxx-compiler
