@@ -9,7 +9,7 @@
 ## Install
 ```bash
 mamba env create -f conda_environment.yaml # for python3.9, or py310_environment.yaml for python3.10
-conda activate arx # arx-py310
+conda activate arx # arx-py310 
 mkdir build && cd build
 cmake ..
 make -j

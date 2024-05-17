@@ -25,7 +25,7 @@ def main():
 
     arx5_joint_controller.enable_background_send_recv()
     arx5_joint_controller.reset_to_home()
-    arx5_joint_controller.enable_gravity_compensation("../models/arx5_gopro.urdf")
+    arx5_joint_controller.enable_gravity_compensation("../models/arx5.urdf")
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
     gain = arx5.Gain()
