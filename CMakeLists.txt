@@ -29,9 +29,9 @@ set(cpp_source
     src/app/joint_controller.cpp
     src/utils.cpp
 )
-add_executable(arx5_low_level examples/test_low_level.cpp ${cpp_source})
+add_executable(test_joint_controller examples/test_joint_controller.cpp ${cpp_source})
 
-target_link_libraries(arx5_low_level 
+target_link_libraries(test_joint_controller 
     ${LIB_DIR}/libhardware.so 
     ${LIB_DIR}/libsolver.so 
     Eigen3::Eigen
@@ -40,17 +40,17 @@ target_link_libraries(arx5_low_level
     kdl_parser
     orocos-kdl
 )
-target_include_directories(arx5_low_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(arx5_low_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
-target_include_directories(arx5_low_level PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
+target_include_directories(test_joint_controller PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(test_joint_controller PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(test_joint_controller PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
 
 
 
-add_executable(arx5_high_level examples/test_high_level.cpp 
+add_executable(test_high_level examples/test_high_level.cpp 
     ${cpp_source}
     src/app/high_level.cpp
 )  
-target_link_libraries(arx5_high_level 
+target_link_libraries(test_high_level 
     ${LIB_DIR}/libhardware.so 
     ${LIB_DIR}/libsolver.so 
     spdlog::spdlog
@@ -59,9 +59,9 @@ target_link_libraries(arx5_high_level
     kdl_parser
     orocos-kdl
 )
-target_include_directories(arx5_high_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(arx5_high_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
+target_include_directories(test_high_level PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(test_high_level PUBLIC ${EIGEN3_INCLUDE_DIRS})
 # Hack for py310
-target_include_directories(arx5_high_level PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
+target_include_directories(test_high_level PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
 
 add_subdirectory(python)

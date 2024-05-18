@@ -72,6 +72,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("reset_to_home", &Arx5JointController::reset_to_home)
         .def("set_to_damping", &Arx5JointController::set_to_damping)
         .def("set_log_level", &Arx5JointController::set_log_level)
+        .def("calibrate_joint", &Arx5JointController::calibrate_joint)
         .def("calibrate_gripper", &Arx5JointController::calibrate_gripper);
     py::class_<HighState>(m, "HighState")
         .def(py::init<>())
