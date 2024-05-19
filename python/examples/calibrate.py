@@ -24,7 +24,7 @@ def calibrate_gripper():
 
 if __name__ == "__main__":
 
-    calibrate_joint(1)
+    calibrate_joint(4)
     # calibrate_gripper()
 
 

@@ -35,11 +35,12 @@ def main():
     # gain.kp()[:] = [30.0, 30.0, 30.0, 5.0, 5.0, 3.0]
     # gain.kd()[:] = [0.001, 0.01, 0.01, 0.01, 0.01, 0.01]
 
-    gain.kp()[:] = [100.0, 100.0, 100.0, 30.0, 30, 5.0]
-    gain.kd()[:] = [15.0, 15.0, 15.0, 2.0, 2.0, 1]
+    gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
+    gain.kd()[:] = np.array([1.5, 1.5, 1.5, 2.0, 2.0, 1.0])
 
     arx5_joint_controller.set_gain(gain)
-    step_num = 3000
+
+    step_num = 1500
     USE_TIMER = True
     if not USE_TIMER:
         arx5_joint_controller.disable_background_send_recv()
@@ -71,9 +72,5 @@ def main():
         time.sleep(arx5.JOINT_CONTROLLER_DT)
         JointState = arx5_joint_controller.get_state()
         # print(f"gripper: {JointState.gripper_pos:.05f}")
-
-    gain = arx5.Gain()
-    gain.kd()[:] = np.array([10.0, 10.0, 10.0, 1.0, 1.0, 0.5]) * 0.1
-    arx5_joint_controller.set_gain(gain)
 
 main()
