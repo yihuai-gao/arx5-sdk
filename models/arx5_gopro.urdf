@@ -160,8 +160,8 @@
         <parent link="link3"/>
         <child link="link4"/>
         <axis xyz="0 1 0"/>
-        <limit  lower="-1.57079632679 "
-            upper="1.57079632679 "
+        <limit  lower="-1.57079632679"
+            upper="1.57079632679"
             effort="30"
             velocity="10" />
     </joint>
