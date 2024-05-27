@@ -1,0 +1,19 @@
+name: arx-py39
+channels:
+  - robostack-staging
+  - conda-forge
+dependencies:
+  - python=3.9 # Specify your desired python version
+  - ros-noetic-kdl-parser # for python 3.10
+  # - ros-noetic-ament-cmake
+  - cxx-compiler
+  - cmake
+  - ninja
+  - orocos-kdl
+  - eigen
+  - boost
+  - spdlog
+  - pybind11
+  - numpy
+  - click
+  - pyzmq
