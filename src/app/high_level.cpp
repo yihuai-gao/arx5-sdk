@@ -4,6 +4,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+using namespace arx;
+
 Arx5HighLevel::Arx5HighLevel(std::string can_name, std::string urdf_path)
     : _joint_controller(can_name), _solver(urdf_path)
 {

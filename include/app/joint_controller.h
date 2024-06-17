@@ -14,6 +14,10 @@
 #include <mutex>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
+
+namespace arx
+{
+
 struct JointState
 {
     double timestamp = 0.0f;
@@ -130,5 +134,7 @@ private:
     bool _enable_gravity_compensation = false;
     std::shared_ptr<Arx5Solver> _solver;
 };
+
+} // namespace arx
 
 #endif

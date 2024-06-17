@@ -6,6 +6,8 @@
 #include <chrono>
 #include <mutex>
 
+namespace arx
+{
 struct HighState
 {
     double timestamp = 0.0f;
@@ -71,4 +73,5 @@ private:
     MovingAverage6d _joint_torque_filter{_moving_window_size};
 };
 
+} // namespace arx
 #endif

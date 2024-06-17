@@ -3,6 +3,8 @@
 #include <sys/syscall.h>
 #include <sys/types.h>
 
+using namespace arx;
+
 Arx5JointController::Arx5JointController(std::string can_name)
     : _can_handle(can_name),
       _logger(spdlog::stdout_color_mt(std::string("ARX5_") + can_name))

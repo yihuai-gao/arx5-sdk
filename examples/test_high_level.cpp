@@ -3,6 +3,8 @@
 #include <chrono>
 #include <csignal>
 
+using namespace arx;
+
 Arx5HighLevel *arx5_high_level = new Arx5HighLevel("can0", "models/arx5.urdf");
 
 void signal_handler(int signal)

@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "spdlog/spdlog.h"
 namespace py = pybind11;
+using namespace arx;
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 PYBIND11_MODULE(arx5_interface, m)
 {

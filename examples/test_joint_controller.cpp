@@ -3,6 +3,8 @@
 #include <chrono>
 #include <csignal>
 
+using namespace arx;
+
 Arx5JointController *arx5_joint_controller = new Arx5JointController("can0");
 
 void signal_handler(int signal)
