@@ -77,6 +77,7 @@ class Arx5JointController {
   void set_joint_cmd(JointState new_cmd);
   std::tuple<JointState, JointState> get_joint_cmd();
   JointState get_state();
+  Vec6d get_tool_pose();
 
   void set_gain(Gain new_gain);
   Gain get_gain();

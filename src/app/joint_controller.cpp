@@ -51,6 +51,14 @@ JointState Arx5JointController::get_state() {
   return _joint_state;
 }
 
+Vec6d Arx5JointController::get_tool_pose() {
+  if (_solver == nullptr) {
+    _logger->error("Solver is not initialized, cannot run kinematics.");
+    return Vec6d::Zero();
+  }
+  return _solver->forward_kinematics(_joint_state.pos);
+}
+
 void Arx5JointController::send_recv_once() {
   if (_background_send_recv_running) {
     std::cout << "send_recv task is already running in background. "

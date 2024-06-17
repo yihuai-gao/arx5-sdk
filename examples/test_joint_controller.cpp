@@ -16,14 +16,14 @@ void signal_handler(int signal) {
 int main() {
   std::signal(SIGINT, signal_handler);
   arx5_joint_controller->enable_background_send_recv();
-  JointState cmd;
+  arx5_joint_controller->enable_gravity_compensation("../models/arx5_gopro.urdf");
   int loop_cnt = 0;
   while (true) {
     JointState state = arx5_joint_controller->get_state();
-    std::cout << "Gripper: " << state.gripper_pos << " Pos: " << state.pos[0]
-              << " " << state.pos[1] << " " << state.pos[2] << " "
-              << state.pos[3] << " " << state.pos[4] << " " << state.pos[5]
-              << " " << std::endl;
+    Vec6d pose6 = arx5_joint_controller->get_tool_pose();
+    std::cout << "Gripper: " << state.gripper_pos
+              << ", joint pos: " << state.pos.transpose()
+              << ", Pose: " << pose6.transpose() << std::endl;
     usleep(10000);  // 10ms
     loop_cnt++;
     if (loop_cnt % 200 == 0) {
