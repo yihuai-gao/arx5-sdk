@@ -14,6 +14,38 @@ mkdir build && cd build
 cmake ..
 make -j
 ```
+
+# CAN setup
+``` sh
+sudo apt install can-utils
+sudo apt install net-tools
+```
+Get serial number by:
+``` sh
+udevadm info -a -n /dev/ttyACM* | grep serial
+```
+You will get something like:
+```
+ATTRS{serial}=="209738924D4D"
+ATTRS{serial}=="0000:00:14.0"
+```
+Then edit CAN rules file:
+``` sh
+sudo vim /etc/udev/rules.d/arx_can.rules
+```
+Copy and paste the following, replace the serial number with yours.
+```
+SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", 
+ATTRS{serial}=="209738924D4D", SYMLINK+="canable0"
+```
+
+Finally, activate CAN connection by:
+``` sh
+sudo udevadm control --reload-rules && sudo udevadm trigger
+sudo slcand -o -f -s8 /dev/canable0 can0
+sudo ifconfig can0 up
+```
+
 ## Usage
 ```bash
 cd python

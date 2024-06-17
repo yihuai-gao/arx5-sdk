@@ -6,8 +6,8 @@
 // don't contain the right definitions.
 // Copied the correct CAN definitions from modern linux kernel to here.
 
-#include <linux/types.h>
 #include <linux/socket.h>
+#include <linux/types.h>
 /* controller area network (CAN) kernel definitions */
 
 /* special address description flags for the CAN_ID */
@@ -63,22 +63,20 @@ typedef __u32 can_err_mask_t;
  *            CAN_CTRLMODE_CC_LEN8_DLC flag has to be enabled in CAN driver.
  * @data:     CAN frame payload (up to 8 byte)
  */
-struct can_frame
-{
-    canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    union
-    {
-        /* CAN frame payload length in byte (0 .. CAN_MAX_DLEN)
+struct can_frame {
+  canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+  union {
+    /* CAN frame payload length in byte (0 .. CAN_MAX_DLEN)
          * was previously named can_dlc so we need to carry that
          * name for legacy support
          */
-        __u8 len;
-        __u8 can_dlc;          /* deprecated */
-    } __attribute__((packed)); /* disable padding added in some ABIs */
-    __u8 __pad;                /* padding */
-    __u8 __res0;               /* reserved / padding */
-    __u8 len8_dlc;             /* optional DLC for 8 byte payload length (9 .. 15) */
-    __u8 data[CAN_MAX_DLEN] __attribute__((aligned(8)));
+    __u8 len;
+    __u8 can_dlc;            /* deprecated */
+  } __attribute__((packed)); /* disable padding added in some ABIs */
+  __u8 __pad;                /* padding */
+  __u8 __res0;               /* reserved / padding */
+  __u8 len8_dlc; /* optional DLC for 8 byte payload length (9 .. 15) */
+  __u8 data[CAN_MAX_DLEN] __attribute__((aligned(8)));
 };
 
 /*
@@ -118,14 +116,13 @@ struct can_frame
  * @__res1: reserved / padding
  * @data:   CAN FD frame payload (up to CANFD_MAX_DLEN byte)
  */
-struct canfd_frame
-{
-    canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
-    __u8 len;       /* frame payload length in byte */
-    __u8 flags;     /* additional flags for CAN FD */
-    __u8 __res0;    /* reserved / padding */
-    __u8 __res1;    /* reserved / padding */
-    __u8 data[CANFD_MAX_DLEN] __attribute__((aligned(8)));
+struct canfd_frame {
+  canid_t can_id; /* 32 bit CAN_ID + EFF/RTR/ERR flags */
+  __u8 len;       /* frame payload length in byte */
+  __u8 flags;     /* additional flags for CAN FD */
+  __u8 __res0;    /* reserved / padding */
+  __u8 __res1;    /* reserved / padding */
+  __u8 data[CANFD_MAX_DLEN] __attribute__((aligned(8)));
 };
 
 #define CAN_MTU (sizeof(struct can_frame))
@@ -149,38 +146,34 @@ struct canfd_frame
  * @can_ifindex: CAN network interface index.
  * @can_addr:    protocol specific address information
  */
-struct sockaddr_can
-{
-    __kernel_sa_family_t can_family;
-    int can_ifindex;
-    union
-    {
-        /* transport protocol class address information (e.g. ISOTP) */
-        struct
-        {
-            canid_t rx_id, tx_id;
-        } tp;
+struct sockaddr_can {
+  __kernel_sa_family_t can_family;
+  int can_ifindex;
+  union {
+    /* transport protocol class address information (e.g. ISOTP) */
+    struct {
+      canid_t rx_id, tx_id;
+    } tp;
 
-        /* J1939 address information */
-        struct
-        {
-            /* 8 byte name when using dynamic addressing */
-            __u64 name;
+    /* J1939 address information */
+    struct {
+      /* 8 byte name when using dynamic addressing */
+      __u64 name;
 
-            /* pgn:
+      /* pgn:
              * 8 bit: PS in PDU2 case, else 0
              * 8 bit: PF
              * 1 bit: DP
              * 1 bit: reserved
              */
-            __u32 pgn;
+      __u32 pgn;
 
-            /* 1 byte address */
-            __u8 addr;
-        } j1939;
+      /* 1 byte address */
+      __u8 addr;
+    } j1939;
 
-        /* reserved for future CAN protocols address information */
-    } can_addr;
+    /* reserved for future CAN protocols address information */
+  } can_addr;
 };
 
 /**
@@ -196,14 +189,14 @@ struct sockaddr_can
  * The filter can be inverted (CAN_INV_FILTER bit set in can_id) or it can
  * filter for error message frames (CAN_ERR_FLAG bit set in mask).
  */
-struct can_filter
-{
-    canid_t can_id;
-    canid_t can_mask;
+struct can_filter {
+  canid_t can_id;
+  canid_t can_mask;
 };
 
 #define CAN_INV_FILTER 0x20000000U /* to be set in can_filter.can_id */
-#define CAN_RAW_FILTER_MAX 512     /* maximum number of can_filter set via setsockopt() */
+#define CAN_RAW_FILTER_MAX \
+  512 /* maximum number of can_filter set via setsockopt() */
 
 /**
  * Holds the content of one CAN frame
