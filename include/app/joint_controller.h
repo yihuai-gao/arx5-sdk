@@ -89,6 +89,7 @@ class Arx5JointController {
   void calibrate_gripper();
   void calibrate_joint(int joint_id);
   double get_timestamp();
+  double get_dt_s();
 
   void set_log_level(spdlog::level::level_enum level);
 
