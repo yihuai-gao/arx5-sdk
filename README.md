@@ -6,16 +6,18 @@
 - Joint controller runs at 500Hz in the background (motor communication delay ~0.4ms)
 - Control multiple arms in the same process
 
-## Install
+## Build & Install
 ```bash
 mamba env create -f conda_environment.yaml # for python3.9, or py310_environment.yaml for python3.10
 conda activate arx # arx-py310
 mkdir build && cd build
 cmake ..
 make -j
+# At this point, you should be able to run test scripts below.
+make install
 ```
 
-# CAN setup
+## CAN setup
 ``` sh
 sudo apt install can-utils
 sudo apt install net-tools
@@ -46,7 +48,7 @@ sudo slcand -o -f -s8 /dev/canable0 can0
 sudo ifconfig can0 up
 ```
 
-## Usage
+## Test scripts
 ```bash
 cd python
 python examples/test_joint_control.py
