@@ -9,6 +9,8 @@
 #include <thread>
 #include <vector>
 
+// namespace arx {
+
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 const Vec6d JOINT_POS_MIN =
     (Vec6d() << -3.14, -0.005, -0.1, -1.6, -1.57, -2).finished();
@@ -34,10 +36,18 @@ const double GRIPPER_WIDTH =
 const double DEFAULT_GRIPPER_KP = 30.0;
 const double DEFAULT_GRIPPER_KD = 0.2;
 const int OVER_CURRENT_CNT_MAX = 20;  // 0.1s
+
+enum class MotorType {
+  EC,
+  DM,
+};
+// }  // namespace arx
+
 #define sleep_ms(x) std::this_thread::sleep_for(std::chrono::milliseconds(x))
 #define sleep_us(x) std::this_thread::sleep_for(std::chrono::microseconds(x))
 #define get_time_us()                                      \
   std::chrono::duration_cast<std::chrono::microseconds>(   \
       std::chrono::steady_clock::now().time_since_epoch()) \
       .count()
+
 #endif

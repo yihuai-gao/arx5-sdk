@@ -7,7 +7,7 @@ os.chdir(ROOT_DIR)
 import arx5_interface as arx5
 
 def calibrate_joint(joint_id: int):
-    joint_controller = arx5.Arx5JointController("can0")
+    joint_controller = arx5.Arx5JointController("X5", "can0")
     gain = arx5.Gain()
     joint_controller.set_gain(gain)
     joint_controller.enable_background_send_recv()
@@ -19,7 +19,7 @@ def calibrate_joint(joint_id: int):
         time.sleep(0.1)
 
 def calibrate_gripper():
-    joint_controller = arx5.Arx5JointController("can0")
+    joint_controller = arx5.Arx5JointController("X5", "can0")
     joint_controller.calibrate_gripper()
 
 if __name__ == "__main__":

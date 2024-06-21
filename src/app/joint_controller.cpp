@@ -6,17 +6,35 @@
 
 using namespace arx;
 
-Arx5JointController::Arx5JointController(std::string can_name)
+Arx5JointController::Arx5JointController(std::string model,
+                                         std::string can_name)
     : _can_handle(can_name),
-      _logger(spdlog::stdout_color_mt(std::string("ARX5_") + can_name)) {
+      _logger(spdlog::stdout_color_mt(std::string("ARX_") + model + "_" +
+                                      can_name)),
+      _MODEL(model),
+      _MOTOR_TYPE(
+          model == "X5"
+              ? std::array<MotorType, 7>(
+                    {MotorType::EC, MotorType::EC, MotorType::EC, MotorType::DM,
+                     MotorType::DM, MotorType::DM, MotorType::DM})
+              : std::array<MotorType, 7>(
+                    {MotorType::DM, MotorType::DM, MotorType::DM, MotorType::DM,
+                     MotorType::DM, MotorType::DM, MotorType::DM})) {
+  if (model != "X5" && model != "L5") {
+    throw std::invalid_argument("Model " + model + " is not supported.");
+  }
   bool succeeded = true;
-  for (auto id : _DM_MOTOR_ID) {
-    succeeded = _can_handle.enable_DM_motor(id);
-    if (!succeeded) {
-      throw std::runtime_error("Failed to enable motor " + std::to_string(id) +
-                               ". Please check the connection.");
+  for (int i = 0; i < 7; ++i) {
+    if (_MOTOR_TYPE[i] == MotorType::DM) {
+      int id = _MOTOR_ID[i];
+      succeeded = _can_handle.enable_DM_motor(id);
+      if (!succeeded) {
+        throw std::runtime_error("Failed to enable motor " +
+                                 std::to_string(id) +
+                                 ". Please check the connection.");
+      }
+      usleep(1000);
     }
-    usleep(1000);
   }
 
   Gain gain = Gain();
@@ -201,38 +219,43 @@ bool Arx5JointController::_send_recv() {
   int update_cmd_time_us = get_time_us();
   int communicate_sleep_us = 150;
 
-  for (int i = 0; i < _EC_MOTOR_ID.size(); i++) {
+  for (int i = 0; i < 6; i++) {
     int start_send_motor_time_us = get_time_us();
-    succeeded = _can_handle.send_EC_motor_cmd(
-        _MOTOR_ID[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
-        _output_joint_cmd.vel[i],
-        _output_joint_cmd.torque[i] / torque_constant1);
-    if (!succeeded) {
-      _logger->error("Failed to send motor command to EC motor {}",
-                     _MOTOR_ID[i]);
-      return false;
+    if (_MOTOR_TYPE[i] == MotorType::EC) {
+      succeeded = _can_handle.send_EC_motor_cmd(
+          _MOTOR_ID[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+          _output_joint_cmd.vel[i],
+          _output_joint_cmd.torque[i] / torque_constant1);
+    } else {
+      succeeded = _can_handle.send_DM_motor_cmd(
+          _MOTOR_ID[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+          _output_joint_cmd.vel[i],
+          _output_joint_cmd.torque[i] / torque_constant2);
     }
     int finish_send_motor_time_us = get_time_us();
-
-    sleep_us(communicate_sleep_us -
-             (finish_send_motor_time_us - start_send_motor_time_us));
-  }
-
-  for (int i = 7 - _DM_MOTOR_ID.size(); i < 7; i++) {
-    int start_send_motor_time_us = get_time_us();
-    succeeded = _can_handle.send_DM_motor_cmd(
-        _MOTOR_ID[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
-        _output_joint_cmd.vel[i],
-        _output_joint_cmd.torque[i] / torque_constant2);
-    int finish_send_motor_time_us = get_time_us();
     if (!succeeded) {
-      _logger->error("Failed to send motor command to DM motor {}",
-                     _MOTOR_ID[i]);
+      _logger->error("Failed to send motor command to motor {}", _MOTOR_ID[i]);
       return false;
     }
     sleep_us(communicate_sleep_us -
              (finish_send_motor_time_us - start_send_motor_time_us));
   }
+
+  // Send gripper command (gripper is using DM motor)
+  int start_send_motor_time_us = get_time_us();
+
+  succeeded = _can_handle.send_DM_motor_cmd(
+      _MOTOR_ID[6], _gain.gripper_kp, _gain.gripper_kd,
+      _output_joint_cmd.gripper_pos, _output_joint_cmd.gripper_vel,
+      _output_joint_cmd.gripper_torque / torque_constant2);
+  int finish_send_motor_time_us = get_time_us();
+
+  if (!succeeded) {
+    _logger->error("Failed to send motor command to motor {}", _MOTOR_ID[6]);
+    return false;
+  }
+  sleep_us(communicate_sleep_us -
+           (finish_send_motor_time_us - start_send_motor_time_us));
 
   int start_get_motor_msg_time_us = get_time_us();
   std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
@@ -263,15 +286,15 @@ bool Arx5JointController::_send_recv() {
       motor_msg[7].speed_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
 
   // HACK: just to match the values (there must be something wrong)
-  _joint_state.torque[0] =
-      motor_msg[0].current_actual_float * torque_constant1 * torque_constant1;
-  _joint_state.torque[1] =
-      motor_msg[1].current_actual_float * torque_constant1 * torque_constant1;
-  _joint_state.torque[2] =
-      motor_msg[3].current_actual_float * torque_constant1 * torque_constant1;
-  _joint_state.torque[3] = motor_msg[4].current_actual_float * torque_constant2;
-  _joint_state.torque[4] = motor_msg[5].current_actual_float * torque_constant2;
-  _joint_state.torque[5] = motor_msg[6].current_actual_float * torque_constant2;
+  for (int i = 0; i < 6; i++) {
+    if (_MOTOR_TYPE[i] == MotorType::EC) {
+      _joint_state.torque[i] = motor_msg[i].current_actual_float *
+                               torque_constant1 * torque_constant1;
+    } else {
+      _joint_state.torque[i] =
+          motor_msg[i].current_actual_float * torque_constant2;
+    }
+  }
   _joint_state.gripper_torque =
       motor_msg[7].current_actual_float * torque_constant2;
   _joint_state.timestamp = get_timestamp();
@@ -491,7 +514,7 @@ void Arx5JointController::calibrate_joint(int joint_id) {
   usleep(1000);
   int motor_id = _MOTOR_ID[joint_id];
   for (int i = 0; i < 10; ++i) {
-    if (joint_id < 3)
+    if (_MOTOR_TYPE[joint_id] == MotorType::EC)
       _can_handle.send_EC_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     else
       _can_handle.send_DM_motor_cmd(motor_id, 0, 0, 0, 0, 0);
@@ -502,13 +525,13 @@ void Arx5JointController::calibrate_joint(int joint_id) {
       "and press enter to continue",
       joint_id);
   std::cin.get();
-  if (joint_id < 3)
+  if (_MOTOR_TYPE[joint_id] == MotorType::EC)
     _can_handle.CAN_cmd_init(motor_id, 0x03);
   else
     _can_handle.Set_Zero(motor_id);
   usleep(400);
   for (int i = 0; i < 10; ++i) {
-    if (joint_id < 3)
+    if (_MOTOR_TYPE[joint_id] == MotorType::EC)
       _can_handle.send_EC_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     else
       _can_handle.send_DM_motor_cmd(motor_id, 0, 0, 0, 0, 0);

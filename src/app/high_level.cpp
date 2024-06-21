@@ -6,8 +6,9 @@
 
 using namespace arx;
 
-Arx5HighLevel::Arx5HighLevel(std::string can_name, std::string urdf_path)
-    : _joint_controller(can_name), _solver(urdf_path) {
+Arx5HighLevel::Arx5HighLevel(std::string model, std::string can_name,
+                             std::string urdf_path)
+    : _joint_controller(model, can_name), _solver(urdf_path) {
   _joint_controller.set_to_damping();
   // std::string model_path = std::string(ARX_DIRECTORY) + "/models/arx5.urdf";
   int control_mode = 0;  // Keyboard control_mode
