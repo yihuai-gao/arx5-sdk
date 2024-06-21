@@ -179,6 +179,10 @@ double Arx5JointController::get_timestamp() {
   return double(get_time_us() - _start_time_us) / 1e6;
 }
 
+double Arx5JointController::get_dt_s() {
+  return JOINT_CONTROLLER_DT;
+}
+
 void Arx5JointController::_send_recv() {
   // TODO: in the motor documentation, there shouldn't be these torque constant. Torque will go directly into the motors
   const double torque_constant1 = 1.4;    // Nm/A, only for the bottom 3 motors
@@ -555,3 +559,4 @@ void Arx5JointController::disable_gravity_compensation() {
   _enable_gravity_compensation = false;
   _solver.reset();
 }
+
