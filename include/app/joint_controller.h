@@ -98,7 +98,7 @@ class Arx5JointController {
  private:
   const double _GRIPPER_OPEN_READOUT = 4.8;
   void _background_send_recv_task();
-  void _send_recv();
+  bool _send_recv();
   void _check_current();
   int _over_current_cnt = 0;
   JointState _output_joint_cmd;
@@ -117,6 +117,8 @@ class Arx5JointController {
   void _update_output_cmd();
   int _start_time_us;
   const std::array<int, 7> _MOTOR_ID = {1, 2, 4, 5, 6, 7, 8};
+  const std::array<int, 4> _DM_MOTOR_ID = {5, 6, 7, 8};
+  const std::array<int, 3> _EC_MOTOR_ID = {1, 2, 4};
   bool _enable_gravity_compensation = false;
   std::shared_ptr<Arx5Solver> _solver;
 };

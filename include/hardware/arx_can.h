@@ -22,8 +22,8 @@ class ArxCan {
   void Can_cmd_position(uint16_t motor_id, float pos, uint16_t spd,
                         uint16_t cur, uint8_t ack_status);
 
-  void Send_moto_Cmd1(uint16_t motor_id, float kp, float kd, float pos,
-                      float spd, float tor);
+  bool send_EC_motor_cmd(uint16_t motor_id, float kp, float kd, float pos,
+                         float spd, float tor);
   void CAN_cmd_fpc1(float kp[4], float kd[4], float pos[4], float spd[4],
                     float tor[4]);
   void CAN_cmd_fpc2(float kp[4], float kd[4], float pos[4], float spd[4],
@@ -37,9 +37,9 @@ class ArxCan {
                    int16_t motor4);
 
   // dubuf DM
-  void Send_moto_Cmd2(uint16_t motor_id, float kp, float kd, float pos,
-                      float spd, float tor);
-  void Enable_Moto(uint16_t ID);
+  bool send_DM_motor_cmd(uint16_t motor_id, float kp, float kd, float pos,
+                         float spd, float tor);
+  bool enable_DM_motor(uint16_t ID);
   void Set_Zero(uint16_t ID);
   void clear(uint16_t ID);
   // util variabels
