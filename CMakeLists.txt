@@ -59,6 +59,11 @@ target_link_libraries(ArxHighlevelController
     orocos-kdl
 )
 
+# Hack for py310 (conda environment is slightly different from other python versions)
+target_include_directories(ArxJointController PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
+target_include_directories(ArxHighlevelController PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
+
+
 add_executable(test_joint_controller examples/test_joint_controller.cpp)
 target_link_libraries(test_joint_controller 
     ${LIB_DIR}/libhardware.so 

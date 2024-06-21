@@ -1,11 +1,10 @@
-name: arx-py39
+name: arx-py38
 channels:
-  - robostack-staging
+  - robostack
   - conda-forge
 dependencies:
-  - python=3.9 # Specify your desired python version
-  - ros-noetic-kdl-parser # for python 3.10
-  # - ros-noetic-ament-cmake
+  - python=3.8
+  - ros-noetic-kdl-parser
   - cxx-compiler
   - cmake
   - ninja

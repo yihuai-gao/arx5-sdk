@@ -16,7 +16,7 @@ void signal_handler(int signal) {
 int main() {
   std::signal(SIGINT, signal_handler);
   arx5_joint_controller->enable_background_send_recv();
-  arx5_joint_controller->enable_gravity_compensation("../models/arx5_gopro.urdf");
+  arx5_joint_controller->enable_gravity_compensation("../models/arx5.urdf");
   int loop_cnt = 0;
   while (true) {
     JointState state = arx5_joint_controller->get_state();

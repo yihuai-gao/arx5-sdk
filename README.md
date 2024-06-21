@@ -8,12 +8,14 @@
 
 ## Build & Install
 ```bash
-mamba env create -f conda_environment.yaml # for python3.9, or py310_environment.yaml for python3.10
-conda activate arx # arx-py310
+mamba env create -f conda_environments/py310_environment 
+# Currently available python versions: 3.8, 3.9, 3.10, 3.11 
+conda activate arx-py310
 mkdir build && cd build
 cmake ..
 make -j
 # At this point, you should be able to run test scripts below.
+# To install the C++ package your system, run:
 make install
 ```
 
