@@ -36,7 +36,7 @@ def main():
     # gain.kd()[:] = [0.001, 0.01, 0.01, 0.01, 0.01, 0.01]
 
     gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
-    gain.kd()[:] = np.array([1.5, 1.5, 1.5, 2.0, 2.0, 1.0])
+    gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
 
     arx5_joint_controller.set_gain(gain)
 

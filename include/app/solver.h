@@ -31,17 +31,6 @@
 #include <vector>
 #include "common.h"
 
-enum arx5_state {
-  NORMAL,
-  OUT_RANGE,
-  OUT_BOUNDARY
-};  // NORMAL：正常 OUT_RANGE：超出机械臂控制距离 OUT_BOUNDARY：关节锁死
-
-#define FORWARD 0
-#define DOWNWARD 1
-
-#define filter_cmd 0.3f
-
 class Arx5Solver {
 
  public:
