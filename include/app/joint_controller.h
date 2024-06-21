@@ -65,7 +65,7 @@ struct Gain {
 
 class Arx5JointController {
  public:
-  Arx5JointController(std::string can_name);
+  Arx5JointController(std::string model, std::string can_name);
   ~Arx5JointController();
 
   void send_recv_once();
@@ -117,8 +117,10 @@ class Arx5JointController {
   void _update_output_cmd();
   int _start_time_us;
   const std::array<int, 7> _MOTOR_ID = {1, 2, 4, 5, 6, 7, 8};
-  const std::array<int, 4> _DM_MOTOR_ID = {5, 6, 7, 8};
-  const std::array<int, 3> _EC_MOTOR_ID = {1, 2, 4};
+  const std::string _MODEL;
+  const std::array<MotorType, 7> _MOTOR_TYPE;
+  // = {EC, EC, EC, DM, DM, DM, DM} for X5
+  // = {DM, DM, DM, DM, DM, DM, DM} for L5
   bool _enable_gravity_compensation = false;
   std::shared_ptr<Arx5Solver> _solver;
 };
