@@ -13,7 +13,7 @@
 
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 const Vec6d JOINT_POS_MIN =
-    (Vec6d() << -3.14, -0.005, -0.1, -1.6, -1.57, -2).finished();
+    (Vec6d() << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished();
 const Vec6d JOINT_POS_MAX =
     (Vec6d() << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished();
 const Vec6d DEFAULT_KP = (Vec6d() << 80, 80, 80, 50, 40, 20).finished();

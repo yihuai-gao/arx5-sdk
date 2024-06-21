@@ -9,8 +9,7 @@ using namespace arx;
 Arx5JointController::Arx5JointController(std::string model,
                                          std::string can_name)
     : _can_handle(can_name),
-      _logger(spdlog::stdout_color_mt(std::string("ARX_") + model + "_" +
-                                      can_name)),
+      _logger(spdlog::stdout_color_mt(model + std::string("_") + can_name)),
       _MODEL(model),
       _MOTOR_TYPE(
           model == "X5"
@@ -244,10 +243,11 @@ bool Arx5JointController::_send_recv() {
   // Send gripper command (gripper is using DM motor)
   int start_send_motor_time_us = get_time_us();
 
-  succeeded = _can_handle.send_DM_motor_cmd(
-      _MOTOR_ID[6], _gain.gripper_kp, _gain.gripper_kd,
-      _output_joint_cmd.gripper_pos, _output_joint_cmd.gripper_vel,
-      _output_joint_cmd.gripper_torque / torque_constant2);
+  double gripper_motor_pos =
+      _output_joint_cmd.gripper_pos / GRIPPER_WIDTH * _GRIPPER_OPEN_READOUT;
+  succeeded =
+      _can_handle.send_DM_motor_cmd(_MOTOR_ID[6], _gain.gripper_kp,
+                                    _gain.gripper_kd, gripper_motor_pos, 0, 0);
   int finish_send_motor_time_us = get_time_us();
 
   if (!succeeded) {
