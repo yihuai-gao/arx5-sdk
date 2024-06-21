@@ -1,6 +1,7 @@
 #include "app/joint_controller.h"
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <stdexcept>
 #include "utils.h"
 
 using namespace arx;
@@ -8,21 +9,28 @@ using namespace arx;
 Arx5JointController::Arx5JointController(std::string can_name)
     : _can_handle(can_name),
       _logger(spdlog::stdout_color_mt(std::string("ARX5_") + can_name)) {
-
-  // Enable motor 5, 6, 7
-  _can_handle.Enable_Moto(0x05);
-  usleep(1000);
-  _can_handle.Enable_Moto(0x06);
-  usleep(1000);
-  _can_handle.Enable_Moto(0x07);
-  usleep(1000);
-  _can_handle.Enable_Moto(0x08);
-  usleep(1000);
+  bool succeeded = true;
+  for (auto id : _DM_MOTOR_ID) {
+    succeeded = _can_handle.enable_DM_motor(id);
+    if (!succeeded) {
+      throw std::runtime_error("Failed to enable motor " + std::to_string(id) +
+                               ". Please check the connection.");
+    }
+    usleep(1000);
+  }
 
   Gain gain = Gain();
   gain.kd = DEFAULT_KD;
-  set_gain(gain);  // set to damping by default
-  _send_recv();
+  set_joint_cmd(JointState());  // initialize joint command to zero
+  set_gain(gain);               // set to damping by default
+  for (int i = 0; i <= 10; ++i) {
+    // make sure all the motor positions are updated
+    succeeded = _send_recv();
+    if (!succeeded) {
+      throw std::runtime_error("Failed to send and receive motor command.");
+    }
+    sleep_ms(5);
+  }
   _background_send_recv =
       std::thread(&Arx5JointController::_background_send_recv_task, this);
   _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
@@ -183,79 +191,48 @@ double Arx5JointController::get_dt_s() {
   return JOINT_CONTROLLER_DT;
 }
 
-void Arx5JointController::_send_recv() {
+bool Arx5JointController::_send_recv() {
   // TODO: in the motor documentation, there shouldn't be these torque constant. Torque will go directly into the motors
   const double torque_constant1 = 1.4;    // Nm/A, only for the bottom 3 motors
   const double torque_constant2 = 0.424;  // Nm/A, only for the top 3 motors
-
+  bool succeeded = true;
   int start_time_us = get_time_us();
   _update_output_cmd();
   int update_cmd_time_us = get_time_us();
   int communicate_sleep_us = 150;
 
-  int start_send_motor_0_time_us = get_time_us();
-  _can_handle.Send_moto_Cmd1(_MOTOR_ID[0], _gain.kp[0], _gain.kd[0],
-                             _output_joint_cmd.pos[0], _output_joint_cmd.vel[0],
-                             _output_joint_cmd.torque[0] / torque_constant1);
-  int send_motor_0_time_us = get_time_us();
+  for (int i = 0; i < _EC_MOTOR_ID.size(); i++) {
+    int start_send_motor_time_us = get_time_us();
+    succeeded = _can_handle.send_EC_motor_cmd(
+        _MOTOR_ID[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+        _output_joint_cmd.vel[i],
+        _output_joint_cmd.torque[i] / torque_constant1);
+    if (!succeeded) {
+      _logger->error("Failed to send motor command to EC motor {}",
+                     _MOTOR_ID[i]);
+      return false;
+    }
+    int finish_send_motor_time_us = get_time_us();
 
-  sleep_us(communicate_sleep_us -
-           (send_motor_0_time_us - start_send_motor_0_time_us));
+    sleep_us(communicate_sleep_us -
+             (finish_send_motor_time_us - start_send_motor_time_us));
+  }
 
-  int start_send_motor_1_time_us = get_time_us();
-  _can_handle.Send_moto_Cmd1(_MOTOR_ID[1], _gain.kp[1], _gain.kd[1],
-                             _output_joint_cmd.pos[1], _output_joint_cmd.vel[1],
-                             _output_joint_cmd.torque[1] / torque_constant1);
-  int send_motor_1_time_us = get_time_us();
-
-  sleep_us(communicate_sleep_us -
-           (send_motor_1_time_us - start_send_motor_1_time_us));
-
-  int start_send_motor_2_time_us = get_time_us();
-  _can_handle.Send_moto_Cmd1(_MOTOR_ID[2], _gain.kp[2], _gain.kd[2],
-                             _output_joint_cmd.pos[2], _output_joint_cmd.vel[2],
-                             _output_joint_cmd.torque[2] / torque_constant1);
-  int send_motor_2_time_us = get_time_us();
-
-  sleep_us(communicate_sleep_us -
-           (send_motor_2_time_us - start_send_motor_2_time_us));
-
-  int start_send_motor_3_time_us = get_time_us();
-  _can_handle.Send_moto_Cmd2(_MOTOR_ID[3], _gain.kp[3], _gain.kd[3],
-                             _output_joint_cmd.pos[3], _output_joint_cmd.vel[3],
-                             _output_joint_cmd.torque[3] / torque_constant2);
-  int send_motor_3_time_us = get_time_us();
-
-  sleep_us(communicate_sleep_us -
-           (send_motor_3_time_us - start_send_motor_3_time_us));
-
-  int start_send_motor_4_time_us = get_time_us();
-  _can_handle.Send_moto_Cmd2(_MOTOR_ID[4], _gain.kp[4], _gain.kd[4],
-                             _output_joint_cmd.pos[4], _output_joint_cmd.vel[4],
-                             _output_joint_cmd.torque[4] / torque_constant2);
-  int send_motor_4_time_us = get_time_us();
-
-  sleep_us(communicate_sleep_us -
-           (send_motor_4_time_us - start_send_motor_4_time_us));
-
-  int start_send_motor_5_time_us = get_time_us();
-  _can_handle.Send_moto_Cmd2(_MOTOR_ID[5], _gain.kp[5], _gain.kd[5],
-                             _output_joint_cmd.pos[5], _output_joint_cmd.vel[5],
-                             _output_joint_cmd.torque[5] / torque_constant2);
-  int send_motor_5_time_us = get_time_us();
-
-  sleep_us(communicate_sleep_us -
-           (send_motor_5_time_us - start_send_motor_5_time_us));
-
-  int start_send_motor_6_time_us = get_time_us();
-  double gripper_motor_pos =
-      _output_joint_cmd.gripper_pos / GRIPPER_WIDTH * _GRIPPER_OPEN_READOUT;
-  _can_handle.Send_moto_Cmd2(_MOTOR_ID[6], _gain.gripper_kp, _gain.gripper_kd,
-                             gripper_motor_pos, 0, 0);
-  int send_motor_6_time_us = get_time_us();
-
-  sleep_us(communicate_sleep_us -
-           (send_motor_6_time_us - start_send_motor_6_time_us));
+  for (int i = 7 - _DM_MOTOR_ID.size(); i < 7; i++) {
+    int start_send_motor_time_us = get_time_us();
+    succeeded = _can_handle.send_DM_motor_cmd(
+        _MOTOR_ID[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+        _output_joint_cmd.vel[i],
+        _output_joint_cmd.torque[i] / torque_constant2);
+    int finish_send_motor_time_us = get_time_us();
+    if (!succeeded) {
+      _logger->error("Failed to send motor command to DM motor {}",
+                     _MOTOR_ID[i]);
+      return false;
+    }
+    sleep_us(communicate_sleep_us -
+             (finish_send_motor_time_us - start_send_motor_time_us));
+  }
 
   int start_get_motor_msg_time_us = get_time_us();
   std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
@@ -298,6 +275,7 @@ void Arx5JointController::_send_recv() {
   _joint_state.gripper_torque =
       motor_msg[7].current_actual_float * torque_constant2;
   _joint_state.timestamp = get_timestamp();
+  return true;
 }
 
 void Arx5JointController::_check_current() {
@@ -473,7 +451,7 @@ void Arx5JointController::calibrate_gripper() {
   _background_send_recv_running = false;
   usleep(1000);
   for (int i = 0; i < 10; ++i) {
-    _can_handle.Send_moto_Cmd2(8, 0, 0, 0, 0, 0);
+    _can_handle.send_DM_motor_cmd(8, 0, 0, 0, 0, 0);
     usleep(400);
   }
   _logger->info(
@@ -483,7 +461,7 @@ void Arx5JointController::calibrate_gripper() {
   _can_handle.Set_Zero(0x08);
   usleep(400);
   for (int i = 0; i < 10; ++i) {
-    _can_handle.Send_moto_Cmd2(8, 0, 0, 0, 0, 0);
+    _can_handle.send_DM_motor_cmd(8, 0, 0, 0, 0, 0);
     usleep(400);
   }
   usleep(400);
@@ -493,7 +471,7 @@ void Arx5JointController::calibrate_gripper() {
   std::cin.get();
 
   for (int i = 0; i < 10; ++i) {
-    _can_handle.Send_moto_Cmd2(8, 0, 0, 0, 0, 0);
+    _can_handle.send_DM_motor_cmd(8, 0, 0, 0, 0, 0);
     usleep(400);
   }
   std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
@@ -514,9 +492,9 @@ void Arx5JointController::calibrate_joint(int joint_id) {
   int motor_id = _MOTOR_ID[joint_id];
   for (int i = 0; i < 10; ++i) {
     if (joint_id < 3)
-      _can_handle.Send_moto_Cmd1(motor_id, 0, 0, 0, 0, 0);
+      _can_handle.send_EC_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     else
-      _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
+      _can_handle.send_DM_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     usleep(400);
   }
   _logger->info(
@@ -531,9 +509,9 @@ void Arx5JointController::calibrate_joint(int joint_id) {
   usleep(400);
   for (int i = 0; i < 10; ++i) {
     if (joint_id < 3)
-      _can_handle.Send_moto_Cmd1(motor_id, 0, 0, 0, 0, 0);
+      _can_handle.send_EC_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     else
-      _can_handle.Send_moto_Cmd2(motor_id, 0, 0, 0, 0, 0);
+      _can_handle.send_DM_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     usleep(400);
   }
   usleep(400);
@@ -559,4 +537,3 @@ void Arx5JointController::disable_gravity_compensation() {
   _enable_gravity_compensation = false;
   _solver.reset();
 }
-
