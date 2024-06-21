@@ -1,17 +1,18 @@
-name: arx
+name: arx-py39
 channels:
   - robostack-staging
   - conda-forge
 dependencies:
+  - python=3.9
+  - ros-noetic-kdl-parser
   - cxx-compiler
   - cmake
   - ninja
-  - ros-noetic-kdl-parser
   - orocos-kdl
   - eigen
   - boost
   - spdlog
   - pybind11
   - numpy
-  - pyzmq
   - click
+  - pyzmq

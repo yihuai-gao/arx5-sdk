@@ -1,5 +1,5 @@
 {
-    "C_Cpp.clang_format_style": "Visual Studio",
+    "C_Cpp.clang_format_style": "file",
     "editor.formatOnSave": true,
     "files.associations": {
         "*.ino": "cpp",
@@ -90,9 +90,10 @@
     },
     "python.analysis.extraPaths": [
         "python",
-        "/opt/ros/humble/lib/python3.10/site-packages", 
+        "/opt/ros/humble/lib/python3.10/site-packages",
     ],
     "cSpell.words": [
         "urdf"
-    ]
+    ],
+    "C_Cpp.formatting": "clangFormat"
 }
