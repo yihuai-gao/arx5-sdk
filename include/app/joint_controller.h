@@ -100,6 +100,8 @@ class Arx5JointController {
   void _background_send_recv_task();
   bool _send_recv();
   void _check_current();
+  void _check_joint_state_sanity();
+  void _enter_emergency_state();
   int _over_current_cnt = 0;
   JointState _output_joint_cmd;
   JointState _input_joint_cmd;

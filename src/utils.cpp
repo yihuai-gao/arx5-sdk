@@ -30,3 +30,31 @@ Vec6d MovingAverage6d::filter(Vec6d new_data) {
   _window_index = (_window_index + 1) % _window_size;
   return _window_sum / _window_size;
 }
+
+std::string vec2str(const Eigen::VectorXd& vec, int precision) {
+  std::string str = "[";
+  for (int i = 0; i < vec.size(); i++) {
+    char buffer[50];
+    std::sprintf(buffer, "%.*f", precision, vec(i));
+    str += buffer;
+    if (i < vec.size() - 1) {
+      str += ", ";
+    }
+  }
+  str += "]";
+  return str;
+}
+
+std::string vec2str(const Vec6d& vec, int precision) {
+  std::string str = "[";
+  for (int i = 0; i < vec.size(); i++) {
+    char buffer[50];
+    std::sprintf(buffer, "%.*f", precision, vec(i));
+    str += buffer;
+    if (i < vec.size() - 1) {
+      str += ", ";
+    }
+  }
+  str += "]";
+  return str;
+}

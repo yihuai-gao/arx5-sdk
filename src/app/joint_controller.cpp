@@ -20,7 +20,8 @@ Arx5JointController::Arx5JointController(std::string model,
                     {MotorType::DM, MotorType::DM, MotorType::DM, MotorType::DM,
                      MotorType::DM, MotorType::DM, MotorType::DM})) {
   if (model != "X5" && model != "L5") {
-    throw std::invalid_argument("Model " + model + " is not supported.");
+    throw std::invalid_argument("Model " + model +
+                                " is not supported. Supported models: X5, L5");
   }
   bool succeeded = true;
   for (int i = 0; i < 7; ++i) {
@@ -35,6 +36,7 @@ Arx5JointController::Arx5JointController(std::string model,
       usleep(1000);
     }
   }
+  _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
 
   Gain gain = Gain();
   gain.kd = DEFAULT_KD;
@@ -48,9 +50,17 @@ Arx5JointController::Arx5JointController(std::string model,
     }
     sleep_ms(5);
   }
+  // Check whether any motor has non-zero position
+  if (_joint_state.pos == Vec6d::Zero()) {
+    _logger->error(
+        "All motors are not initialized. Please check the "
+        "connection or power of the arm.");
+    throw std::runtime_error(
+        "All motors are not initialized. Please check the "
+        "connection or power of the arm.");
+  }
   _background_send_recv =
       std::thread(&Arx5JointController::_background_send_recv_task, this);
-  _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
   _logger->info("Background send_recv task is running at ID: {}",
                 syscall(SYS_gettid));
 }
@@ -131,7 +141,14 @@ void Arx5JointController::_update_output_cmd() {
     if (_gain.gripper_kp > 0) {
       double gripper_delta_pos =
           _input_joint_cmd.gripper_pos - prev_output_cmd.gripper_pos;
-      if (std::abs(gripper_delta_pos) / dt > GRIPPER_VEL_MAX) {
+      if (std::abs(gripper_delta_pos) > 0.01) {
+        _logger->error(
+            "Gripper pos cmd is too far from the current pos: {:.3f} to "
+            "{:.3f}. Gripper target position is not updated",
+            _joint_state.gripper_pos, _input_joint_cmd.gripper_pos);
+        _output_joint_cmd.gripper_pos = prev_output_cmd.gripper_pos;
+
+      } else if (std::abs(gripper_delta_pos) / dt > GRIPPER_VEL_MAX) {
         _output_joint_cmd.gripper_pos =
             prev_output_cmd.gripper_pos + GRIPPER_VEL_MAX * dt *
                                               gripper_delta_pos /
@@ -301,6 +318,20 @@ bool Arx5JointController::_send_recv() {
   return true;
 }
 
+void Arx5JointController::_check_joint_state_sanity() {
+  for (int i = 0; i < 6; ++i) {
+    if (std::abs(_joint_state.pos[i]) > JOINT_POS_MAX[i] + 3.14 ||
+        std::abs(_joint_state.pos[i]) < JOINT_POS_MIN[i] - 3.14) {
+      _logger->error("Joint {} pos data error: {:.3f}", i, _joint_state.pos[i]);
+      _enter_emergency_state();
+    }
+    if (std::abs(_joint_state.torque[i]) > 100 * JOINT_TORQUE_MAX[i]) {
+      _logger->error("Joint {} torque data error: {:.3f}", i,
+                     _joint_state.torque[i]);
+      _enter_emergency_state();
+    }
+  }
+}
 void Arx5JointController::_check_current() {
   bool over_current = false;
   for (int i = 0; i < 6; ++i) {
@@ -322,20 +353,24 @@ void Arx5JointController::_check_current() {
       _logger->error(
           "Over current detected, robot is set to damping. Please restart the "
           "program.");
-      Gain damping_gain;
-      damping_gain.kd = DEFAULT_KD;
-      damping_gain.kd[1] *= 3;
-      damping_gain.kd[2] *= 3;
-      damping_gain.kd[3] *= 1.5;
-      set_gain(damping_gain);
-
-      while (true) {
-        _send_recv();
-        sleep_ms(5);
-      }
+      _enter_emergency_state();
     }
   } else {
     _over_current_cnt = 0;
+  }
+}
+
+void Arx5JointController::_enter_emergency_state() {
+  Gain damping_gain;
+  damping_gain.kd = DEFAULT_KD;
+  damping_gain.kd[1] *= 3;
+  damping_gain.kd[2] *= 3;
+  damping_gain.kd[3] *= 1.5;
+  set_gain(damping_gain);
+
+  while (true) {
+    _send_recv();
+    sleep_ms(5);
   }
 }
 
@@ -345,6 +380,7 @@ void Arx5JointController::_background_send_recv_task() {
     if (_background_send_recv_running) {
       _send_recv();
       _check_current();
+      _check_joint_state_sanity();
     }
     int elapsed_time_us = get_time_us() - start_time_us;
     int sleep_time_us = int(JOINT_CONTROLLER_DT * 1e6) - elapsed_time_us;
@@ -389,6 +425,25 @@ Gain Arx5JointController::get_gain() {
 
 void Arx5JointController::set_gain(Gain new_gain) {
   // std::cout << "Set new gain: kp: " << new_gain.kp.transpose() << ", kd: " << new_gain.kd.transpose() << std::endl;
+
+  // Make sure the robot doesn't jump when setting kp to non-zero
+  if (_gain.kp.isZero() && !new_gain.kp.isZero()) {
+    double max_pos_error =
+        (_joint_state.pos - _output_joint_cmd.pos).cwiseAbs().maxCoeff();
+    double error_threshold = 0.2;
+    if (max_pos_error > error_threshold) {
+      _logger->error(
+          "Cannot set kp to non-zero when the joint pos cmd is far from "
+          "current pos.");
+      _logger->error("Current pos: {}, cmd pos: {}, threshold: {}",
+                     vec2str(_joint_state.pos), vec2str(_output_joint_cmd.pos),
+                     error_threshold);
+      _background_send_recv_running = false;
+      throw std::runtime_error(
+          "Cannot set kp to non-zero when the joint pos cmd is far from "
+          "current pos.");
+    }
+  }
   _gain = new_gain;
 }
 
@@ -407,7 +462,13 @@ void Arx5JointController::reset_to_home() {
   Gain target_gain =
       Gain(DEFAULT_KP, DEFAULT_KD, DEFAULT_GRIPPER_KP, DEFAULT_GRIPPER_KD);
   JointState target_state;
-
+  if (init_state.pos == Vec6d::Zero()) {
+    _logger->error(
+        "Motor positions are not initialized. Please check the connection.");
+    _background_send_recv_running = false;
+    throw std::runtime_error(
+        "Motor positions are not initialized. Please check the connection.");
+  }
   // calculate the maximum joint position error
   double max_pos_error = (init_state.pos - Vec6d::Zero()).cwiseAbs().maxCoeff();
   max_pos_error =
@@ -424,9 +485,9 @@ void Arx5JointController::reset_to_home() {
     double alpha = double(i) / step_num;
     gain = init_gain * (1 - alpha) + target_gain * alpha;
     cmd = init_state * (1 - alpha) + target_state * alpha;
-    set_gain(gain);
     set_joint_cmd(cmd);
     sleep_ms(5);
+    set_gain(gain);
   }
   // Hardcode 0.5 s
   sleep_ms(500);
