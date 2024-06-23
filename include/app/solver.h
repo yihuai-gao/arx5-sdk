@@ -29,7 +29,7 @@
 #include <kdl/tree.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 #include <vector>
-#include "common.h"
+namespace arx {
 
 class Arx5Solver {
 
@@ -37,10 +37,15 @@ class Arx5Solver {
   Arx5Solver(std::string urdf_path);
   ~Arx5Solver() = default;
 
-  Vec6d inverse_dynamics(Vec6d joint_pos, Vec6d joint_vel, Vec6d joint_acc);
-  std::tuple<bool, Vec6d> inverse_kinematics(Vec6d target_pose_6d,
-                                             Vec6d current_joint_pos);
-  Vec6d forward_kinematics(Vec6d joint_pos);
+  Eigen::Matrix<double, 6, 1> inverse_dynamics(
+      Eigen::Matrix<double, 6, 1> joint_pos,
+      Eigen::Matrix<double, 6, 1> joint_vel,
+      Eigen::Matrix<double, 6, 1> joint_acc);
+  std::tuple<bool, Eigen::Matrix<double, 6, 1>> inverse_kinematics(
+      Eigen::Matrix<double, 6, 1> target_pose_6d,
+      Eigen::Matrix<double, 6, 1> current_joint_pos);
+  Eigen::Matrix<double, 6, 1> forward_kinematics(
+      Eigen::Matrix<double, 6, 1> joint_pos);
 
  private:
   // parameters for ik solver
@@ -53,6 +58,8 @@ class Arx5Solver {
   KDL::Tree _tree;
   KDL::Chain _chain;
   KDL::Chain _chain_without_end_effector;
+  Eigen::Matrix<double, 6, 1> _joint_pos_max;
+  Eigen::Matrix<double, 6, 1> _joint_pos_min;
 
   std::shared_ptr<KDL::ChainIkSolverPos_LMA> _ik_solver;
   std::shared_ptr<KDL::ChainFkSolverPos_recursive> _fk_solver;
@@ -63,5 +70,6 @@ class Arx5Solver {
 
   KDL::Frame _init_frame;
 };
+}  // namespace arx
 
 #endif

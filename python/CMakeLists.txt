@@ -13,7 +13,6 @@ find_package(Boost REQUIRED COMPONENTS container)
 pybind11_add_module(arx5_interface 
 arx5_pybind.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/../src/app/joint_controller.cpp
-${CMAKE_CURRENT_SOURCE_DIR}/../src/app/high_level.cpp
 ${CMAKE_CURRENT_SOURCE_DIR}/../src/utils.cpp
 )
 

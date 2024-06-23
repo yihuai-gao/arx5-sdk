@@ -2,6 +2,8 @@
 #define UTILS_H
 #include <Eigen/Core>
 #include "app/common.h"
+
+namespace arx {
 class MovingAverage6d {
  public:
   MovingAverage6d(int window_size);
@@ -18,7 +20,8 @@ class MovingAverage6d {
   Vec6d* _window;
 };
 
-std::string vec2str(const Eigen::VectorXd& vec, int precision = 3);
-std::string vec2str(const Vec6d& vec, int precision = 3);
+// std::string vec2str(const Eigen::VectorXd& vec, int precision = 3);
 
+}  // namespace arx
+std::string vec2str(const Eigen::Matrix<double, 6, 1>& vec, int precision = 3);
 #endif
