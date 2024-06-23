@@ -1,7 +1,6 @@
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-#include "app/high_level.h"
 #include "app/joint_controller.h"
 #include "spdlog/spdlog.h"
 #include "utils.h"
@@ -9,18 +8,6 @@ namespace py = pybind11;
 using namespace arx;
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 PYBIND11_MODULE(arx5_interface, m) {
-  m.attr("JOINT_POS_MIN") = JOINT_POS_MIN;
-  m.attr("JOINT_POS_MAX") = JOINT_POS_MAX;
-  m.attr("DEFAULT_KP") = DEFAULT_KP;
-  m.attr("DEFAULT_KD") = DEFAULT_KD;
-  m.attr("DEFAULT_GRIPPER_KP") = DEFAULT_GRIPPER_KP;
-  m.attr("DEFAULT_GRIPPER_KD") = DEFAULT_GRIPPER_KD;
-  m.attr("JOINT_VEL_MAX") = JOINT_VEL_MAX;
-  m.attr("JOINT_TORQUE_MAX") = JOINT_TORQUE_MAX;
-  m.attr("EE_VEL_MAX") = EE_VEL_MAX;
-  m.attr("GRIPPER_VEL_MAX") = GRIPPER_VEL_MAX;
-  m.attr("GRIPPER_WIDTH") = GRIPPER_WIDTH;
-  m.attr("JOINT_CONTROLLER_DT") = JOINT_CONTROLLER_DT;
   py::enum_<spdlog::level::level_enum>(m, "LogLevel")
       .value("TRACE", spdlog::level::level_enum::trace)
       .value("DEBUG", spdlog::level::level_enum::debug)
@@ -79,32 +66,32 @@ PYBIND11_MODULE(arx5_interface, m) {
       .def("set_log_level", &Arx5JointController::set_log_level)
       .def("calibrate_joint", &Arx5JointController::calibrate_joint)
       .def("calibrate_gripper", &Arx5JointController::calibrate_gripper);
-  py::class_<HighState>(m, "HighState")
-      .def(py::init<>())
-      .def(py::init<Vec6d, double>())
-      .def_readwrite("timestamp", &HighState::timestamp)
-      .def_readwrite("gripper_pos", &HighState::gripper_pos)
-      .def_readwrite("gripper_vel", &HighState::gripper_vel)
-      .def_readwrite("gripper_torque", &HighState::gripper_torque)
-      .def("__add__", [](const HighState& self,
-                         const HighState& other) { return self + other; })
-      .def("__mul__", [](const HighState& self,
-                         const float& scalar) { return self * scalar; })
-      .def("pose_6d", &HighState::get_pose_6d_ref,
-           py::return_value_policy::reference);
-  py::class_<Arx5HighLevel>(m, "Arx5HighLevel")
-      .def(py::init<const std::string&, const std::string&,
-                    const std::string&>())
-      .def("set_high_cmd", &Arx5HighLevel::set_high_cmd)
-      .def("get_high_state", &Arx5HighLevel::get_high_state)
-      .def("get_joint_state", &Arx5HighLevel::get_joint_state)
-      .def("get_high_cmd", &Arx5HighLevel::get_high_cmd)
-      .def("get_joint_cmd", &Arx5HighLevel::get_joint_cmd)
-      .def("get_timestamp", &Arx5HighLevel::get_timestamp)
-      .def("set_gain", &Arx5HighLevel::set_gain)
-      .def("get_gain", &Arx5HighLevel::get_gain)
-      .def("reset_to_home", &Arx5HighLevel::reset_to_home)
-      .def("set_to_damping", &Arx5HighLevel::set_to_damping);
+  //   py::class_<HighState>(m, "HighState")
+  //       .def(py::init<>())
+  //       .def(py::init<Vec6d, double>())
+  //       .def_readwrite("timestamp", &HighState::timestamp)
+  //       .def_readwrite("gripper_pos", &HighState::gripper_pos)
+  //       .def_readwrite("gripper_vel", &HighState::gripper_vel)
+  //       .def_readwrite("gripper_torque", &HighState::gripper_torque)
+  //       .def("__add__", [](const HighState& self,
+  //                          const HighState& other) { return self + other; })
+  //       .def("__mul__", [](const HighState& self,
+  //                          const float& scalar) { return self * scalar; })
+  //       .def("pose_6d", &HighState::get_pose_6d_ref,
+  //            py::return_value_policy::reference);
+  //   py::class_<Arx5HighLevel>(m, "Arx5HighLevel")
+  //       .def(py::init<const std::string&, const std::string&,
+  //                     const std::string&>())
+  //       .def("set_high_cmd", &Arx5HighLevel::set_high_cmd)
+  //       .def("get_high_state", &Arx5HighLevel::get_high_state)
+  //       .def("get_joint_state", &Arx5HighLevel::get_joint_state)
+  //       .def("get_high_cmd", &Arx5HighLevel::get_high_cmd)
+  //       .def("get_joint_cmd", &Arx5HighLevel::get_joint_cmd)
+  //       .def("get_timestamp", &Arx5HighLevel::get_timestamp)
+  //       .def("set_gain", &Arx5HighLevel::set_gain)
+  //       .def("get_gain", &Arx5HighLevel::get_gain)
+  //       .def("reset_to_home", &Arx5HighLevel::reset_to_home)
+  //       .def("set_to_damping", &Arx5HighLevel::set_to_damping);
   py::class_<Arx5Solver>(m, "Arx5Solver")
       .def(py::init<const std::string&>())
       .def("inverse_dynamics", &Arx5Solver::inverse_dynamics)

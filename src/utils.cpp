@@ -3,6 +3,8 @@
 #include <cstdarg>
 #include <cstdio>
 
+namespace arx {
+
 MovingAverage6d::MovingAverage6d(int window_size) {
   set_window_size(window_size);
   reset();
@@ -31,21 +33,22 @@ Vec6d MovingAverage6d::filter(Vec6d new_data) {
   return _window_sum / _window_size;
 }
 
-std::string vec2str(const Eigen::VectorXd& vec, int precision) {
-  std::string str = "[";
-  for (int i = 0; i < vec.size(); i++) {
-    char buffer[50];
-    std::sprintf(buffer, "%.*f", precision, vec(i));
-    str += buffer;
-    if (i < vec.size() - 1) {
-      str += ", ";
-    }
-  }
-  str += "]";
-  return str;
-}
+// std::string vec2str(const Eigen::VectorXd& vec, int precision) {
+//   std::string str = "[";
+//   for (int i = 0; i < vec.size(); i++) {
+//     char buffer[50];
+//     std::sprintf(buffer, "%.*f", precision, vec(i));
+//     str += buffer;
+//     if (i < vec.size() - 1) {
+//       str += ", ";
+//     }
+//   }
+//   str += "]";
+//   return str;
+// }
+}  // namespace arx
 
-std::string vec2str(const Vec6d& vec, int precision) {
+std::string vec2str(const Eigen::Matrix<double, 6, 1>& vec, int precision) {
   std::string str = "[";
   for (int i = 0; i < vec.size(); i++) {
     char buffer[50];

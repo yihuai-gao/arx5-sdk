@@ -17,52 +17,6 @@
 
 namespace arx {
 
-struct JointState {
-  double timestamp = 0.0f;
-  Vec6d pos;
-  Vec6d vel;
-  Vec6d torque;
-  double gripper_pos = 0.0f;     // m; 0 for close, GRIPPER_WIDTH for fully open
-  double gripper_vel = 0.0f;     // s^{-1}
-  double gripper_torque = 0.0f;  // Nm
-  JointState()
-      : pos(Vec6d::Zero()), vel(Vec6d::Zero()), torque(Vec6d::Zero()) {}
-  JointState(Vec6d pos, Vec6d vel, Vec6d torque, double gripper_pos)
-      : pos(pos), vel(vel), torque(torque), gripper_pos(gripper_pos) {}
-  JointState operator+(const JointState& other) const {
-    return JointState(pos + other.pos, vel + other.vel, torque + other.torque,
-                      gripper_pos + other.gripper_pos);
-  }
-  JointState operator*(const double& scalar) const {
-    return JointState(pos * scalar, vel * scalar, torque * scalar,
-                      gripper_pos * scalar);
-  }
-  // For pybind11 to update values
-  Vec6d& get_pos_ref() { return pos; }
-  Vec6d& get_vel_ref() { return vel; }
-  Vec6d& get_torque_ref() { return torque; }
-};
-
-struct Gain {
-  Vec6d kp;
-  Vec6d kd;
-  float gripper_kp = 0.0f;
-  float gripper_kd = 0.0f;
-  Gain() : kp(Vec6d::Zero()), kd(Vec6d::Zero()) {}
-  Gain(Vec6d kp, Vec6d kd, float gripper_kp, float gripper_kd)
-      : kp(kp), kd(kd), gripper_kp(gripper_kp), gripper_kd(gripper_kd) {}
-  Gain operator+(const Gain& other) const {
-    return Gain(kp + other.kp, kd + other.kd, gripper_kp + other.gripper_kp,
-                gripper_kd + other.gripper_kd);
-  }
-  Gain operator*(const double& scalar) const {
-    return Gain(kp * scalar, kd * scalar, gripper_kp * scalar,
-                gripper_kd * scalar);
-  }
-  Vec6d& get_kp_ref() { return kp; }
-  Vec6d& get_kd_ref() { return kd; }
-};
-
 class Arx5JointController {
  public:
   Arx5JointController(std::string model, std::string can_name);
@@ -90,14 +44,14 @@ class Arx5JointController {
   void calibrate_joint(int joint_id);
   double get_timestamp();
   double get_dt_s();
+  RobotConfig get_robot_config();
 
   void set_log_level(spdlog::level::level_enum level);
 
-  bool is_damping();
-
  private:
-  const double _GRIPPER_OPEN_READOUT = 4.8;
-  void _background_send_recv_task();
+  const RobotConfig _ROBOT_CONFIG;
+  const double _CONTROLLER_DT = 0.002;
+  void _background_send_recv();
   bool _send_recv();
   void _check_current();
   void _check_joint_state_sanity();
@@ -109,7 +63,7 @@ class Arx5JointController {
   Gain _gain;
   ArxCan _can_handle;
   std::shared_ptr<spdlog::logger> _logger;
-  std::thread _background_send_recv;
+  std::thread _background_send_recv_thread;
   bool _background_send_recv_running = false;
   bool _destroy_background_threads = false;
   std::mutex _cmd_mutex;
@@ -118,11 +72,6 @@ class Arx5JointController {
   bool _enable_torque_clipping = true;
   void _update_output_cmd();
   int _start_time_us;
-  const std::array<int, 7> _MOTOR_ID = {1, 2, 4, 5, 6, 7, 8};
-  const std::string _MODEL;
-  const std::array<MotorType, 7> _MOTOR_TYPE;
-  // = {EC, EC, EC, DM, DM, DM, DM} for X5
-  // = {DM, DM, DM, DM, DM, DM, DM} for L5
   bool _enable_gravity_compensation = false;
   std::shared_ptr<Arx5Solver> _solver;
 };
