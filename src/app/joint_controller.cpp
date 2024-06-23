@@ -141,14 +141,7 @@ void Arx5JointController::_update_output_cmd() {
     if (_gain.gripper_kp > 0) {
       double gripper_delta_pos =
           _input_joint_cmd.gripper_pos - prev_output_cmd.gripper_pos;
-      if (std::abs(gripper_delta_pos) > 0.01) {
-        _logger->error(
-            "Gripper pos cmd is too far from the current pos: {:.3f} to "
-            "{:.3f}. Gripper target position is not updated",
-            _joint_state.gripper_pos, _input_joint_cmd.gripper_pos);
-        _output_joint_cmd.gripper_pos = prev_output_cmd.gripper_pos;
-
-      } else if (std::abs(gripper_delta_pos) / dt > GRIPPER_VEL_MAX) {
+      if (std::abs(gripper_delta_pos) / dt > GRIPPER_VEL_MAX) {
         _output_joint_cmd.gripper_pos =
             prev_output_cmd.gripper_pos + GRIPPER_VEL_MAX * dt *
                                               gripper_delta_pos /
@@ -322,12 +315,22 @@ void Arx5JointController::_check_joint_state_sanity() {
   for (int i = 0; i < 6; ++i) {
     if (std::abs(_joint_state.pos[i]) > JOINT_POS_MAX[i] + 3.14 ||
         std::abs(_joint_state.pos[i]) < JOINT_POS_MIN[i] - 3.14) {
-      _logger->error("Joint {} pos data error: {:.3f}", i, _joint_state.pos[i]);
+      _logger->error(
+          "Joint {} pos data error: {:.3f}. Please restart the program.", i,
+          _joint_state.pos[i]);
+      _enter_emergency_state();
+    }
+    if (std::abs(_input_joint_cmd.pos[i]) > JOINT_POS_MAX[i] + 3.14 ||
+        std::abs(_input_joint_cmd.pos[i]) < JOINT_POS_MIN[i] - 3.14) {
+      _logger->error(
+          "Joint {} command data error: {:.3f}. Please restart the program.", i,
+          _input_joint_cmd.pos[i]);
       _enter_emergency_state();
     }
     if (std::abs(_joint_state.torque[i]) > 100 * JOINT_TORQUE_MAX[i]) {
-      _logger->error("Joint {} torque data error: {:.3f}", i,
-                     _joint_state.torque[i]);
+      _logger->error(
+          "Joint {} torque data error: {:.3f}. Please restart the program.", i,
+          _joint_state.torque[i]);
       _enter_emergency_state();
     }
   }
@@ -378,9 +381,9 @@ void Arx5JointController::_background_send_recv_task() {
   while (!_destroy_background_threads) {
     int start_time_us = get_time_us();
     if (_background_send_recv_running) {
-      _send_recv();
       _check_current();
       _check_joint_state_sanity();
+      _send_recv();
     }
     int elapsed_time_us = get_time_us() - start_time_us;
     int sleep_time_us = int(JOINT_CONTROLLER_DT * 1e6) - elapsed_time_us;
