@@ -3,16 +3,32 @@ import numpy as np
 import numpy.typing as npt
 from enum import Enum
 
-JOINT_POS_MIN: npt.NDArray[np.float64]
-JOINT_POS_MAX: npt.NDArray[np.float64]
-DEFAULT_KP: npt.NDArray[np.float64]
-DEFAULT_KD: npt.NDArray[np.float64]
-DEFAULT_GRIPPER_KP: float
-DEFAULT_GRIPPER_KD: float
-JOINT_VEL_MAX: npt.NDArray[np.float64]
-GRIPPER_VEL_MAX: float
-GRIPPER_WIDTH: float
-JOINT_CONTROLLER_DT: float
+class MotorType:
+    DM: "MotorType"
+    EC: "MotorType"
+
+class RobotConfig:
+    def __init__(self, model: str, controller_dt: float) -> None: ...
+    joint_pos_min: np.ndarray
+    joint_pos_max: np.ndarray
+    default_kp: np.ndarray
+    default_kd: np.ndarray
+    joint_vel_max: np.ndarray
+    joint_torque_max: np.ndarray
+    ee_vel_max: np.ndarray
+    gripper_vel_max: float
+    gripper_torque_max: float
+    gripper_width: float
+    default_gripper_kp: float
+    default_gripper_kd: float
+    over_current_cnt_max: int
+    gripper_open_readout: float
+    joint_dof: int
+    motor_id: list[int]
+    model: str
+    motor_type: list[MotorType]
+    controller_dt: float
+
 
 class LogLevel:
     TRACE: "LogLevel"
@@ -63,13 +79,6 @@ class JointState:
     def torque(self) -> npt.NDArray[np.float64]: ...
 
 class Arx5JointController:
-    JOINT_POS_MIN: npt.NDArray[np.float64]
-    JOINT_POS_MAX: npt.NDArray[np.float64]
-    DEFAULT_KP: npt.NDArray[np.float64]
-    DEFAULT_KD: npt.NDArray[np.float64]
-    TORQUE_LIM: float
-    DEFAULT_GRIPPER_KP: float
-    DEFAULT_GRIPPER_KD: float
 
     def __init__(self, model: str, can_name: str) -> None: ...
     def send_recv_once(self) -> None: ...
@@ -83,6 +92,8 @@ class Arx5JointController:
     def get_state(self) -> JointState: ...
     def set_gain(self, gain: Gain) -> None: ...
     def get_gain(self) -> Gain: ...
+    def get_robot_config(self) -> RobotConfig: ...
+    def get_controller_dt_s(self) -> float: ...
     def clip_joint_pos(
         self, pos: npt.NDArray[np.float64]
     ) -> npt.NDArray[np.float64]: ...

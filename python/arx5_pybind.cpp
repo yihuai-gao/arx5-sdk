@@ -1,6 +1,7 @@
 #include <pybind11/eigen.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include "app/common.h"
 #include "app/joint_controller.h"
 #include "spdlog/spdlog.h"
 #include "utils.h"
@@ -60,6 +61,7 @@ PYBIND11_MODULE(arx5_interface, m) {
       .def("get_joint_cmd", &Arx5JointController::get_joint_cmd)
       .def("set_gain", &Arx5JointController::set_gain)
       .def("get_gain", &Arx5JointController::get_gain)
+      .def("get_robot_config", &Arx5JointController::get_robot_config)
       .def("clip_joint_pos", &Arx5JointController::clip_joint_pos)
       .def("reset_to_home", &Arx5JointController::reset_to_home)
       .def("set_to_damping", &Arx5JointController::set_to_damping)
@@ -97,4 +99,28 @@ PYBIND11_MODULE(arx5_interface, m) {
       .def("inverse_dynamics", &Arx5Solver::inverse_dynamics)
       .def("forward_kinematics", &Arx5Solver::forward_kinematics)
       .def("inverse_kinematics", &Arx5Solver::inverse_kinematics);
+  py::class_<RobotConfig>(m, "RobotConfig")
+      .def(py::init<const std::string&, double>())
+      .def_readwrite("joint_pos_min", &RobotConfig::joint_pos_min)
+      .def_readwrite("joint_pos_max", &RobotConfig::joint_pos_max)
+      .def_readwrite("default_kp", &RobotConfig::default_kp)
+      .def_readwrite("default_kd", &RobotConfig::default_kd)
+      .def_readwrite("joint_vel_max", &RobotConfig::joint_vel_max)
+      .def_readwrite("joint_torque_max", &RobotConfig::joint_torque_max)
+      .def_readwrite("ee_vel_max", &RobotConfig::ee_vel_max)
+      .def_readwrite("gripper_vel_max", &RobotConfig::gripper_vel_max)
+      .def_readwrite("gripper_torque_max", &RobotConfig::gripper_torque_max)
+      .def_readwrite("gripper_width", &RobotConfig::gripper_width)
+      .def_readwrite("default_gripper_kp", &RobotConfig::default_gripper_kp)
+      .def_readwrite("default_gripper_kd", &RobotConfig::default_gripper_kd)
+      .def_readwrite("over_current_cnt_max", &RobotConfig::over_current_cnt_max)
+      .def_readwrite("gripper_open_readout", &RobotConfig::gripper_open_readout)
+      .def_readwrite("joint_dof", &RobotConfig::joint_dof)
+      .def_readwrite("motor_id", &RobotConfig::motor_id)
+      .def_readwrite("model", &RobotConfig::model)
+      .def_readwrite("controller_dt", &RobotConfig::controller_dt)
+      .def_readwrite("motor_type", &RobotConfig::motor_type);
+  py::enum_<MotorType>(m, "MotorType")
+      .value("DM", MotorType::DM)
+      .value("EC", MotorType::EC);
 }
