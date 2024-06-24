@@ -22,18 +22,16 @@ def main():
     np.set_printoptions(precision=3, suppress=True)
     arx5_joint_controller = arx5.Arx5JointController("X5", "can0")
     arx5_joint_controller.set_log_level(arx5.LogLevel.DEBUG)
+    config = arx5_joint_controller.get_robot_config()
 
     arx5_joint_controller.enable_background_send_recv()
     arx5_joint_controller.reset_to_home()
-    arx5_joint_controller.enable_gravity_compensation("../models/arx5_gopro.urdf")
+    # arx5_joint_controller.enable_gravity_compensation("../models/arx5.urdf")
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
     gain = arx5.Gain()
     gain.gripper_kp = 5.0
-    gain.gripper_kd = arx5.DEFAULT_GRIPPER_KD
-
-    # gain.kp()[:] = [30.0, 30.0, 30.0, 5.0, 5.0, 3.0]
-    # gain.kd()[:] = [0.001, 0.01, 0.01, 0.01, 0.01, 0.01]
+    gain.gripper_kd = config.default_gripper_kd
 
     gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
     gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
@@ -58,7 +56,7 @@ def main():
         arm_dof_vel = JointState.vel().copy()
         # print(arm_dof_pos, arm_dof_vel)
         # print(f"gripper: {JointState.gripper_pos:.05f}")
-        time.sleep(arx5.JOINT_CONTROLLER_DT)
+        time.sleep(config.controller_dt)
 
     for i in range(step_num):
         cmd = arx5.JointState()
@@ -69,7 +67,7 @@ def main():
         arx5_joint_controller.set_joint_cmd(cmd)
         if not USE_TIMER:
             arx5_joint_controller.send_recv_once()
-        time.sleep(arx5.JOINT_CONTROLLER_DT)
+        time.sleep(config.controller_dt)
         JointState = arx5_joint_controller.get_state()
         # print(f"gripper: {JointState.gripper_pos:.05f}")
 

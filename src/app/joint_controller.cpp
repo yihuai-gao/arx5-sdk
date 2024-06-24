@@ -10,7 +10,8 @@ Arx5JointController::Arx5JointController(std::string model,
                                          std::string can_name)
     : _can_handle(can_name),
       _logger(spdlog::stdout_color_mt(model + std::string("_") + can_name)),
-      _ROBOT_CONFIG(RobotConfig(model)) {
+      _ROBOT_CONFIG(RobotConfig(model, _CONTROLLER_DT)) {
+  _logger->info("_CONTROLLER_DT: {}", _CONTROLLER_DT);
   if (model != "X5" && model != "L5") {
     throw std::invalid_argument("Model " + model +
                                 " is not supported. Supported models: X5, L5");
@@ -214,10 +215,6 @@ void Arx5JointController::_update_output_cmd() {
 
 double Arx5JointController::get_timestamp() {
   return double(get_time_us() - _start_time_us) / 1e6;
-}
-
-double Arx5JointController::get_dt_s() {
-  return _CONTROLLER_DT;
 }
 
 bool Arx5JointController::_send_recv() {

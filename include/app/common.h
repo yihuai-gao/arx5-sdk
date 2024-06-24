@@ -113,7 +113,10 @@ struct RobotConfig {
   std::string model;
   std::array<MotorType, 7> motor_type;
 
-  RobotConfig(std::string model) : model(model) {
+  double controller_dt;
+
+  RobotConfig(std::string model, double controller_dt)
+      : model(model), controller_dt(controller_dt) {
     if (model == "X5") {
       motor_id = {1, 2, 4, 5, 6, 7, 8};
       motor_type = {MotorType::EC, MotorType::EC, MotorType::EC, MotorType::DM,

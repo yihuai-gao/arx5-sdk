@@ -43,14 +43,13 @@ class Arx5JointController {
   void calibrate_gripper();
   void calibrate_joint(int joint_id);
   double get_timestamp();
-  double get_dt_s();
   RobotConfig get_robot_config();
 
   void set_log_level(spdlog::level::level_enum level);
 
  private:
-  const RobotConfig _ROBOT_CONFIG;
   const double _CONTROLLER_DT = 0.002;
+  const RobotConfig _ROBOT_CONFIG;
   void _background_send_recv();
   bool _send_recv();
   void _check_current();
