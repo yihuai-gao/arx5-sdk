@@ -20,23 +20,25 @@ def easeInOutQuad(t):
 
 def main():
     np.set_printoptions(precision=3, suppress=True)
-    arx5_joint_controller = arx5.Arx5JointController("X5", "can0")
+    arx5_joint_controller = arx5.Arx5JointController("L5", "can2")
     arx5_joint_controller.set_log_level(arx5.LogLevel.DEBUG)
     config = arx5_joint_controller.get_robot_config()
 
     arx5_joint_controller.enable_background_send_recv()
     arx5_joint_controller.reset_to_home()
-    # arx5_joint_controller.enable_gravity_compensation("../models/arx5.urdf")
+    arx5_joint_controller.enable_gravity_compensation("../models/arx5_no_gripper.urdf")
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
     gain = arx5.Gain()
     gain.gripper_kp = 5.0
     gain.gripper_kd = config.default_gripper_kd
 
-    gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
-    gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
-
+    # gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
+    # gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
     arx5_joint_controller.set_gain(gain)
+    while True:
+        time.sleep(0.1)
+
 
     step_num = 1500
     USE_TIMER = True

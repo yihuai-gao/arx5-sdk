@@ -62,7 +62,6 @@ PYBIND11_MODULE(arx5_interface, m) {
       .def("set_gain", &Arx5JointController::set_gain)
       .def("get_gain", &Arx5JointController::get_gain)
       .def("get_robot_config", &Arx5JointController::get_robot_config)
-      .def("clip_joint_pos", &Arx5JointController::clip_joint_pos)
       .def("reset_to_home", &Arx5JointController::reset_to_home)
       .def("set_to_damping", &Arx5JointController::set_to_damping)
       .def("set_log_level", &Arx5JointController::set_log_level)

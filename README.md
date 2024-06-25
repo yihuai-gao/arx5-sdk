@@ -20,13 +20,21 @@ make install
 ```
 
 ## CAN setup
+
 ``` sh
 sudo apt install can-utils
 sudo apt install net-tools
 ```
+
+There are 2 popular firmware types of usb-can adapter, `SLCAN` and `candleLight`. After plugging the adapter, you can find out the correct firmware type by the following rules:
+- Run `ls /dev/ttyACM*`. If there is a **new** `/dev/ttyACM*` device (where * is a number), this adapter is using `SLCAN` firmware
+- Run `ip a`. If there is a **new** `can*` interface (where * is a number), this adapter is using `candleLight` firmware.
+
+### For adapters using SLCAN framework
 Get serial number by:
 ``` sh
 udevadm info -a -n /dev/ttyACM* | grep serial
+# Replace the * by the actual number if there are multiple ttyACM devices connected to your computer.
 ```
 You will get something like:
 ```
@@ -37,17 +45,15 @@ Then edit CAN rules file:
 ``` sh
 sudo vim /etc/udev/rules.d/arx_can.rules
 ```
-Copy and paste the following, replace the serial number with yours.
+Copy and paste the following, and replace the serial number with yours. If you are registering multiple adapters, you can use other `SYMLINK` names (e.g. `canable1`) and make sure the following commands are updated accordingly.
 ```
-SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", 
-ATTRS{serial}=="209738924D4D", SYMLINK+="canable0"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", ATTRS{serial}=="209738924D4D", SYMLINK+="canable0"
 ```
 
 Finally, activate CAN connection by:
 ``` sh
 sudo udevadm control --reload-rules && sudo udevadm trigger
-sudo slcand -o -f -s8 /dev/canable0 can0
-sudo ifconfig can0 up
+sudo slcand -o -f -s8 /dev/canable0 can0 && sudo ifconfig can0 up
 ```
 
 ## Test scripts

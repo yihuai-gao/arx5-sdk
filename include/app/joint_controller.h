@@ -36,7 +36,6 @@ class Arx5JointController {
   void set_gain(Gain new_gain);
   Gain get_gain();
 
-  Vec6d clip_joint_pos(Vec6d pos);
   void reset_to_home();
   void set_to_damping();
 
@@ -50,9 +49,10 @@ class Arx5JointController {
  private:
   const double _CONTROLLER_DT = 0.002;
   const RobotConfig _ROBOT_CONFIG;
+  void _init_robot();
   void _background_send_recv();
   bool _send_recv();
-  void _check_current();
+  void _over_current_protection();
   void _check_joint_state_sanity();
   void _enter_emergency_state();
   int _over_current_cnt = 0;
@@ -67,8 +67,6 @@ class Arx5JointController {
   bool _destroy_background_threads = false;
   std::mutex _cmd_mutex;
   std::mutex _state_mutex;
-  bool _enable_vel_clipping = true;
-  bool _enable_torque_clipping = true;
   void _update_output_cmd();
   int _start_time_us;
   bool _enable_gravity_compensation = false;
