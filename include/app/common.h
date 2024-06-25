@@ -126,7 +126,8 @@ struct RobotConfig {
       motor_type = {MotorType::DM, MotorType::DM, MotorType::DM, MotorType::DM,
                     MotorType::DM, MotorType::DM, MotorType::DM};
     } else {
-      throw std::invalid_argument("Robot model not supported: " + model);
+      throw std::invalid_argument("Robot model not supported: " + model +
+                                  ". Please use 'X5' or 'L5'.");
     }
   }
 };

@@ -11,11 +11,34 @@ Arx5JointController::Arx5JointController(std::string model,
     : _can_handle(can_name),
       _logger(spdlog::stdout_color_mt(model + std::string("_") + can_name)),
       _ROBOT_CONFIG(RobotConfig(model, _CONTROLLER_DT)) {
-  _logger->info("_CONTROLLER_DT: {}", _CONTROLLER_DT);
-  if (model != "X5" && model != "L5") {
-    throw std::invalid_argument("Model " + model +
-                                " is not supported. Supported models: X5, L5");
-  }
+
+  _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
+  _init_robot();
+  _background_send_recv_thread =
+      std::thread(&Arx5JointController::_background_send_recv, this);
+  _logger->info("Background send_recv task is running at ID: {}",
+                syscall(SYS_gettid));
+}
+
+Arx5JointController::~Arx5JointController() {
+  Gain damping_gain = Gain();
+  damping_gain.kd = _ROBOT_CONFIG.default_kd;
+  damping_gain.kd[0] *= 3;
+  damping_gain.kd[1] *= 3;
+  damping_gain.kd[2] *= 3;
+  damping_gain.kd[3] *= 1.5;
+  _logger->info("Set to damping before exit");
+  set_gain(damping_gain);
+  set_joint_cmd(JointState());
+  _enable_gravity_compensation = false;
+  sleep_ms(2000);
+  _destroy_background_threads = true;
+  _background_send_recv_thread.join();
+  _logger->info("background send_recv task joined");
+}
+
+void Arx5JointController::_init_robot() {
+
   bool succeeded = true;
   for (int i = 0; i < 7; ++i) {
     if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM) {
@@ -29,7 +52,6 @@ Arx5JointController::Arx5JointController(std::string model,
       usleep(1000);
     }
   }
-  _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
 
   Gain gain = Gain();
   gain.kd = _ROBOT_CONFIG.default_kd;
@@ -52,26 +74,6 @@ Arx5JointController::Arx5JointController(std::string model,
         "All motors are not initialized. Please check the "
         "connection or power of the arm.");
   }
-  _background_send_recv_thread =
-      std::thread(&Arx5JointController::_background_send_recv, this);
-  _logger->info("Background send_recv task is running at ID: {}",
-                syscall(SYS_gettid));
-}
-
-Arx5JointController::~Arx5JointController() {
-  Gain damping_gain = Gain();
-  damping_gain.kd = _ROBOT_CONFIG.default_kd;
-  damping_gain.kd[1] *= 3;
-  damping_gain.kd[2] *= 3;
-  damping_gain.kd[3] *= 1.5;
-  _logger->info("Set to damping before exit");
-  set_gain(damping_gain);
-  set_joint_cmd(JointState());
-  _enable_gravity_compensation = false;
-  sleep_ms(2000);
-  _destroy_background_threads = true;
-  _background_send_recv_thread.join();
-  _logger->info("background send_recv task joined");
 }
 
 JointState Arx5JointController::get_state() {
@@ -99,7 +101,7 @@ void Arx5JointController::send_recv_once() {
     return;
   }
   _send_recv();
-  _check_current();
+  _over_current_protection();
 }
 
 void Arx5JointController::_update_output_cmd() {
@@ -109,32 +111,26 @@ void Arx5JointController::_update_output_cmd() {
 
   _output_joint_cmd = _input_joint_cmd;
 
-  if (_enable_gravity_compensation && _solver != nullptr) {
-    Vec6d gravity_torque = _solver->inverse_dynamics(
-        _joint_state.pos, Vec6d::Zero(), Vec6d::Zero());
-    _output_joint_cmd.torque += gravity_torque;
-  }
+  // Joint velocity clipping
+  double dt = _CONTROLLER_DT;
+  for (int i = 0; i < 6; ++i) {
+    if (_gain.kp[i] > 0) {
 
-  if (_enable_vel_clipping) {
-    double dt = _CONTROLLER_DT;
-    for (int i = 0; i < 6; ++i) {
-      if (_gain.kp[i] > 0) {
-
-        double delta_pos = _input_joint_cmd.pos[i] - prev_output_cmd.pos[i];
-        double max_vel = _ROBOT_CONFIG.joint_vel_max[i];
-        if (std::abs(delta_pos) > max_vel * dt) {
-          _output_joint_cmd.pos[i] =
-              prev_output_cmd.pos[i] +
-              max_vel * dt * delta_pos / std::abs(delta_pos);
-          _logger->debug(
-              "Joint {} pos {:.3f} pos cmd clipped: {:.3f} to {:.3f}", i,
-              _joint_state.pos[i], _input_joint_cmd.pos[i],
-              _output_joint_cmd.pos[i]);
-        }
-      } else {
-        _output_joint_cmd.pos[i] = _joint_state.pos[i];
+      double delta_pos = _input_joint_cmd.pos[i] - prev_output_cmd.pos[i];
+      double max_vel = _ROBOT_CONFIG.joint_vel_max[i];
+      if (std::abs(delta_pos) > max_vel * dt) {
+        _output_joint_cmd.pos[i] =
+            prev_output_cmd.pos[i] +
+            max_vel * dt * delta_pos / std::abs(delta_pos);
+        _logger->debug("Joint {} pos {:.3f} pos cmd clipped: {:.3f} to {:.3f}",
+                       i, _joint_state.pos[i], _input_joint_cmd.pos[i],
+                       _output_joint_cmd.pos[i]);
       }
+    } else {
+      _output_joint_cmd.pos[i] = _joint_state.pos[i];
     }
+
+    // Gripper pos clipping
     if (_gain.gripper_kp > 0) {
       double gripper_delta_pos =
           _input_joint_cmd.gripper_pos - prev_output_cmd.gripper_pos;
@@ -194,21 +190,19 @@ void Arx5JointController::_update_output_cmd() {
     }
   }
 
-  if (_enable_torque_clipping) {
-    // Torque clipping
-    for (int i = 0; i < 6; ++i) {
-      if (_output_joint_cmd.torque[i] > _ROBOT_CONFIG.joint_torque_max[i]) {
-        _logger->debug("Joint {} torque cmd clipped from {:.3f} to max {:.3f}",
-                       i, _output_joint_cmd.torque[i],
-                       _ROBOT_CONFIG.joint_torque_max[i]);
-        _output_joint_cmd.torque[i] = _ROBOT_CONFIG.joint_torque_max[i];
-      } else if (_output_joint_cmd.torque[i] <
-                 -_ROBOT_CONFIG.joint_torque_max[i]) {
-        _logger->debug("Joint {} torque cmd clipped from {:.3f} to min {:.3f}",
-                       i, _output_joint_cmd.torque[i],
-                       -_ROBOT_CONFIG.joint_torque_max[i]);
-        _output_joint_cmd.torque[i] = -_ROBOT_CONFIG.joint_torque_max[i];
-      }
+  // Torque clipping
+  for (int i = 0; i < 6; ++i) {
+    if (_output_joint_cmd.torque[i] > _ROBOT_CONFIG.joint_torque_max[i]) {
+      _logger->debug("Joint {} torque cmd clipped from {:.3f} to max {:.3f}", i,
+                     _output_joint_cmd.torque[i],
+                     _ROBOT_CONFIG.joint_torque_max[i]);
+      _output_joint_cmd.torque[i] = _ROBOT_CONFIG.joint_torque_max[i];
+    } else if (_output_joint_cmd.torque[i] <
+               -_ROBOT_CONFIG.joint_torque_max[i]) {
+      _logger->debug("Joint {} torque cmd clipped from {:.3f} to min {:.3f}", i,
+                     _output_joint_cmd.torque[i],
+                     -_ROBOT_CONFIG.joint_torque_max[i]);
+      _output_joint_cmd.torque[i] = -_ROBOT_CONFIG.joint_torque_max[i];
     }
   }
 }
@@ -223,6 +217,13 @@ bool Arx5JointController::_send_recv() {
   const double torque_constant2 = 0.424;  // Nm/A, only for the top 3 motors
   bool succeeded = true;
   int start_time_us = get_time_us();
+
+  if (_enable_gravity_compensation && _solver != nullptr) {
+    Vec6d gravity_torque = _solver->inverse_dynamics(
+        _joint_state.pos, Vec6d::Zero(), Vec6d::Zero());
+    _logger->debug("Gravity torque: {}", vec2str(gravity_torque));
+    _output_joint_cmd.torque += gravity_torque;
+  }
   _update_output_cmd();
   int update_cmd_time_us = get_time_us();
   int communicate_sleep_us = 150;
@@ -235,10 +236,17 @@ bool Arx5JointController::_send_recv() {
           _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
           _output_joint_cmd.torque[i] / torque_constant1);
     } else {
-      succeeded = _can_handle.send_DM_motor_cmd(
-          _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
-          _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-          _output_joint_cmd.torque[i] / torque_constant2);
+      if (i < 3) {
+        succeeded = _can_handle.send_DM_motor_cmd(
+            _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
+            _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
+            _output_joint_cmd.torque[i] / torque_constant1);
+      } else {
+        succeeded = _can_handle.send_DM_motor_cmd(
+            _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
+            _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
+            _output_joint_cmd.torque[i] / torque_constant2);
+      }
     }
     int finish_send_motor_time_us = get_time_us();
     if (!succeeded) {
@@ -343,7 +351,7 @@ void Arx5JointController::_check_joint_state_sanity() {
   }
 }
 
-void Arx5JointController::_check_current() {
+void Arx5JointController::_over_current_protection() {
   bool over_current = false;
   for (int i = 0; i < 6; ++i) {
     if (std::abs(_joint_state.torque[i]) > _ROBOT_CONFIG.joint_torque_max[i]) {
@@ -390,7 +398,7 @@ void Arx5JointController::_background_send_recv() {
   while (!_destroy_background_threads) {
     int start_time_us = get_time_us();
     if (_background_send_recv_running) {
-      _check_current();
+      _over_current_protection();
       _check_joint_state_sanity();
       _send_recv();
     }
@@ -426,7 +434,6 @@ Gain Arx5JointController::get_gain() {
 }
 
 void Arx5JointController::set_gain(Gain new_gain) {
-  // std::cout << "Set new gain: kp: " << new_gain.kp.transpose() << ", kd: " << new_gain.kd.transpose() << std::endl;
 
   // Make sure the robot doesn't jump when setting kp to non-zero
   if (_gain.kp.isZero() && !new_gain.kp.isZero()) {
@@ -447,12 +454,6 @@ void Arx5JointController::set_gain(Gain new_gain) {
     }
   }
   _gain = new_gain;
-}
-
-Vec6d Arx5JointController::clip_joint_pos(Vec6d pos) {
-  Vec6d pos_clip = pos.cwiseMax(_ROBOT_CONFIG.joint_pos_min)
-                       .cwiseMin(_ROBOT_CONFIG.joint_pos_max);
-  return pos;
 }
 
 void Arx5JointController::reset_to_home() {
