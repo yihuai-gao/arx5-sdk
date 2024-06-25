@@ -1,6 +1,5 @@
 from queue import Queue
-from arx5_interface import GRIPPER_WIDTH
-from communication.zmq_client import Arx5Client, CTRL_DT
+from communication.zmq_client import Arx5Client, CTRL_DT, GRIPPER_WIDTH
 from peripherals.spacemouse_shared_memory import Spacemouse
 from multiprocessing.managers import SharedMemoryManager
 import numpy as np
@@ -9,11 +8,11 @@ import time
 
 def start_teleop_recording(arx5_client: Arx5Client):
 
-    ori_speed = 0.3
-    pos_speed = 0.1
+    ori_speed = 0.8
+    pos_speed = 0.3
     gripper_speed = 0.04
     target_pose_6d = np.zeros((6,), dtype=np.float64)
-    target_gripper_pos = GRIPPER_WIDTH
+    target_gripper_pos = 0.0
 
     window_size = 1
     spacemouse_queue = Queue(window_size)
@@ -57,7 +56,7 @@ def start_teleop_recording(arx5_client: Arx5Client):
                 if button_left and button_right:
                     arx5_client.reset_to_home()
                     target_pose_6d = np.zeros((6,), dtype=np.float64)
-                    target_gripper_pos = GRIPPER_WIDTH
+                    target_gripper_pos = 0.0
                     loop_cnt = 0
                     start_time = time.monotonic()
                     continue

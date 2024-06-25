@@ -21,6 +21,8 @@ class Arx5CartesianController {
   double get_timestamp();
   void set_gain(Gain new_gain);
   Gain get_gain();
+  void set_log_level(spdlog::level::level_enum level);
+  RobotConfig get_robot_config();
 
   void reset_to_home();
   void set_to_damping();
@@ -30,13 +32,11 @@ class Arx5CartesianController {
   const RobotConfig _ROBOT_CONFIG;
   double _clipping_output_threshold = 0.001;
   int _moving_window_size = 1;  // 1 for no filtering
-  double _LOOK_AHEAD_TIME = 0.1;
 
   EEFState _input_eef_cmd;
   EEFState _output_eef_cmd;
   JointState _input_joint_cmd;
   JointState _output_joint_cmd;
-  EEFState _eef_state;
   JointState _joint_state;
   Gain _gain;
 
@@ -48,12 +48,15 @@ class Arx5CartesianController {
   void _init_robot();
   void _background_send_recv();
   void _update_output_cmd();
-  void _update_output_cmd();
+  void _calc_joint_cmd();
   void _over_current_protection();
   void _check_joint_state_sanity();
+  void _enter_emergency_state();
+  bool _send_recv();
   int _over_current_cnt = 0;
   bool _background_send_recv_running = false;
   bool _destroy_background_threads = false;
+  bool _enable_gravity_compensation = true;
   std::mutex _cmd_mutex;
   std::mutex _state_mutex;
   int _start_time_us;

@@ -41,7 +41,8 @@ void Arx5JointController::_init_robot() {
 
   bool succeeded = true;
   for (int i = 0; i < 7; ++i) {
-    if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM) {
+    if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310 ||
+        _ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340) {
       int id = _ROBOT_CONFIG.motor_id[i];
       succeeded = _can_handle.enable_DM_motor(id);
       if (!succeeded) {
@@ -110,6 +111,12 @@ void Arx5JointController::_update_output_cmd() {
   JointState prev_output_cmd = _output_joint_cmd;
 
   _output_joint_cmd = _input_joint_cmd;
+
+  if (_enable_gravity_compensation && _solver != nullptr) {
+    Vec6d gravity_torque = _solver->inverse_dynamics(
+        _joint_state.pos, Vec6d::Zero(), Vec6d::Zero());
+    _output_joint_cmd.torque += gravity_torque;
+  }
 
   // Joint velocity clipping
   double dt = _CONTROLLER_DT;
@@ -212,41 +219,39 @@ double Arx5JointController::get_timestamp() {
 }
 
 bool Arx5JointController::_send_recv() {
-  // TODO: in the motor documentation, there shouldn't be these torque constant. Torque will go directly into the motors
-  const double torque_constant1 = 1.4;    // Nm/A, only for the bottom 3 motors
-  const double torque_constant2 = 0.424;  // Nm/A, only for the top 3 motors
+  // TODO: in the motor documentation, there shouldn't be these torque constants. Torque will go directly into the motors
+  const double torque_constant_EC_A4310 = 1.4;  // Nm/A
+  const double torque_constant_DM_J4310 = 0.424;
+  const double torque_constant_DM_J4340 = 1.0;
   bool succeeded = true;
   int start_time_us = get_time_us();
 
-  if (_enable_gravity_compensation && _solver != nullptr) {
-    Vec6d gravity_torque = _solver->inverse_dynamics(
-        _joint_state.pos, Vec6d::Zero(), Vec6d::Zero());
-    _logger->debug("Gravity torque: {}", vec2str(gravity_torque));
-    _output_joint_cmd.torque += gravity_torque;
-  }
   _update_output_cmd();
   int update_cmd_time_us = get_time_us();
   int communicate_sleep_us = 150;
 
   for (int i = 0; i < 6; i++) {
     int start_send_motor_time_us = get_time_us();
-    if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC) {
+    if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC_A4310) {
       succeeded = _can_handle.send_EC_motor_cmd(
           _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
           _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-          _output_joint_cmd.torque[i] / torque_constant1);
+          _output_joint_cmd.torque[i] / torque_constant_EC_A4310);
+    } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310) {
+
+      succeeded = _can_handle.send_DM_motor_cmd(
+          _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
+          _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
+          _output_joint_cmd.torque[i] / torque_constant_DM_J4310);
+
+    } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340) {
+      succeeded = _can_handle.send_DM_motor_cmd(
+          _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
+          _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
+          _output_joint_cmd.torque[i] / torque_constant_DM_J4340);
     } else {
-      if (i < 3) {
-        succeeded = _can_handle.send_DM_motor_cmd(
-            _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
-            _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-            _output_joint_cmd.torque[i] / torque_constant1);
-      } else {
-        succeeded = _can_handle.send_DM_motor_cmd(
-            _ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
-            _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-            _output_joint_cmd.torque[i] / torque_constant2);
-      }
+      _logger->error("Motor type not supported.");
+      return false;
     }
     int finish_send_motor_time_us = get_time_us();
     if (!succeeded) {
@@ -309,16 +314,21 @@ bool Arx5JointController::_send_recv() {
 
   // HACK: just to match the values (there must be something wrong)
   for (int i = 0; i < 6; i++) {
-    if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC) {
+    if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC_A4310) {
       _joint_state.torque[i] = motor_msg[i].current_actual_float *
-                               torque_constant1 * torque_constant1;
-    } else {
+                               torque_constant_EC_A4310 *
+                               torque_constant_EC_A4310;
+      // Why there are two torque_constant_EC_A4310?
+    } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310) {
       _joint_state.torque[i] =
-          motor_msg[i].current_actual_float * torque_constant2;
+          motor_msg[i].current_actual_float * torque_constant_DM_J4310;
+    } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340) {
+      _joint_state.torque[i] =
+          motor_msg[i].current_actual_float * torque_constant_DM_J4340;
     }
   }
   _joint_state.gripper_torque =
-      motor_msg[7].current_actual_float * torque_constant2;
+      motor_msg[7].current_actual_float * torque_constant_DM_J4310;
   _joint_state.timestamp = get_timestamp();
   return true;
 }
@@ -387,6 +397,8 @@ void Arx5JointController::_enter_emergency_state() {
   damping_gain.kd[2] *= 3;
   damping_gain.kd[3] *= 1.5;
   set_gain(damping_gain);
+  _input_joint_cmd.vel = Vec6d::Zero();
+  _input_joint_cmd.torque = Vec6d::Zero();
 
   while (true) {
     _send_recv();
@@ -406,7 +418,7 @@ void Arx5JointController::_background_send_recv() {
     int sleep_time_us = int(_CONTROLLER_DT * 1e6) - elapsed_time_us;
     if (sleep_time_us > 0) {
       std::this_thread::sleep_for(std::chrono::microseconds(sleep_time_us));
-    } else {
+    } else if (sleep_time_us < -500) {
       _logger->debug(
           "Background send_recv task is running too slow, time: {} us",
           elapsed_time_us);
@@ -575,7 +587,7 @@ void Arx5JointController::calibrate_joint(int joint_id) {
   usleep(1000);
   int motor_id = _ROBOT_CONFIG.motor_id[joint_id];
   for (int i = 0; i < 10; ++i) {
-    if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC)
+    if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC_A4310)
       _can_handle.send_EC_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     else
       _can_handle.send_DM_motor_cmd(motor_id, 0, 0, 0, 0, 0);
@@ -586,13 +598,13 @@ void Arx5JointController::calibrate_joint(int joint_id) {
       "and press enter to continue",
       joint_id);
   std::cin.get();
-  if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC)
+  if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC_A4310)
     _can_handle.CAN_cmd_init(motor_id, 0x03);
   else
     _can_handle.Set_Zero(motor_id);
   usleep(400);
   for (int i = 0; i < 10; ++i) {
-    if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC)
+    if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC_A4310)
       _can_handle.send_EC_motor_cmd(motor_id, 0, 0, 0, 0, 0);
     else
       _can_handle.send_DM_motor_cmd(motor_id, 0, 0, 0, 0, 0);
