@@ -45,23 +45,23 @@ target_link_libraries(ArxJointController
     kdl_parser
     orocos-kdl
 )
-# add_library(ArxHighlevelController SHARED
-#     src/app/high_level.cpp
-#     src/utils.cpp
-# )
-# target_link_libraries(ArxHighlevelController
-#     ${LIB_DIR}/libhardware.so
-#     ${LIB_DIR}/libsolver.so
-#     Eigen3::Eigen
-#     Threads::Threads
-#     spdlog::spdlog
-#     kdl_parser
-#     orocos-kdl
-# )
+add_library(ArxCartesianController SHARED
+    src/app/cartesian_controller.cpp
+    src/utils.cpp
+)
+target_link_libraries(ArxCartesianController
+    ${LIB_DIR}/libhardware.so
+    ${LIB_DIR}/libsolver.so
+    Eigen3::Eigen
+    Threads::Threads
+    spdlog::spdlog
+    kdl_parser
+    orocos-kdl
+)
 
 # Hack for py310 (conda environment is slightly different from other python versions)
 target_include_directories(ArxJointController PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
-# target_include_directories(ArxHighlevelController PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
+target_include_directories(ArxCartesianController PUBLIC $ENV{CONDA_PREFIX}/include/kdl_parser  $ENV{CONDA_PREFIX}/include/urdfdom_headers)
 
 
 add_executable(test_joint_controller examples/test_joint_controller.cpp)
@@ -76,17 +76,17 @@ target_link_libraries(test_joint_controller
     orocos-kdl
 )
 
-# add_executable(test_high_level examples/test_high_level.cpp)
-# target_link_libraries(test_high_level 
-#     ${LIB_DIR}/libhardware.so 
-#     ${LIB_DIR}/libsolver.so
-#     ArxHighlevelController
-#     spdlog::spdlog
-#     Eigen3::Eigen
-#     Threads::Threads
-#     kdl_parser
-#     orocos-kdl
-# )
+add_executable(test_cartesian_controller examples/test_cartesian_controller.cpp)
+target_link_libraries(test_cartesian_controller 
+    ${LIB_DIR}/libhardware.so 
+    ${LIB_DIR}/libsolver.so
+    ArxCartesianController
+    spdlog::spdlog
+    Eigen3::Eigen
+    Threads::Threads
+    kdl_parser
+    orocos-kdl
+)
 
 add_subdirectory(python)
 
@@ -98,6 +98,6 @@ install(FILES ${LIB_DIR}/libhardware.so ${LIB_DIR}/libsolver.so
     DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}
 )
 
-# install(TARGETS ArxJointController ArxHighlevelController
-#     LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}
-# )
+install(TARGETS ArxJointController ArxCartesianController
+    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/${PROJECT_NAME}
+)

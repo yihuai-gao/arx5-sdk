@@ -28,14 +28,25 @@ class Arx5Server:
         self,
         zmq_ip: str,
         zmq_port: int,
+        model: str,
+        interface: str,
+        urdf_path: str,
         no_cmd_timeout: float = 60.0,
     ):
-        self.arx5_high_level = arx5.Arx5HighLevel("can0", "../models/arx5_gopro.urdf")
+        self.model = model
+        self.interface = interface
+        self.urdf_path = urdf_path
+        self.arx5_cartesian_controller = arx5.Arx5CartesianController(
+            model, interface, urdf_path
+        )
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://{zmq_ip}:{zmq_port}")
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
+        self.default_gain = arx5.Gain()
+        self.default_gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
+        self.default_gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
 
         self.zmq_ip = zmq_ip
         self.zmq_port = zmq_port
@@ -50,19 +61,21 @@ class Arx5Server:
                 socks = dict(self.poller.poll(int(self.no_cmd_timeout * 1000)))
                 if self.socket in socks and socks[self.socket] == zmq.POLLIN:
                     msg: dict[str, Any] = self.socket.recv_pyobj()
-                    if self.arx5_high_level is None:
+                    if self.arx5_cartesian_controller is None:
                         print(f"Reestablishing high level controller")
-                        self.arx5_high_level = arx5.Arx5HighLevel("can0", "../models/arx5_gopro.urdf")
+                        self.arx5_cartesian_controller = arx5.Arx5CartesianController(
+                            self.model, self.interface, self.urdf_path
+                        )
                 else:
 
-                    if self.arx5_high_level is not None:
+                    if self.arx5_cartesian_controller is not None:
                         print(
                             f"Timeout: No command received for {self.no_cmd_timeout} sec. ARX5 arm is reset to home position."
                         )
-                        self.arx5_high_level.reset_to_home()
-                        self.arx5_high_level.set_to_damping()
-                        del self.arx5_high_level
-                        self.arx5_high_level = None
+                        self.arx5_cartesian_controller.reset_to_home()
+                        self.arx5_cartesian_controller.set_to_damping()
+                        del self.arx5_cartesian_controller
+                        self.arx5_cartesian_controller = None
                     continue
             except KeyboardInterrupt:
                 break
@@ -82,13 +95,13 @@ class Arx5Server:
                     continue
                 if msg["cmd"] == "GET_STATE":
                     # print(f"Received GET_STATE message")
-                    high_state = self.arx5_high_level.get_high_state()
-                    low_state = self.arx5_high_level.get_joint_state()
+                    eef_state = self.arx5_cartesian_controller.get_eef_state()
+                    low_state = self.arx5_cartesian_controller.get_joint_state()
                     reply_msg = {
                         "cmd": "GET_STATE",
                         "data": {
-                            "timestamp": high_state.timestamp,
-                            "ee_pose": high_state.pose_6d().copy(),
+                            "timestamp": eef_state.timestamp,
+                            "ee_pose": eef_state.pose_6d().copy(),
                             "joint_pos": low_state.pos().copy(),
                             "joint_vel": low_state.vel().copy(),
                             "joint_torque": low_state.torque().copy(),
@@ -106,14 +119,12 @@ class Arx5Server:
                     else:
                         # Maintain the current gripper position
                         target_gripper_pos = (
-                            self.arx5_high_level.get_high_state().gripper_pos
+                            self.arx5_cartesian_controller.get_eef_state().gripper_pos
                         )
                     if self.is_reset_to_home:
                         if np.linalg.norm(target_ee_pose) > 0.1:
                             error_str = f"Error: Cannot set EE pose far away from home: {target_ee_pose} after RESET_TO_HOME. Please check the input."
-                            print(
-                                error_str
-                            )
+                            print(error_str)
                             self.socket.send_pyobj(
                                 {
                                     "cmd": "SET_EE_POSE",
@@ -122,16 +133,16 @@ class Arx5Server:
                             )
                             continue
 
-                    self.arx5_high_level.set_high_cmd(
-                        arx5.HighState(target_ee_pose, target_gripper_pos)
+                    self.arx5_cartesian_controller.set_eef_cmd(
+                        arx5.EEFState(target_ee_pose, target_gripper_pos)
                     )
-                    high_state = self.arx5_high_level.get_high_state()
-                    low_state = self.arx5_high_level.get_joint_state()
+                    eef_state = self.arx5_cartesian_controller.get_eef_state()
+                    low_state = self.arx5_cartesian_controller.get_joint_state()
                     reply_msg = {
                         "cmd": "SET_EE_POSE",
                         "data": {
-                            "timestamp": high_state.timestamp,
-                            "ee_pose": high_state.pose_6d().copy(),
+                            "timestamp": eef_state.timestamp,
+                            "ee_pose": eef_state.pose_6d().copy(),
                             "joint_pos": low_state.pos().copy(),
                             "joint_vel": low_state.vel().copy(),
                             "joint_torque": low_state.torque().copy(),
@@ -144,7 +155,8 @@ class Arx5Server:
                     self.is_reset_to_home = False
                 elif msg["cmd"] == "RESET_TO_HOME":
                     print(f"Received RESET_TO_HOME message")
-                    self.arx5_high_level.reset_to_home()
+                    self.arx5_cartesian_controller.reset_to_home()
+                    self.arx5_cartesian_controller.set_gain(self.default_gain)
                     reply_msg = {
                         "cmd": "RESET_TO_HOME",
                         "data": "OK",
@@ -153,7 +165,7 @@ class Arx5Server:
                     self.is_reset_to_home = True
                 elif msg["cmd"] == "SET_TO_DAMPING":
                     print(f"Received SET_TO_DAMPING message")
-                    self.arx5_high_level.set_to_damping()
+                    self.arx5_cartesian_controller.set_to_damping()
                     reply_msg = {
                         "cmd": "SET_TO_DAMPING",
                         "data": "OK",
@@ -162,7 +174,7 @@ class Arx5Server:
                     self.is_reset_to_home = False
                 elif msg["cmd"] == "GET_GAIN":
                     print(f"Received GET_GAIN message")
-                    gain = self.arx5_high_level.get_gain()
+                    gain = self.arx5_cartesian_controller.get_gain()
                     reply_msg = {
                         "cmd": "GET_GAIN",
                         "data": {
@@ -181,7 +193,7 @@ class Arx5Server:
                     kd = cast(np.ndarray, msg["data"]["kd"])
                     gripper_kp = cast(float, msg["data"]["gripper_kp"])
                     gripper_kd = cast(float, msg["data"]["gripper_kd"])
-                    self.arx5_high_level.set_gain(
+                    self.arx5_cartesian_controller.set_gain(
                         arx5.Gain(kp, kd, gripper_kp, gripper_kd)
                     )
                     reply_msg = {
@@ -208,5 +220,11 @@ class Arx5Server:
 
 
 if __name__ == "__main__":
-    server = Arx5Server(zmq_ip="0.0.0.0", zmq_port=8765)
+    server = Arx5Server(
+        model="L5",
+        interface="can2",
+        urdf_path="../models/arx5_realsense.urdf",
+        zmq_ip="0.0.0.0",
+        zmq_port=8765,
+    )
     server.run()

@@ -12,10 +12,7 @@
 namespace arx {
 using Vec6d = Eigen::Matrix<double, 6, 1>;
 
-enum class MotorType {
-  EC,
-  DM,
-};
+enum class MotorType { EC_A4310, DM_J4310, DM_J4340 };
 
 struct JointState {
   double timestamp = 0.0f;
@@ -79,9 +76,6 @@ struct EEFState {
     return EEFState(pose_6d * scalar, gripper_pos * scalar);
   }
   Vec6d& get_pose_6d_ref() { return pose_6d; }
-
-  const std::vector<std::string> EE_POSE_NAMES = {"x",    "y",     "z",
-                                                  "roll", "pitch", "yaw"};
 };
 
 struct RobotConfig {
@@ -89,8 +83,7 @@ struct RobotConfig {
       (Vec6d() << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished();
   Vec6d joint_pos_max =
       (Vec6d() << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished();
-  Vec6d default_kp = (Vec6d() << 80, 80, 80, 50, 40, 20).finished();
-  Vec6d default_kd = (Vec6d() << 1.0, 1.0, 1.0, 1.0, 0.8, 1.0).finished();
+
   Vec6d joint_vel_max =
       (Vec6d() << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished();  // rad/s
   Vec6d joint_torque_max =
@@ -102,6 +95,8 @@ struct RobotConfig {
   double gripper_torque_max = 1.5;
   double gripper_width = 0.085;  // fully opened: GRIPPER_WIDTH, fully closed: 0
 
+  Vec6d default_kp = (Vec6d() << 80, 80, 80, 50, 40, 20).finished();
+  Vec6d default_kd = (Vec6d() << 1.0, 1.0, 1.0, 1.0, 0.8, 1.0).finished();
   double default_gripper_kp = 30.0;
   double default_gripper_kd = 0.2;
   int over_current_cnt_max = 20;  // 0.1s
@@ -119,12 +114,16 @@ struct RobotConfig {
       : model(model), controller_dt(controller_dt) {
     if (model == "X5") {
       motor_id = {1, 2, 4, 5, 6, 7, 8};
-      motor_type = {MotorType::EC, MotorType::EC, MotorType::EC, MotorType::DM,
-                    MotorType::DM, MotorType::DM, MotorType::DM};
+      motor_type = {MotorType::EC_A4310, MotorType::EC_A4310,
+                    MotorType::EC_A4310, MotorType::DM_J4310,
+                    MotorType::DM_J4310, MotorType::DM_J4310,
+                    MotorType::DM_J4310};
     } else if (model == "L5") {
       motor_id = {1, 2, 4, 5, 6, 7, 8};
-      motor_type = {MotorType::DM, MotorType::DM, MotorType::DM, MotorType::DM,
-                    MotorType::DM, MotorType::DM, MotorType::DM};
+      motor_type = {MotorType::DM_J4340, MotorType::DM_J4340,
+                    MotorType::DM_J4340, MotorType::DM_J4310,
+                    MotorType::DM_J4310, MotorType::DM_J4310,
+                    MotorType::DM_J4310};
     } else {
       throw std::invalid_argument("Robot model not supported: " + model +
                                   ". Please use 'X5' or 'L5'.");
