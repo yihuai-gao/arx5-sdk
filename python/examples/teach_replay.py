@@ -15,10 +15,7 @@ import click
 
 def start_teaching(controller: Arx5CartesianController, data_file: str):
     controller.reset_to_home()
-    controller.set_to_damping()
-    gain = controller.get_gain()
-    gain.kd()[:] *= 0.1
-    controller.set_gain(gain)  # set to passive
+
     config = controller.get_robot_config()
 
     print("Teaching mode ready. Press 't' to start teaching.")
@@ -30,6 +27,11 @@ def start_teaching(controller: Arx5CartesianController, data_file: str):
             press_events = key_counter.get_press_events()
             for key_stroke in press_events:
                 if key_stroke == KeyCode(char="t"):
+                    controller.set_to_damping()
+
+                    gain = controller.get_gain()
+                    gain.kd()[:] *= 0.1
+                    controller.set_gain(gain)  # set to passive
                     if teaching_started:
                         print(f"Teaching is already started!")
                         continue
@@ -103,8 +105,8 @@ def start_high_level_replay(controller: Arx5CartesianController, data_file: str)
 
 
 @click.command()
-@click.argument("model") # ARX arm model: X5 or L5
-@click.argument("can_interface") # can bus name (can0 etc.)
+@click.argument("model")  # ARX arm model: X5 or L5
+@click.argument("can_interface")  # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
 def main(model: str, can_interface: str, urdf_path: str):
     controller = Arx5CartesianController(model, can_interface, urdf_path)
