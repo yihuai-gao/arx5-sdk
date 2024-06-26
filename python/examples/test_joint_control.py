@@ -21,12 +21,12 @@ def easeInOutQuad(t):
 
 
 @click.command()
-@click.option("--model", "-m", required=True, help="ARX5 model name: X5 or L5")
-@click.option("--interface", "-i", required=True, help="can bus name (can0 etc.)")
+@click.argument("model") # ARX arm model: X5 or L5
+@click.argument("can_interface") # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
-def main(model: str, interface: str, urdf_path: str):
+def main(model: str, can_interface: str, urdf_path: str):
     np.set_printoptions(precision=3, suppress=True)
-    arx5_joint_controller = arx5.Arx5JointController(model, interface)
+    arx5_joint_controller = arx5.Arx5JointController(model, can_interface)
     arx5_joint_controller.set_log_level(arx5.LogLevel.DEBUG)
     config = arx5_joint_controller.get_robot_config()
 
