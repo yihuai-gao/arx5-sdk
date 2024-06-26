@@ -246,7 +246,7 @@
     </link>
 
     <joint name="gripper_fixed_joint" type="fixed">
-        <origin xyz="0.225 0.0 0.0" rpy="0 0 0"/>
+        <origin xyz="0.03 0.0 0.0" rpy="0 0 0"/>
         <parent link="link6"/>
         <child link="gripper_dummy_link"/>
     </joint>

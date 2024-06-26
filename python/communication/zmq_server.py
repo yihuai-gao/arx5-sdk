@@ -1,17 +1,18 @@
 import sys
 import os
+import numpy as np
 
 ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
 import time
 from typing import Any, cast
+
 import arx5_interface as arx5
 import zmq
-from enum import IntEnum, auto
+import click
 import sys
 import traceback
-import numpy as np
 
 
 def echo_exception():
@@ -39,6 +40,7 @@ class Arx5Server:
         self.arx5_cartesian_controller = arx5.Arx5CartesianController(
             model, interface, urdf_path
         )
+        print(f"Arx5Server is initialized with {model} on {interface}")
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
         self.socket.bind(f"tcp://{zmq_ip}:{zmq_port}")
@@ -219,12 +221,20 @@ class Arx5Server:
         print("Arx5ZmqServer is terminated")
 
 
-if __name__ == "__main__":
+@click.command()
+@click.option("--model", "-m", required=True, help="ARX5 model name: X5 or L5")
+@click.option("--interface", "-i", required=True, help="can bus name (can0 etc.)")
+@click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
+def main(model: str, interface: str, urdf_path: str):
     server = Arx5Server(
-        model="L5",
-        interface="can2",
-        urdf_path="../models/arx5_realsense.urdf",
+        model=model,
+        interface=interface,
+        urdf_path=urdf_path,
         zmq_ip="0.0.0.0",
         zmq_port=8765,
     )
     server.run()
+
+
+if __name__ == "__main__":
+    main()

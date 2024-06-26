@@ -1,16 +1,25 @@
-from communication.zmq_client import Arx5Client, CTRL_DT
+import os
+import sys
+
+import numpy as np
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT_DIR)
+os.chdir(ROOT_DIR)
+from arx5_interface import Arx5CartesianController, EEFState, Gain
+
 import time
 from peripherals.keystroke_counter import KeystrokeCounter, KeyCode
-import numpy as np
-import os, sys
+import click
 
 
-def start_teaching(client: Arx5Client, data_file: str):
-    client.reset_to_home()
-    client.set_to_damping()
-    gain = client.get_gain()
-    gain["kd"] = 0.1 * gain["kd"]
-    client.set_gain(gain)  # set to passive
+def start_teaching(controller: Arx5CartesianController, data_file: str):
+    controller.reset_to_home()
+    controller.set_to_damping()
+    gain = controller.get_gain()
+    gain.kd()[:] *= 0.1
+    controller.set_gain(gain)  # set to passive
+    config = controller.get_robot_config()
 
     print("Teaching mode ready. Press 't' to start teaching.")
     teaching_started = False
@@ -33,18 +42,25 @@ def start_teaching(client: Arx5Client, data_file: str):
                     np.save(data_file, traj, allow_pickle=True)
                     return
             if teaching_started:
-                state = client.get_state()
-                state["timestamp"] = time.monotonic() - start_time
-                traj.append(state)
-                time.sleep(CTRL_DT)
-                # print(f"Time elapsed: {time.monotonic() - start_time:.03f}s", end="\r")
-                # print(f"tcp pose: {arx5_client.tcp_pose}")
-                print(f"joint pos: {client.joint_pos}")
+                state = controller.get_eef_state()
+                state.timestamp = time.monotonic() - start_time
+                traj.append(
+                    {
+                        "pose_6d": state.pose_6d().copy(),
+                        "gripper_pos": state.gripper_pos,
+                    }
+                )
+                time.sleep(config.controller_dt)
 
 
+def start_high_level_replay(controller: Arx5CartesianController, data_file: str):
+    controller.reset_to_home()
 
-def start_high_level_replay(client: Arx5Client, data_file: str):
-    client.reset_to_home()
+    gain = Gain()
+    gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
+    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+    controller.set_gain(gain)
+    config = controller.get_robot_config()
     traj = np.load(data_file, allow_pickle=True)
     replay_started = False
     start_time = 0
@@ -67,25 +83,37 @@ def start_high_level_replay(client: Arx5Client, data_file: str):
                     return
             if replay_started:
                 if loop_cnt < len(traj):
-                    target_state = traj[loop_cnt]
+                    pose_dict = traj[loop_cnt]
+                    pose_6d = pose_dict["pose_6d"]
+                    gripper_pos = pose_dict["gripper_pos"]
+
                     loop_cnt += 1
-                    client.set_ee_pose(
-                        target_state["ee_pose"], target_state["gripper_pos"]
-                    )
+
+                    controller.set_eef_cmd(EEFState(pose_6d, gripper_pos))
                     # print(
                     #     f"Time elapsed: {time.monotonic() - start_time:.03f}s/{traj[-1]['timestamp']:.03f}",
                     #     end="\r",
                     # )
-                    print(f"joint pos: {client.joint_pos}")
+                    # print(f"joint pos: {controller.joint_pos}")
                 else:
                     print(f"\nReplay finished!")
+                    controller.reset_to_home()
                     return
-                time.sleep(CTRL_DT * 2)
+                time.sleep(config.controller_dt)
+
+
+@click.command()
+@click.option("--model", "-m", required=True, help="ARX5 model name: X5 or L5")
+@click.option("--interface", "-i", required=True, help="can bus name (can0 etc.)")
+@click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
+def main(model: str, interface: str, urdf_path: str):
+    controller = Arx5CartesianController(model, interface, urdf_path)
+
+    np.set_printoptions(precision=4, suppress=True)
+    os.makedirs("data", exist_ok=True)
+    start_teaching(controller, "data/teach_traj.npy")
+    start_high_level_replay(controller, "data/teach_traj.npy")
 
 
 if __name__ == "__main__":
-    arx5_client = Arx5Client(zmq_ip="localhost", zmq_port=8765)
-    np.set_printoptions(precision=4, suppress=True)
-    os.makedirs("data", exist_ok=True)
-    start_teaching(arx5_client, "data/teach_traj.npy")
-    start_high_level_replay(arx5_client, "data/teach_traj.npy")
+    main()

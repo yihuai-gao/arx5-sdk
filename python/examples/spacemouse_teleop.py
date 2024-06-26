@@ -1,12 +1,21 @@
 from queue import Queue
-from communication.zmq_client import Arx5Client, CTRL_DT, GRIPPER_WIDTH
+import os
+import sys
+
+import numpy as np
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT_DIR)
+os.chdir(ROOT_DIR)
+from arx5_interface import Arx5CartesianController, EEFState, Gain
 from peripherals.spacemouse_shared_memory import Spacemouse
 from multiprocessing.managers import SharedMemoryManager
-import numpy as np
+
 import time
+import click
 
 
-def start_teleop_recording(arx5_client: Arx5Client):
+def start_teleop_recording(controller: Arx5CartesianController):
 
     ori_speed = 0.8
     pos_speed = 0.3
@@ -14,8 +23,9 @@ def start_teleop_recording(arx5_client: Arx5Client):
     target_pose_6d = np.zeros((6,), dtype=np.float64)
     target_gripper_pos = 0.0
 
-    window_size = 1
+    window_size = 20
     spacemouse_queue = Queue(window_size)
+    robot_config = controller.get_robot_config()
     with SharedMemoryManager() as shm_manager:
         with Spacemouse(shm_manager=shm_manager, deadzone=0.3, max_value=500) as sm:
 
@@ -54,7 +64,11 @@ def start_teleop_recording(arx5_client: Arx5Client):
                 button_left = sm.is_button_pressed(0)
                 button_right = sm.is_button_pressed(1)
                 if button_left and button_right:
-                    arx5_client.reset_to_home()
+                    controller.reset_to_home()
+                    gain = Gain()
+                    gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
+                    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+                    controller.set_gain(gain)
                     target_pose_6d = np.zeros((6,), dtype=np.float64)
                     target_gripper_pos = 0.0
                     loop_cnt = 0
@@ -67,30 +81,48 @@ def start_teleop_recording(arx5_client: Arx5Client):
                 else:
                     gripper_cmd = 0
 
-                target_pose_6d[:3] += state[:3] * pos_speed * CTRL_DT
-                target_pose_6d[3:] += state[3:] * ori_speed * CTRL_DT
-                target_gripper_pos += gripper_cmd * gripper_speed * CTRL_DT
-                if target_gripper_pos >= GRIPPER_WIDTH:
-                    target_gripper_pos = GRIPPER_WIDTH
+                target_pose_6d[:3] += state[:3] * pos_speed * robot_config.controller_dt
+                target_pose_6d[3:] += state[3:] * ori_speed * robot_config.controller_dt
+                target_gripper_pos += (
+                    gripper_cmd * gripper_speed * robot_config.controller_dt
+                )
+                if target_gripper_pos >= robot_config.gripper_width:
+                    target_gripper_pos = robot_config.gripper_width
                 elif target_gripper_pos <= 0:
                     target_gripper_pos = 0
                 loop_cnt += 1
-                while time.monotonic() < start_time + loop_cnt * CTRL_DT:
+                while (
+                    time.monotonic()
+                    < start_time + loop_cnt * robot_config.controller_dt
+                ):
                     pass
-                # print(
-                #     f"Target pose: {target_pose_6d}, gripper pos: {target_gripper_pos:.3f}, gripper torque: {arx5_client.gripper_torque:.3f}"
-                # )
-                print(f"tcp pose: {arx5_client.tcp_pose}")
-                arx5_client.set_ee_pose(target_pose_6d, target_gripper_pos)
+
+                eef_cmd = EEFState()
+                eef_cmd.pose_6d()[:] = target_pose_6d
+                eef_cmd.gripper_pos = target_gripper_pos
+                controller.set_eef_cmd(eef_cmd)
+
+
+@click.command()
+@click.option("--model", "-m", required=True, help="ARX5 model name: X5 or L5")
+@click.option("--interface", "-i", required=True, help="can bus name (can0 etc.)")
+@click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
+def main(model: str, interface: str, urdf_path: str):
+    controller = Arx5CartesianController(model, interface, urdf_path)
+    controller.reset_to_home()
+
+    gain = Gain()
+    gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
+    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+    controller.set_gain(gain)
+    np.set_printoptions(precision=4, suppress=True)
+    try:
+        start_teleop_recording(controller)
+    except KeyboardInterrupt:
+        print(f"Teleop recording is terminated. Resetting to home.")
+        controller.reset_to_home()
+        controller.set_to_damping()
 
 
 if __name__ == "__main__":
-    arx5_client = Arx5Client(zmq_ip="localhost", zmq_port=8765)
-    arx5_client.reset_to_home()
-    np.set_printoptions(precision=4, suppress=True)
-    try:
-        start_teleop_recording(arx5_client)
-    except KeyboardInterrupt:
-        print(f"Teleop recording is terminated. Resetting to home.")
-        arx5_client.reset_to_home()
-        arx5_client.set_to_damping()
+    main()

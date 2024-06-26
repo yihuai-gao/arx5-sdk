@@ -164,7 +164,6 @@ void Arx5CartesianController::reset_to_home() {
       Gain(_ROBOT_CONFIG.default_kp, _ROBOT_CONFIG.default_kd,
            _ROBOT_CONFIG.default_gripper_kp, _ROBOT_CONFIG.default_gripper_kd);
   JointState target_state;
-  target_state.gripper_pos = _ROBOT_CONFIG.gripper_width;
 
   // calculate the maximum joint position error
   double max_pos_error = (init_state.pos - Vec6d::Zero()).cwiseAbs().maxCoeff();
@@ -394,6 +393,10 @@ void Arx5CartesianController::_enter_emergency_state() {
   _input_joint_cmd.torque = Vec6d::Zero();
 
   while (true) {
+    std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
+    set_gain(damping_gain);
+    _input_joint_cmd.vel = Vec6d::Zero();
+    _input_joint_cmd.torque = Vec6d::Zero();
     _send_recv();
     sleep_ms(5);
   }

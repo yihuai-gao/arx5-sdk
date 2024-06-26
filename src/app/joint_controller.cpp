@@ -1,9 +1,9 @@
 #include "app/joint_controller.h"
 #include <sys/syscall.h>
 #include <sys/types.h>
+#include <array>
 #include <stdexcept>
 #include "utils.h"
-
 using namespace arx;
 
 Arx5JointController::Arx5JointController(std::string model,
@@ -13,6 +13,7 @@ Arx5JointController::Arx5JointController(std::string model,
       _ROBOT_CONFIG(RobotConfig(model, _CONTROLLER_DT)) {
 
   _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
+
   _init_robot();
   _background_send_recv_thread =
       std::thread(&Arx5JointController::_background_send_recv, this);
@@ -291,6 +292,7 @@ bool Arx5JointController::_send_recv() {
   //                send_motor_3_time_us - start_send_motor_3_time_us, send_motor_4_time_us - start_send_motor_4_time_us, send_motor_5_time_us - start_send_motor_5_time_us, send_motor_6_time_us - start_send_motor_6_time_us, get_motor_msg_time_us - start_get_motor_msg_time_us);
 
   std::lock_guard<std::mutex> guard_state(_state_mutex);
+  std::array<int, 7> ids = _ROBOT_CONFIG.motor_id;
 
   _joint_state.pos[0] = motor_msg[0].angle_actual_rad;
   _joint_state.pos[1] = motor_msg[1].angle_actual_rad;
@@ -315,18 +317,19 @@ bool Arx5JointController::_send_recv() {
   // HACK: just to match the values (there must be something wrong)
   for (int i = 0; i < 6; i++) {
     if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC_A4310) {
-      _joint_state.torque[i] = motor_msg[i].current_actual_float *
+      _joint_state.torque[i] = motor_msg[ids[i]].current_actual_float *
                                torque_constant_EC_A4310 *
                                torque_constant_EC_A4310;
       // Why there are two torque_constant_EC_A4310?
     } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310) {
       _joint_state.torque[i] =
-          motor_msg[i].current_actual_float * torque_constant_DM_J4310;
+          motor_msg[ids[i]].current_actual_float * torque_constant_DM_J4310;
     } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340) {
       _joint_state.torque[i] =
-          motor_msg[i].current_actual_float * torque_constant_DM_J4340;
+          motor_msg[ids[i]].current_actual_float * torque_constant_DM_J4340;
     }
   }
+
   _joint_state.gripper_torque =
       motor_msg[7].current_actual_float * torque_constant_DM_J4310;
   _joint_state.timestamp = get_timestamp();
@@ -401,6 +404,10 @@ void Arx5JointController::_enter_emergency_state() {
   _input_joint_cmd.torque = Vec6d::Zero();
 
   while (true) {
+    std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
+    set_gain(damping_gain);
+    _input_joint_cmd.vel = Vec6d::Zero();
+    _input_joint_cmd.torque = Vec6d::Zero();
     _send_recv();
     sleep_ms(5);
   }
