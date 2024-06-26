@@ -1,5 +1,5 @@
 import time
-import numpy as np
+
 import os
 import sys
 
@@ -7,6 +7,8 @@ ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
 import arx5_interface as arx5
+import click
+import numpy as np
 
 
 def easeInOutQuad(t):
@@ -18,27 +20,30 @@ def easeInOutQuad(t):
         return -(t * (t - 2) - 1) / 2
 
 
-def main():
+@click.command()
+@click.option("--model", "-m", required=True, help="ARX5 model name: X5 or L5")
+@click.option("--interface", "-i", required=True, help="can bus name (can0 etc.)")
+@click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
+def main(model: str, interface: str, urdf_path: str):
     np.set_printoptions(precision=3, suppress=True)
-    arx5_joint_controller = arx5.Arx5JointController("L5", "can2")
+    arx5_joint_controller = arx5.Arx5JointController(model, interface)
     arx5_joint_controller.set_log_level(arx5.LogLevel.DEBUG)
     config = arx5_joint_controller.get_robot_config()
 
     arx5_joint_controller.enable_background_send_recv()
     arx5_joint_controller.reset_to_home()
-    arx5_joint_controller.enable_gravity_compensation("../models/arx5_realsense.urdf")
+    arx5_joint_controller.enable_gravity_compensation(urdf_path)
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
     gain = arx5.Gain()
     gain.gripper_kp = 5.0
     gain.gripper_kd = config.default_gripper_kd
 
-    # gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
-    # gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
+    gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
+    gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
     arx5_joint_controller.set_gain(gain)
-    while True:
-        time.sleep(0.1)
-
+    # while True:
+    #     time.sleep(0.1)
 
     step_num = 1500
     USE_TIMER = True
@@ -72,5 +77,6 @@ def main():
         time.sleep(config.controller_dt)
         JointState = arx5_joint_controller.get_state()
         # print(f"gripper: {JointState.gripper_pos:.05f}")
+
 
 main()
