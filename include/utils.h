@@ -24,4 +24,5 @@ class MovingAverage6d {
 
 }  // namespace arx
 std::string vec2str(const Eigen::Matrix<double, 6, 1>& vec, int precision = 3);
+
 #endif

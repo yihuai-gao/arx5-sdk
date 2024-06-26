@@ -291,13 +291,11 @@ void Arx5CartesianController::_update_output_cmd() {
   }
   if (std::abs(_joint_state.gripper_torque) >
       _ROBOT_CONFIG.gripper_torque_max / 2) {
-    double sign = _joint_state.gripper_torque > 0
-                      ? 1
-                      : -1;  // -1 for closing blocked, 1 for opening blocked
+    double sign = _joint_state.gripper_torque > 0 ? 1 : -1;
+    // -1 for closing blocked, 1 for opening blocked
     double delta_pos =
-        _output_joint_cmd.gripper_pos -
-        prev_output_cmd
-            .gripper_pos;  // negative for closing, positive for opening
+        _output_joint_cmd.gripper_pos - prev_output_cmd.gripper_pos;
+    // negative for closing, positive for opening
     if (delta_pos * sign > 0) {
       _logger->debug(
           "Gripper torque is too large, gripper pos cmd is not updated");
@@ -534,8 +532,11 @@ void Arx5CartesianController::_calc_joint_cmd() {
   bool success = std::get<0>(ik_results);
   Vec6d joint_pos = std::get<1>(ik_results);
 
+  Vec6d clipped_joint_pos = joint_pos.cwiseMax(_ROBOT_CONFIG.joint_pos_min)
+                                .cwiseMin(_ROBOT_CONFIG.joint_pos_max);
+
   if (success) {
-    joint_cmd.pos = _joint_pos_filter.filter(joint_pos);
+    joint_cmd.pos = _joint_pos_filter.filter(clipped_joint_pos);
     if (_enable_gravity_compensation) {
       // Use the torque of the current joint positions
       Vec6d joint_torque = _solver->inverse_dynamics(

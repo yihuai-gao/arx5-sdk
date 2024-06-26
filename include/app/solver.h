@@ -53,7 +53,6 @@ class Arx5Solver {
   const int _MAXITER = 500;
   const double _EPS_JOINTS = 1E-15;
   const double _MAX_TORQUE = 15.0f;
-  const double _JOINT_POS_TOLERANCE = 0.01;
 
   KDL::Tree _tree;
   KDL::Chain _chain;

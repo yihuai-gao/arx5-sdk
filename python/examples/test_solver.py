@@ -1,6 +1,13 @@
 import time
+import os
+import sys
+
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(ROOT_DIR)
+os.chdir(ROOT_DIR)
 import arx5_interface as arx5
 import numpy as np
+
 
 solver = arx5.Arx5Solver("../models/arx5_gopro.urdf")
 

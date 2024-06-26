@@ -7,7 +7,7 @@ import numpy as np
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
-from arx5_interface import Arx5CartesianController, EEFState, Gain
+from arx5_interface import Arx5CartesianController, EEFState, Gain, LogLevel
 from peripherals.spacemouse_shared_memory import Spacemouse
 from multiprocessing.managers import SharedMemoryManager
 
@@ -68,6 +68,9 @@ def start_teleop_recording(controller: Arx5CartesianController):
                     gain = Gain()
                     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
                     gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+                    gain.gripper_kp = robot_config.default_gripper_kp
+                    gain.gripper_kd = robot_config.default_gripper_kd
+
                     controller.set_gain(gain)
                     target_pose_6d = np.zeros((6,), dtype=np.float64)
                     target_gripper_pos = 0.0
@@ -114,7 +117,11 @@ def main(model: str, can_interface: str, urdf_path: str):
     gain = Gain()
     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
     gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+    robot_config = controller.get_robot_config()
+    gain.gripper_kp = robot_config.default_gripper_kp
+    gain.gripper_kd = robot_config.default_gripper_kd
     controller.set_gain(gain)
+    controller.set_log_level(LogLevel.DEBUG)
     np.set_printoptions(precision=4, suppress=True)
     try:
         start_teleop_recording(controller)
