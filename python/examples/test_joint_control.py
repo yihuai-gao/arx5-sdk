@@ -21,8 +21,8 @@ def easeInOutQuad(t):
 
 
 @click.command()
-@click.argument("model") # ARX arm model: X5 or L5
-@click.argument("can_interface") # can bus name (can0 etc.)
+@click.argument("model")  # ARX arm model: X5 or L5
+@click.argument("can_interface")  # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
 def main(model: str, can_interface: str, urdf_path: str):
     np.set_printoptions(precision=3, suppress=True)

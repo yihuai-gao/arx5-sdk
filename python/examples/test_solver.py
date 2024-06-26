@@ -16,4 +16,3 @@ print(solver.inverse_kinematics(fk_pose, np.array([0, 0, 0, 0, 0, 0])))
 start_time = time.monotonic()
 solver.inverse_dynamics(joint_pos, joint_vel, joint_acc)
 print(f"ID: {time.monotonic() - start_time:.05f}s")
-
