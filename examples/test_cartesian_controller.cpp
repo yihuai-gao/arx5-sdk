@@ -6,7 +6,7 @@
 using namespace arx;
 
 Arx5CartesianController* arx5_cartesian_controller =
-    new Arx5CartesianController("L5", "can2", "../models/arx5_realsense.urdf");
+    new Arx5CartesianController("X5", "can0", "../models/arx5.urdf");
 
 void signal_handler(int signal) {
   std::cout << "SIGINT received" << std::endl;
@@ -16,7 +16,7 @@ void signal_handler(int signal) {
 
 int main() {
   EEFState cmd;
-  Arx5Solver solver("../models/arx5_realsense.urdf");
+  Arx5Solver solver("../models/arx5.urdf");
   int loop_cnt = 0;
   Gain gain = Gain();
   arx5_cartesian_controller->reset_to_home();

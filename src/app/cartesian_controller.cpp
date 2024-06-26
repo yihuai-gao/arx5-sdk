@@ -474,6 +474,7 @@ bool Arx5CartesianController::_send_recv() {
   //                update_cmd_time_us - start_time_us, send_motor_0_time_us - start_send_motor_0_time_us, send_motor_1_time_us - start_send_motor_1_time_us, send_motor_2_time_us - start_send_motor_2_time_us,
   //                send_motor_3_time_us - start_send_motor_3_time_us, send_motor_4_time_us - start_send_motor_4_time_us, send_motor_5_time_us - start_send_motor_5_time_us, send_motor_6_time_us - start_send_motor_6_time_us, get_motor_msg_time_us - start_get_motor_msg_time_us);
 
+  std::array<int, 7> ids = _ROBOT_CONFIG.motor_id;
   std::lock_guard<std::mutex> guard_state(_state_mutex);
 
   _joint_state.pos[0] = motor_msg[0].angle_actual_rad;
@@ -496,19 +497,22 @@ bool Arx5CartesianController::_send_recv() {
                              _ROBOT_CONFIG.gripper_open_readout *
                              _ROBOT_CONFIG.gripper_width;
 
+  // _logger->info("JOint 1 torque: old {} new {}", _joint_state.torque[1],
+  //               motor_msg[ids[1]].current_actual_float *
+  //                   torque_constant_EC_A4310 * torque_constant_EC_A4310);
   // HACK: just to match the values (there must be something wrong)
   for (int i = 0; i < 6; i++) {
     if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC_A4310) {
-      _joint_state.torque[i] = motor_msg[i].current_actual_float *
+      _joint_state.torque[i] = motor_msg[ids[i]].current_actual_float *
                                torque_constant_EC_A4310 *
                                torque_constant_EC_A4310;
       // Why there are two torque_constant_EC_A4310?
     } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310) {
       _joint_state.torque[i] =
-          motor_msg[i].current_actual_float * torque_constant_DM_J4310;
+          motor_msg[ids[i]].current_actual_float * torque_constant_DM_J4310;
     } else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340) {
       _joint_state.torque[i] =
-          motor_msg[i].current_actual_float * torque_constant_DM_J4340;
+          motor_msg[ids[i]].current_actual_float * torque_constant_DM_J4340;
     }
   }
   _joint_state.gripper_torque =
