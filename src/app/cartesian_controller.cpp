@@ -251,9 +251,11 @@ void Arx5CartesianController::_update_output_cmd() {
             prev_output_cmd.gripper_pos + _ROBOT_CONFIG.gripper_vel_max * dt *
                                               gripper_delta_pos /
                                               std::abs(gripper_delta_pos);
-        _logger->debug("Gripper pos cmd clipped: {:.3f} to {:.3f}",
-                       _input_joint_cmd.gripper_pos,
-                       _output_joint_cmd.gripper_pos);
+        if (std::abs(_input_joint_cmd.gripper_pos -
+                     _output_joint_cmd.gripper_pos) >= 0.001)
+          _logger->debug("Gripper pos cmd clipped: {:.3f} to {:.3f}",
+                         _input_joint_cmd.gripper_pos,
+                         _output_joint_cmd.gripper_pos);
       }
     } else {
       _output_joint_cmd.gripper_pos = _joint_state.gripper_pos;
@@ -377,6 +379,18 @@ void Arx5CartesianController::_check_joint_state_sanity() {
           i, _joint_state.torque[i]);
       _enter_emergency_state();
     }
+  }
+  // Gripper should be around 0~_ROBOT_CONFIG.gripper_width
+  double gripper_width_tolerance = 0.005;  // m
+  if (_joint_state.gripper_pos < -gripper_width_tolerance ||
+      _joint_state.gripper_pos >
+          _ROBOT_CONFIG.gripper_width + gripper_width_tolerance) {
+    _logger->error(
+        "Gripper position error: got {:.3f} but should be in 0~{:.3f} (m). "
+        "Please close the gripper before turning the arm on or recalibrate "
+        "gripper home and width.",
+        _joint_state.gripper_pos, _ROBOT_CONFIG.gripper_width);
+    _enter_emergency_state();
   }
 }
 
