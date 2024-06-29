@@ -66,8 +66,6 @@ class Arx5Solver {
   std::shared_ptr<KDL::ChainIkSolverVel_pinv> _ik_acc_solver;
   std::shared_ptr<KDL::ChainJntToJacDotSolver> _jac_dot_solver;
   std::shared_ptr<KDL::ChainIdSolver_RNE> _id_solver;
-
-  KDL::Frame _init_frame;
 };
 }  // namespace arx
 

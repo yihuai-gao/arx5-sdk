@@ -60,7 +60,9 @@ void Arx5CartesianController::_init_robot() {
   Gain gain = Gain();
   gain.kd = _ROBOT_CONFIG.default_kd;
   _input_joint_cmd = JointState();  // initialize joint command to zero
-  set_gain(gain);                   // set to damping by default
+  _input_eef_cmd.pose_6d = get_home_pose();
+  _output_eef_cmd.pose_6d = get_home_pose();
+  set_gain(gain);  // set to damping by default
   for (int i = 0; i <= 10; ++i) {
     // make sure all the motor positions are updated
     succeeded = _send_recv();
@@ -152,6 +154,10 @@ void Arx5CartesianController::set_gain(Gain new_gain) {
 
 RobotConfig Arx5CartesianController::get_robot_config() {
   return _ROBOT_CONFIG;
+}
+
+Vec6d Arx5CartesianController::get_home_pose() {
+  return _solver->forward_kinematics(Vec6d::Zero());
 }
 
 void Arx5CartesianController::reset_to_home() {
@@ -403,7 +409,7 @@ void Arx5CartesianController::_enter_emergency_state() {
   set_gain(damping_gain);
   _input_joint_cmd.vel = Vec6d::Zero();
   _input_joint_cmd.torque = Vec6d::Zero();
-
+  _logger->error("Emergency state entered. Please restart the program.");
   while (true) {
     std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
     set_gain(damping_gain);
@@ -539,6 +545,13 @@ void Arx5CartesianController::_calc_joint_cmd() {
   std::tuple<bool, Vec6d> ik_results;
   {
     std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
+    if (_output_eef_cmd.pose_6d.isZero() ||
+        _output_eef_cmd.pose_6d.norm() < 0.01) {
+      _logger->error(
+          "EEF command should not be set close to zero. To start from the home "
+          "pose, please call get_home_pose().");
+      _enter_emergency_state();
+    }
     ik_results =
         _solver->inverse_kinematics(_output_eef_cmd.pose_6d, joint_state.pos);
     joint_cmd.gripper_pos = _output_eef_cmd.gripper_pos;

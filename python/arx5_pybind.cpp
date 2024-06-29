@@ -90,6 +90,7 @@ PYBIND11_MODULE(arx5_interface, m) {
       .def("get_eef_state", &Arx5CartesianController::get_eef_state)
       .def("get_joint_state", &Arx5CartesianController::get_joint_state)
       .def("get_timestamp", &Arx5CartesianController::get_timestamp)
+      .def("get_home_pose", &Arx5CartesianController::get_home_pose)
       .def("set_gain", &Arx5CartesianController::set_gain)
       .def("get_gain", &Arx5CartesianController::get_gain)
       .def("set_log_level", &Arx5CartesianController::set_log_level)
