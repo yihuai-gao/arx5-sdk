@@ -20,7 +20,8 @@ def start_teleop_recording(controller: Arx5CartesianController):
     ori_speed = 0.8
     pos_speed = 0.3
     gripper_speed = 0.04
-    target_pose_6d = np.zeros((6,), dtype=np.float64)
+    target_pose_6d = controller.get_home_pose()
+
     target_gripper_pos = 0.0
 
     window_size = 20
@@ -72,7 +73,7 @@ def start_teleop_recording(controller: Arx5CartesianController):
                     gain.gripper_kd = robot_config.default_gripper_kd
 
                     controller.set_gain(gain)
-                    target_pose_6d = np.zeros((6,), dtype=np.float64)
+                    target_pose_6d = controller.get_home_pose()
                     target_gripper_pos = 0.0
                     loop_cnt = 0
                     start_time = time.monotonic()

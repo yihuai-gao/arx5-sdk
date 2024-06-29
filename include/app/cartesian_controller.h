@@ -25,6 +25,7 @@ class Arx5CartesianController {
   RobotConfig get_robot_config();
 
   void reset_to_home();
+  Vec6d get_home_pose();
   void set_to_damping();
 
  private:

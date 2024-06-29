@@ -23,6 +23,7 @@ int main() {
   gain.kd = (arx5_cartesian_controller->get_robot_config()).default_kd / 10;
   std::signal(SIGINT, signal_handler);
   arx5_cartesian_controller->set_gain(gain);
+  cmd.pose_6d = arx5_cartesian_controller->get_home_pose();
   arx5_cartesian_controller->set_eef_cmd(cmd);
   while (true) {
     EEFState eef_state = arx5_cartesian_controller->get_eef_state();
