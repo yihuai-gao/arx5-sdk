@@ -91,7 +91,7 @@ sudo ip link set up can0 type can bitrate 1000000
 
 
 ## Spacemouse setup (for Cartesian control)
-All the configurations are tested using 3Dconnexion spacemouse.
+All the configurations are tested using 3Dconnexion spacemouse. You can skip this step and use keyboard to test Cartesian control.
 ```sh
 sudo apt install libspnav-dev spacenavd
 sudo systemctl enable spacenavd.service
@@ -109,6 +109,7 @@ Arguments for `test_joint_control.py`, `spacemouse_teleop.py` and `teach_replay.
 cd python
 python examples/test_joint_control.py X5 can0 # replace X5 with L5 for the other model 
 python examples/test_bimanual.py # For two X5 arms using can0 and can1, each arm will act the same as test_joint_control.py
+python examples/keyboard_teleop.py X5 can0
 python examples/spacemouse_teleop.py X5 can0
 python examples/teach_replay.py X5 can0
 ```
