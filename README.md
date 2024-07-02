@@ -8,8 +8,13 @@
 - Control multiple arms in the same process through C++ multi-threading
 
 ## Build & Install
+We set up a conda environment for all the cmake dependencies, so no system package is required. If you want to run `cmake` and `make` after modifying the C++ source files, please make sure you are under the created conda environment (`arx-py310` etc.).  
+
+We recommend [mamba](https://github.com/conda-forge/miniforge?tab=readme-ov-file#install) for creating conda environments, which takes only about 1min. You can also use `conda`, but it takes significantly longer (~10min).
+
 ``` sh
-mamba env create -f conda_environments/py310_environment 
+mamba env create -f conda_environments/py310_environment.yaml
+# if you do not have mamba, you can also use conda, which takes significantly longer
 # Currently available python versions: 3.8, 3.9, 3.10, 3.11 
 conda activate arx-py310
 mkdir build && cd build
@@ -94,6 +99,7 @@ sudo systemctl start spacenavd.service
 ```
 
 ## Test scripts
+
 Arguments for `test_joint_control.py`, `spacemouse_teleop.py` and `teach_replay.py`: 
 - (required) model: `X5` (silver and black) or `L5` (all black with blue or red LED light)
 - (required) can_interface: `can0` etc. (run `ip a` to check your can interface name)
@@ -106,5 +112,12 @@ python examples/test_bimanual.py # For two X5 arms using can0 and can1, each arm
 python examples/spacemouse_teleop.py X5 can0
 python examples/teach_replay.py X5 can0
 ```
-To use python sdk from other directories, please make sure `./python` is in `$PYTHONPATH` and `./lib/x86_64` or `./lib/aarch64` (depend on your computer system) is in `$LD_LIBRARY_PATH`.
-After compiling the `arx5_interface` pybind dynamic library, you can run it under other python environments (need to be the same python version as the one you built).
+To use python sdk from other directories, please make sure `./python` is in `$PYTHONPATH` and `./lib/x86_64` or `./lib/aarch64` (depend on your computer system) is in `$LD_LIBRARY_PATH`. 
+
+``` sh
+export PYTHONPATH=$PYTHONPATH:/path/to/your/arx5-sdk/python
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/path/to/your/arx5-sdk/lib/your_arch
+```
+
+After compiling the `arx5_interface` pybind dynamic library (usually `python/arx5_interface.cpython-version-arch-linux-gnu.so`), you can run it under other python environments (need to be the same python version as the one you built).
+ 
