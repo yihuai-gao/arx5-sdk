@@ -47,7 +47,7 @@ def start_keyboard_teleop(controller: Arx5CartesianController):
         keyboard.KeyCode.from_char("d"): False,  # -yaw
         keyboard.KeyCode.from_char("r"): False,  # open gripper
         keyboard.KeyCode.from_char("f"): False,  # close gripper
-        keyboard.Key.space: False,
+        keyboard.Key.space: False,  # reset to home
     }
 
     def on_press(key):
