@@ -1,5 +1,5 @@
 {
-    "C_Cpp.clang_format_style": "file",
+    "C_Cpp.clang_format_style": "Microsoft",
     "editor.formatOnSave": true,
     "files.associations": {
         "*.ino": "cpp",
@@ -95,5 +95,5 @@
     "cSpell.words": [
         "urdf"
     ],
-    "C_Cpp.formatting": "clangFormat"
+    // "C_Cpp.formatting": "clangFormat"
 }
