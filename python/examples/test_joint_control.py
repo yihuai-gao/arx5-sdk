@@ -40,7 +40,7 @@ def main(model: str, can_interface: str, urdf_path: str):
     gain.gripper_kd = config.default_gripper_kd
 
     gain.kp()[:] = np.array([100.0, 100.0, 100.0, 30.0, 30, 5.0])
-    gain.kd()[:] = np.array([1.5, 1.5, 1.5, 1.5, 1.5, 1.0])
+    gain.kd()[:] = np.array([1.0, 1.0, 1.0, 1.5, 1.5, 1.0])
     arx5_joint_controller.set_gain(gain)
     # while True:
     #     time.sleep(0.1)

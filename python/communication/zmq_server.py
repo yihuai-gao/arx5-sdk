@@ -48,7 +48,7 @@ class Arx5Server:
         self.poller.register(self.socket, zmq.POLLIN)
         self.default_gain = arx5.Gain()
         self.default_gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-        self.default_gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+        self.default_gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
 
         self.zmq_ip = zmq_ip
         self.zmq_port = zmq_port

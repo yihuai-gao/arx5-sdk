@@ -60,7 +60,7 @@ def start_high_level_replay(controller: Arx5CartesianController, data_file: str)
 
     gain = Gain()
     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
     controller.set_gain(gain)
     config = controller.get_robot_config()
     traj = np.load(data_file, allow_pickle=True)
