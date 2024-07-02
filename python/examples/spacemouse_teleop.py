@@ -68,7 +68,7 @@ def start_teleop_recording(controller: Arx5CartesianController):
                     controller.reset_to_home()
                     gain = Gain()
                     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-                    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+                    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
                     gain.gripper_kp = robot_config.default_gripper_kp
                     gain.gripper_kd = robot_config.default_gripper_kd
 
@@ -117,7 +117,7 @@ def main(model: str, can_interface: str, urdf_path: str):
 
     gain = Gain()
     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.5, 1.5, 1.5])
+    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
     robot_config = controller.get_robot_config()
     gain.gripper_kp = robot_config.default_gripper_kp
     gain.gripper_kd = robot_config.default_gripper_kd
