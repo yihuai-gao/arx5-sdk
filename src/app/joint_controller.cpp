@@ -519,8 +519,18 @@ void Arx5JointController::reset_to_home()
     Gain init_gain = get_gain();
     double init_gripper_kp = _gain.gripper_kp;
     double init_gripper_kd = _gain.gripper_kd;
-    Gain target_gain = Gain(_ROBOT_CONFIG.default_kp, _ROBOT_CONFIG.default_kd, _ROBOT_CONFIG.default_gripper_kp,
-                            _ROBOT_CONFIG.default_gripper_kd);
+    Gain target_gain;
+    if (init_gain.kp.isZero())
+    {
+        _logger->info("Current kp is zero. Setting to default kp kd");
+        target_gain = Gain(_ROBOT_CONFIG.default_kp, _ROBOT_CONFIG.default_kd, _ROBOT_CONFIG.default_gripper_kp,
+                           _ROBOT_CONFIG.default_gripper_kd);
+    }
+    else
+    {
+        target_gain = init_gain;
+    }
+
     JointState target_state;
     if (init_state.pos == Vec6d::Zero())
     {
