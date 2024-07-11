@@ -73,6 +73,7 @@ class Arx5JointController {
   void disable_background_send_recv();
   void enable_gravity_compensation(std::string urdf_path);
   void disable_gravity_compensation();
+  void set_no_gripper();
 
   void set_joint_cmd(JointState new_cmd);
   std::tuple<JointState, JointState> get_joint_cmd();
@@ -110,6 +111,7 @@ class Arx5JointController {
   std::thread _background_send_recv;
   bool _background_send_recv_running = false;
   bool _destroy_background_threads = false;
+  bool _no_gripper = false;
   std::mutex _cmd_mutex;
   std::mutex _state_mutex;
   bool _enable_vel_clipping = true;

@@ -173,6 +173,7 @@ void Arx5JointController::_update_output_cmd() {
       }
     }
   }
+  
 }
 
 double Arx5JointController::get_timestamp() {
@@ -273,8 +274,12 @@ void Arx5JointController::_send_recv() {
   _joint_state.pos[3] = motor_msg[4].angle_actual_rad;
   _joint_state.pos[4] = motor_msg[5].angle_actual_rad;
   _joint_state.pos[5] = motor_msg[6].angle_actual_rad;
-  _joint_state.gripper_pos =
-      motor_msg[7].angle_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
+  if (_no_gripper) {
+    _joint_state.gripper_pos = 0;
+  } else {
+    _joint_state.gripper_pos =
+        motor_msg[7].angle_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
+  }
 
   _joint_state.vel[0] = motor_msg[0].speed_actual_rad;
   _joint_state.vel[1] = motor_msg[1].speed_actual_rad;
@@ -282,8 +287,12 @@ void Arx5JointController::_send_recv() {
   _joint_state.vel[3] = motor_msg[4].speed_actual_rad;
   _joint_state.vel[4] = motor_msg[5].speed_actual_rad;
   _joint_state.vel[5] = motor_msg[6].speed_actual_rad;
-  _joint_state.gripper_vel =
-      motor_msg[7].speed_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
+  if (_no_gripper) {
+    _joint_state.gripper_vel = 0;
+  } else {
+    _joint_state.gripper_vel =
+        motor_msg[7].speed_actual_rad / _GRIPPER_OPEN_READOUT * GRIPPER_WIDTH;
+  }
 
   // HACK: just to match the values (there must be something wrong)
   _joint_state.torque[0] =
@@ -295,8 +304,12 @@ void Arx5JointController::_send_recv() {
   _joint_state.torque[3] = motor_msg[4].current_actual_float * torque_constant2;
   _joint_state.torque[4] = motor_msg[5].current_actual_float * torque_constant2;
   _joint_state.torque[5] = motor_msg[6].current_actual_float * torque_constant2;
-  _joint_state.gripper_torque =
-      motor_msg[7].current_actual_float * torque_constant2;
+  if (_no_gripper) {
+    _joint_state.gripper_torque = 0;
+  } else {
+    _joint_state.gripper_torque =
+        motor_msg[7].current_actual_float * torque_constant2;
+  }
   _joint_state.timestamp = get_timestamp();
 }
 
@@ -365,6 +378,10 @@ void Arx5JointController::enable_background_send_recv() {
 void Arx5JointController::disable_background_send_recv() {
   _logger->info("Disable background send_recv");
   _background_send_recv_running = false;
+}
+
+void Arx5JointController::set_no_gripper() {
+  _no_gripper = true;
 }
 
 void Arx5JointController::set_joint_cmd(JointState new_cmd) {
