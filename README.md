@@ -4,7 +4,7 @@
 - No `sudo` requirement (all dependencies are managed under conda environment, thanks to [Cheng Chi](https://cheng-chi.github.io/))
 - Simple python interface with complete type hints (see `python/arx5_interface.pyi`)
 - Joint controller runs at 500Hz in the background (motor communication delay ~0.4ms)
-- Cartesian space controller with SpaceMouse tele-operation and teach-replay (thanks to [Cheng Chi](https://cheng-chi.github.io/))
+- Cartesian space controller with keyboard and SpaceMouse tele-operation and teach-replay (thanks to [Cheng Chi](https://cheng-chi.github.io/))
 - Control multiple arms in the same process through C++ multi-threading
 
 ## Build & Install
@@ -100,7 +100,7 @@ sudo systemctl start spacenavd.service
 
 ## Test scripts
 
-Arguments for `test_joint_control.py`, `spacemouse_teleop.py` and `teach_replay.py`: 
+Arguments for `test_joint_control.py`, `keyboard_teleop.py`, `spacemouse_teleop.py` and `teach_replay.py`: 
 - (required) model: `X5` (silver and black) or `L5` (all black with blue or red LED light)
 - (required) can_interface: `can0` etc. (run `ip a` to check your can interface name)
 - (optional) urdf_path `-u`: by default `../models/arx5.urdf`
