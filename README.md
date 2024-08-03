@@ -58,7 +58,7 @@ Copy and paste the following, and replace the serial number with yours. If you a
 SUBSYSTEM=="tty", ATTRS{idVendor}=="16d0", ATTRS{idProduct}=="117e", ATTRS{serial}=="209738924D4D", SYMLINK+="arxcan0"
 ```
 
-Finally, activate CAN connection by:
+Finally, activate CAN connection by: (the second line should be run every time after connection)
 ``` sh
 sudo udevadm control --reload-rules && sudo udevadm trigger
 sudo slcand -o -f -s8 /dev/arxcan0 can0 && sudo ifconfig can0 up
@@ -70,7 +70,7 @@ After plugging the adapter and running `ip a`, you should immediately find a can
 ```sh
 sudo ip link set up can0 type can bitrate 1000000
 ```
-and you are good to go.
+and you are good to go. You should run it **every time** after connecting a usb-can adaptor.
 If you have multiple arms and you want to fix the CAN interface name mapping for each arm, you need to register the adapter to the CAN rules:
 ```sh
 sudo dmesg # Find the idVendor, idProduct and serial number of your adapter
@@ -84,7 +84,7 @@ Run the following line to update the changes
 ```sh
 sudo udevadm control --reload-rules && sudo systemctl restart systemd-udevd && sudo udevadm trigger
 ```
-Finally, reconnect your adapter and run 
+Finally, reconnect your adapter and run (This line should be run every time after plugging the usb-can adaptor)
 ```sh
 sudo ip link set up can0 type can bitrate 1000000
 ```
