@@ -5,6 +5,7 @@
 #include "math_ops.h"
 #include <array>
 #include <iostream>
+#include <memory>
 #include <mutex>
 #include <stdint.h>
 #include <string.h>
@@ -58,13 +59,40 @@ void RV_can_data_repack(uint32_t msgID, uint8_t *Data, int32_t databufferlen, ui
                         std::array<OD_Motor_Msg, 10> &motor_msg);
 void DM_can_data_repack(uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
 
+class CanInterface
+{
+  public:
+    virtual bool transmit(can_frame_t &frame) = 0;
+    virtual const std::array<OD_Motor_Msg, 10> get_motor_msg() = 0;
+    void can_receive_frame(can_frame_t *frame);
+
+  protected:
+    std::string m_interface_name;
+    std::array<OD_Motor_Msg, 10> m_motor_msg;
+    std::mutex m_motor_msg_mutex;
+};
+
+class Usb2Can : public CanInterface
+{
+  public:
+    Usb2Can(std::string interface_name);
+    ~Usb2Can();
+
+    bool transmit(can_frame_t &frame) override;
+    const std::array<OD_Motor_Msg, 10> get_motor_msg() override;
+
+  private:
+    SocketCAN m_socket_can;
+};
+// class EtherCat2Can : public CanInterface
+// {
+// };
 class ArxCan
 {
   public:
-    ArxCan(std::string socket_name);
+    ArxCan(std::string interface_name);
     ~ArxCan();
 
-    void can_receive_frame(can_frame_t *frame);
     void can_cmd_init(uint16_t motor_id, uint8_t cmd);
 
     bool send_EC_motor_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor);
@@ -74,15 +102,11 @@ class ArxCan
     bool enable_DM_motor(uint16_t ID);
     void reset_zero_readout(uint16_t ID);
     void clear(uint16_t ID);
-    bool transmit(can_frame_t &frame);
 
     const std::array<OD_Motor_Msg, 10> get_motor_msg();
 
   private:
-    SocketCAN m_can_adapter;
-    std::string m_socket_name;
-    std::array<OD_Motor_Msg, 10> m_motor_msg;
-    std::mutex m_motor_msg_mutex;
+    std::shared_ptr<CanInterface> m_interface_ptr;
 };
 
 #endif

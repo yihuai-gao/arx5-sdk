@@ -24,7 +24,6 @@
 #include <kdl/tree.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 #include <math.h>
-#include <memory.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
