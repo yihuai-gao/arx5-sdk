@@ -609,7 +609,7 @@ void Arx5JointController::calibrate_gripper()
     _logger->info("Start calibrating gripper. Please fully close the gripper and press "
                   "enter to continue");
     std::cin.get();
-    _can_handle.Set_Zero(0x08);
+    _can_handle.reset_zero_readout(0x08);
     usleep(400);
     for (int i = 0; i < 10; ++i)
     {
@@ -655,9 +655,9 @@ void Arx5JointController::calibrate_joint(int joint_id)
                   joint_id);
     std::cin.get();
     if (_ROBOT_CONFIG.motor_type[joint_id] == MotorType::EC_A4310)
-        _can_handle.CAN_cmd_init(motor_id, 0x03);
+        _can_handle.can_cmd_init(motor_id, 0x03);
     else
-        _can_handle.Set_Zero(motor_id);
+        _can_handle.reset_zero_readout(motor_id);
     usleep(400);
     for (int i = 0; i < 10; ++i)
     {
