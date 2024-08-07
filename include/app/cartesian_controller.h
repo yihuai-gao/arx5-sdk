@@ -37,6 +37,7 @@ class Arx5CartesianController
 
     EEFState _input_eef_cmd;
     EEFState _output_eef_cmd;
+    EEFState _interp_start_eef_cmd;
     JointState _input_joint_cmd;
     JointState _output_joint_cmd;
     JointState _joint_state;

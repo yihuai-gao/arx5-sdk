@@ -59,8 +59,7 @@ void Arx5CartesianController::_init_robot()
     Gain gain = Gain();
     gain.kd = _ROBOT_CONFIG.default_kd;
     _input_joint_cmd = JointState(); // initialize joint command to zero
-    _input_eef_cmd.pose_6d = get_home_pose();
-    _output_eef_cmd.pose_6d = get_home_pose();
+
     set_gain(gain); // set to damping by default
     for (int i = 0; i <= 10; ++i)
     {
@@ -75,9 +74,13 @@ void Arx5CartesianController::_init_robot()
     // Check whether any motor has non-zero position
     if (_joint_state.pos == Vec6d::Zero())
     {
-        _logger->error("All motors are not initialized. Please check the connection or power of the arm.");
-        throw std::runtime_error("All motors are not initialized. Please check the connection or power of the arm.");
+        _logger->error("None of the motors are initialized. Please check the connection or power of the arm.");
+        throw std::runtime_error(
+            "None of the motors are initialized. Please check the connection or power of the arm.");
     }
+    _input_eef_cmd = get_eef_state();
+    _output_eef_cmd = get_eef_state();
+    _interp_start_eef_cmd = get_eef_state();
     _background_send_recv_running = true;
 }
 
@@ -90,9 +93,15 @@ void Arx5CartesianController::set_eef_cmd(EEFState new_cmd)
         new_cmd.gripper_vel = 0;
         new_cmd.gripper_torque = 0;
     }
+    if (new_cmd.timestamp != 0 && new_cmd.timestamp < get_timestamp())
+    {
+        _logger->warn(
+            "EEF command timestamp is not 0 and in the past (current timestamp: {:.3f}s). New EEF command is Ignored.",
+            get_timestamp());
+        return;
+    }
     _input_eef_cmd = new_cmd;
-    // TODO: output eef cmd filtering
-    _output_eef_cmd = new_cmd;
+    _interp_start_eef_cmd = _output_eef_cmd;
 }
 
 std::tuple<EEFState, EEFState> Arx5CartesianController::get_eef_cmd()
@@ -105,6 +114,7 @@ EEFState Arx5CartesianController::get_eef_state()
 {
     std::lock_guard<std::mutex> lock(_state_mutex);
     EEFState eef_state;
+    eef_state.timestamp = _joint_state.timestamp;
     eef_state.pose_6d = _solver->forward_kinematics(_joint_state.pos);
     eef_state.gripper_pos = _joint_state.gripper_pos;
     eef_state.gripper_vel = _joint_state.gripper_vel;
@@ -440,7 +450,7 @@ void Arx5CartesianController::_enter_emergency_state()
 bool Arx5CartesianController::_send_recv()
 {
     // TODO: in the motor documentation, there shouldn't be these torque constants. Torque will go directly into the
-    // motors
+    // motors. The torque constant here may represent some other physical properties.
     const double torque_constant_EC_A4310 = 1.4; // Nm/A
     const double torque_constant_DM_J4310 = 0.424;
     const double torque_constant_DM_J4340 = 1.0;
@@ -507,15 +517,6 @@ bool Arx5CartesianController::_send_recv()
     std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
     int get_motor_msg_time_us = get_time_us();
 
-    // _logger->trace("update_cmd: {} us, send_motor_0: {} us, send_motor_1: {} us, send_motor_2: {} us, send_motor_3:
-    // {} us, send_motor_4: {} us, send_motor_5: {} us, send_motor_6: {} us, get_motor_msg: {} us",
-    //                update_cmd_time_us - start_time_us, send_motor_0_time_us - start_send_motor_0_time_us,
-    //                send_motor_1_time_us - start_send_motor_1_time_us, send_motor_2_time_us -
-    //                start_send_motor_2_time_us, send_motor_3_time_us - start_send_motor_3_time_us,
-    //                send_motor_4_time_us - start_send_motor_4_time_us, send_motor_5_time_us -
-    //                start_send_motor_5_time_us, send_motor_6_time_us - start_send_motor_6_time_us,
-    //                get_motor_msg_time_us - start_get_motor_msg_time_us);
-
     std::array<int, 7> ids = _ROBOT_CONFIG.motor_id;
     std::lock_guard<std::mutex> guard_state(_state_mutex);
 
@@ -537,9 +538,6 @@ bool Arx5CartesianController::_send_recv()
     _joint_state.gripper_vel =
         motor_msg[7].speed_actual_rad / _ROBOT_CONFIG.gripper_open_readout * _ROBOT_CONFIG.gripper_width;
 
-    // _logger->info("JOint 1 torque: old {} new {}", _joint_state.torque[1],
-    //               motor_msg[ids[1]].current_actual_float *
-    //                   torque_constant_EC_A4310 * torque_constant_EC_A4310);
     // HACK: just to match the values (there must be something wrong)
     for (int i = 0; i < 6; i++)
     {
@@ -568,8 +566,38 @@ void Arx5CartesianController::_calc_joint_cmd()
     JointState joint_cmd;
     JointState joint_state = get_joint_state();
     std::tuple<bool, Vec6d> ik_results;
+
     {
         std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
+        // Calculate output eef command (according to the interpolation)
+        if (_input_eef_cmd.timestamp == 0) // No interpolation. Directly update the target
+        {
+            _output_eef_cmd = _input_eef_cmd;
+            _output_eef_cmd.timestamp = get_timestamp();
+        }
+        else // Interpolate the current timestamp between _interp_start_eef_cmd and _input_eef_cmd
+        {
+            double current_timestamp = get_timestamp();
+            assert(current_timestamp >= _interp_start_eef_cmd.timestamp);
+            assert(_input_eef_cmd.timestamp > _interp_start_eef_cmd.timestamp);
+            if (current_timestamp > _input_eef_cmd.timestamp)
+            // Current timestamp has already exceed the interpolation target: hold at this target pose
+            {
+                _output_eef_cmd = _input_eef_cmd;
+                _output_eef_cmd.timestamp = current_timestamp;
+            }
+            else // Apply interpolation
+            {
+                double alpha = (current_timestamp - _interp_start_eef_cmd.timestamp) /
+                               (_input_eef_cmd.timestamp - _interp_start_eef_cmd.timestamp);
+                assert(alpha >= 0 && alpha <= 1);
+                _output_eef_cmd.pose_6d = _interp_start_eef_cmd.pose_6d * (1 - alpha) + _input_eef_cmd.pose_6d * alpha;
+                _output_eef_cmd.gripper_pos =
+                    _interp_start_eef_cmd.gripper_pos * (1 - alpha) + _input_eef_cmd.gripper_pos * alpha;
+                _output_eef_cmd.timestamp = current_timestamp;
+            }
+        }
+
         if (_output_eef_cmd.pose_6d.isZero() || _output_eef_cmd.pose_6d.norm() < 0.01)
         {
             _logger->error("EEF command should not be set close to zero. To start from the home pose, please call "
