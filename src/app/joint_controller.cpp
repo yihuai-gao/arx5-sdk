@@ -72,8 +72,9 @@ void Arx5JointController::_init_robot()
     // Check whether any motor has non-zero position
     if (_joint_state.pos == Vec6d::Zero())
     {
-        _logger->error("All motors are not initialized. Please check the connection or power of the arm.");
-        throw std::runtime_error("All motors are not initialized. Please check the connection or power of the arm.");
+        _logger->error("None of the motors are initialized. Please check the connection or power of the arm.");
+        throw std::runtime_error(
+            "None of the motors are initialized. Please check the connection or power of the arm.");
     }
 }
 
