@@ -1,6 +1,7 @@
 #include "app/cartesian_controller.h"
 #include "app/common.h"
 #include "app/joint_controller.h"
+#include "hardware/arx_can.h"
 #include "spdlog/spdlog.h"
 #include "utils.h"
 #include <pybind11/eigen.h>
