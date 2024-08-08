@@ -39,18 +39,12 @@ Arx5JointController::~Arx5JointController()
 void Arx5JointController::_init_robot()
 {
 
-    bool succeeded = true;
     for (int i = 0; i < 7; ++i)
     {
         if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310 || _ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340)
         {
             int id = _ROBOT_CONFIG.motor_id[i];
-            succeeded = _can_handle.enable_DM_motor(id);
-            if (!succeeded)
-            {
-                throw std::runtime_error("Failed to enable motor " + std::to_string(id) +
-                                         ". Please check the connection.");
-            }
+            _can_handle.enable_DM_motor(id);
             usleep(1000);
         }
     }
@@ -62,11 +56,7 @@ void Arx5JointController::_init_robot()
     for (int i = 0; i <= 10; ++i)
     {
         // make sure all the motor positions are updated
-        succeeded = _send_recv();
-        if (!succeeded)
-        {
-            throw std::runtime_error("Failed to send and receive motor command.");
-        }
+        _send_recv();
         sleep_ms(5);
     }
     // Check whether any motor has non-zero position
@@ -237,7 +227,6 @@ bool Arx5JointController::_send_recv()
     const double torque_constant_EC_A4310 = 1.4; // Nm/A
     const double torque_constant_DM_J4310 = 0.424;
     const double torque_constant_DM_J4340 = 1.0;
-    bool succeeded = true;
     int start_time_us = get_time_us();
 
     _update_output_cmd();
@@ -249,22 +238,22 @@ bool Arx5JointController::_send_recv()
         int start_send_motor_time_us = get_time_us();
         if (_ROBOT_CONFIG.motor_type[i] == MotorType::EC_A4310)
         {
-            succeeded = _can_handle.send_EC_motor_cmd(_ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
-                                                      _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-                                                      _output_joint_cmd.torque[i] / torque_constant_EC_A4310);
+            _can_handle.send_EC_motor_cmd(_ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+                                          _output_joint_cmd.vel[i],
+                                          _output_joint_cmd.torque[i] / torque_constant_EC_A4310);
         }
         else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4310)
         {
 
-            succeeded = _can_handle.send_DM_motor_cmd(_ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
-                                                      _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-                                                      _output_joint_cmd.torque[i] / torque_constant_DM_J4310);
+            _can_handle.send_DM_motor_cmd(_ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+                                          _output_joint_cmd.vel[i],
+                                          _output_joint_cmd.torque[i] / torque_constant_DM_J4310);
         }
         else if (_ROBOT_CONFIG.motor_type[i] == MotorType::DM_J4340)
         {
-            succeeded = _can_handle.send_DM_motor_cmd(_ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i],
-                                                      _output_joint_cmd.pos[i], _output_joint_cmd.vel[i],
-                                                      _output_joint_cmd.torque[i] / torque_constant_DM_J4340);
+            _can_handle.send_DM_motor_cmd(_ROBOT_CONFIG.motor_id[i], _gain.kp[i], _gain.kd[i], _output_joint_cmd.pos[i],
+                                          _output_joint_cmd.vel[i],
+                                          _output_joint_cmd.torque[i] / torque_constant_DM_J4340);
         }
         else
         {
@@ -272,11 +261,6 @@ bool Arx5JointController::_send_recv()
             return false;
         }
         int finish_send_motor_time_us = get_time_us();
-        if (!succeeded)
-        {
-            _logger->error("Failed to send motor command to motor {}", _ROBOT_CONFIG.motor_id[i]);
-            return false;
-        }
         sleep_us(communicate_sleep_us - (finish_send_motor_time_us - start_send_motor_time_us));
     }
 
@@ -285,15 +269,10 @@ bool Arx5JointController::_send_recv()
 
     double gripper_motor_pos =
         _output_joint_cmd.gripper_pos / _ROBOT_CONFIG.gripper_width * _ROBOT_CONFIG.gripper_open_readout;
-    succeeded = _can_handle.send_DM_motor_cmd(_ROBOT_CONFIG.motor_id[6], _gain.gripper_kp, _gain.gripper_kd,
-                                              gripper_motor_pos, 0, 0);
+    _can_handle.send_DM_motor_cmd(_ROBOT_CONFIG.motor_id[6], _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos, 0,
+                                  0);
     int finish_send_motor_time_us = get_time_us();
 
-    if (!succeeded)
-    {
-        _logger->error("Failed to send motor command to motor {}", _ROBOT_CONFIG.motor_id[6]);
-        return false;
-    }
     sleep_us(communicate_sleep_us - (finish_send_motor_time_us - start_send_motor_time_us));
 
     int start_get_motor_msg_time_us = get_time_us();

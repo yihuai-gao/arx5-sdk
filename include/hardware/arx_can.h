@@ -62,8 +62,9 @@ void DM_can_data_repack(uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
 class CanInterface
 {
   public:
-    virtual bool transmit(can_frame_t &frame) = 0;
+    virtual void transmit(can_frame_t &frame) = 0;
     virtual const std::array<OD_Motor_Msg, 10> get_motor_msg() = 0;
+    virtual bool is_open() = 0;
     void can_receive_frame(can_frame_t *frame);
 
   protected:
@@ -78,14 +79,17 @@ class Usb2Can : public CanInterface
     Usb2Can(std::string interface_name);
     ~Usb2Can();
 
-    bool transmit(can_frame_t &frame) override;
+    void transmit(can_frame_t &frame) override;
     const std::array<OD_Motor_Msg, 10> get_motor_msg() override;
+    bool is_open() override;
 
   private:
     SocketCAN m_socket_can;
 };
 // class EtherCat2Can : public CanInterface
 // {
+// public:
+//     EtherCat2Can(std::string interface_name);
 // };
 class ArxCan
 {
@@ -95,11 +99,11 @@ class ArxCan
 
     void can_cmd_init(uint16_t motor_id, uint8_t cmd);
 
-    bool send_EC_motor_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor);
+    void send_EC_motor_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor);
     void set_motor(uint16_t motor_id, uint8_t cmd);
 
-    bool send_DM_motor_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor);
-    bool enable_DM_motor(uint16_t ID);
+    void send_DM_motor_cmd(uint16_t motor_id, float kp, float kd, float pos, float spd, float tor);
+    void enable_DM_motor(uint16_t ID);
     void reset_zero_readout(uint16_t ID);
     void clear(uint16_t ID);
 
