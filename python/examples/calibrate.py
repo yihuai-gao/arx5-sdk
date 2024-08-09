@@ -10,7 +10,7 @@ import arx5_interface as arx5
 
 def calibrate_joint(joint_id: int):
     joint_controller = arx5.Arx5JointController("X5", "can0")
-    gain = arx5.Gain()
+    gain = arx5.Gain(joint_controller.get_robot_config().joint_dof)
     joint_controller.set_gain(gain)
     joint_controller.enable_background_send_recv()
     joint_controller.calibrate_joint(joint_id)

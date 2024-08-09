@@ -17,9 +17,10 @@ void signal_handler(int signal)
 int main()
 {
     EEFState cmd;
-    Arx5Solver solver("../models/arx5.urdf");
     int loop_cnt = 0;
-    Gain gain{arx5_cartesian_controller->get_robot_config().joint_dof};
+    int dof = arx5_cartesian_controller->get_robot_config().joint_dof;
+    Gain gain{dof};
+    Arx5Solver solver("../models/arx5.urdf", dof);
     arx5_cartesian_controller->reset_to_home();
     gain.kd = (arx5_cartesian_controller->get_robot_config()).default_kd / 10;
     std::signal(SIGINT, signal_handler);

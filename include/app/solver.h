@@ -35,28 +35,26 @@ class Arx5Solver
 {
 
   public:
-    Arx5Solver(std::string urdf_path);
+    Arx5Solver(std::string urdf_path, int joint_dof);
+    Arx5Solver(std::string urdf_path, int joint_dof, std::string base_link, std::string eef_link,
+               Eigen::Vector3d gravity_vector);
     ~Arx5Solver() = default;
 
-    Eigen::Matrix<double, 6, 1> inverse_dynamics(Eigen::Matrix<double, 6, 1> joint_pos,
-                                                 Eigen::Matrix<double, 6, 1> joint_vel,
-                                                 Eigen::Matrix<double, 6, 1> joint_acc);
-    std::tuple<bool, Eigen::Matrix<double, 6, 1>> inverse_kinematics(Eigen::Matrix<double, 6, 1> target_pose_6d,
-                                                                     Eigen::Matrix<double, 6, 1> current_joint_pos);
-    Eigen::Matrix<double, 6, 1> forward_kinematics(Eigen::Matrix<double, 6, 1> joint_pos);
+    Eigen::VectorXd inverse_dynamics(Eigen::VectorXd joint_pos, Eigen::VectorXd joint_vel, Eigen::VectorXd joint_acc);
+    std::tuple<bool, Eigen::VectorXd> inverse_kinematics(Eigen::Matrix<double, 6, 1> target_pose_6d,
+                                                         Eigen::VectorXd current_joint_pos);
+    Eigen::Matrix<double, 6, 1> forward_kinematics(Eigen::VectorXd joint_pos);
 
   private:
     // parameters for ik solver
     const double _EPS = 1E-5;
     const int _MAXITER = 500;
     const double _EPS_JOINTS = 1E-15;
-    const double _MAX_TORQUE = 15.0f;
+    const int _JOINT_DOF;
 
     KDL::Tree _tree;
     KDL::Chain _chain;
     KDL::Chain _chain_without_end_effector;
-    Eigen::Matrix<double, 6, 1> _joint_pos_max;
-    Eigen::Matrix<double, 6, 1> _joint_pos_min;
 
     std::shared_ptr<KDL::ChainIkSolverPos_LMA> _ik_solver;
     std::shared_ptr<KDL::ChainFkSolverPos_recursive> _fk_solver;

@@ -44,7 +44,7 @@ class Gain:
     gripper_kp: float
     gripper_kd: float
     @overload
-    def __init__(self) -> None: ...
+    def __init__(self, dof: int) -> None: ...
     @overload
     def __init__(
         self,
@@ -62,7 +62,7 @@ class JointState:
     gripper_vel: float
     gripper_torque: float
     @overload
-    def __init__(self) -> None: ...
+    def __init__(self, dof: int) -> None: ...
     @overload
     def __init__(
         self,
@@ -130,7 +130,17 @@ class Arx5CartesianController:
     def set_to_damping(self) -> None: ...
 
 class Arx5Solver:
-    def __init__(self, urdf_path: str) -> None: ...
+    @overload
+    def __init__(self, urdf_path: str, joint_dof: int) -> None: ...
+    @overload
+    def __init__(
+        self,
+        urdf_path: str,
+        joint_dof: int,
+        base_link: str,
+        eef_link: str,
+        gravity_vector: npt.NDArray[np.float64],
+    ) -> None: ...
     def inverse_dynamics(
         self,
         joint_pos: npt.NDArray[np.float64],

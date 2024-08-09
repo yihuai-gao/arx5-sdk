@@ -237,7 +237,7 @@
             velocity="10"/>
     </joint>
 
-    <link name="gripper_dummy_link">
+    <link name="eef_link">
     <inertial>
         <mass value="0.0"/>
         <origin xyz="0.0 0.0 0.0"  rpy="0 0 0"/>
@@ -249,7 +249,7 @@
         <origin xyz="0.185 0.0 0.0" rpy="0 0 0"/>
         <!-- <origin xyz="0.225 0.0 0.0" rpy="0 0 0"/> -->
         <parent link="link6"/>
-        <child link="gripper_dummy_link"/>
+        <child link="eef_link"/>
     </joint>
 
     <!-- <link name="gopro">

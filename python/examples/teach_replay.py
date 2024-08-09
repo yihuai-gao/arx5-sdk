@@ -58,11 +58,11 @@ def start_teaching(controller: Arx5CartesianController, data_file: str):
 def start_high_level_replay(controller: Arx5CartesianController, data_file: str):
     controller.reset_to_home()
 
-    gain = Gain()
+    config = controller.get_robot_config()
+    gain = Gain(config.joint_dof)
     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
     gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
     controller.set_gain(gain)
-    config = controller.get_robot_config()
     traj = np.load(data_file, allow_pickle=True)
     replay_started = False
     start_time = 0

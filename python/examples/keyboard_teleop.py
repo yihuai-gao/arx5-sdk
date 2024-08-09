@@ -117,7 +117,7 @@ def start_keyboard_teleop(controller: Arx5CartesianController):
 
         if key_space:
             controller.reset_to_home()
-            gain = Gain()
+            gain = Gain(controller.get_robot_config().joint_dof)
             gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
             gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
             gain.gripper_kp = robot_config.default_gripper_kp
@@ -161,10 +161,10 @@ def main(model: str, can_interface: str, urdf_path: str):
     controller = Arx5CartesianController(model, can_interface, urdf_path)
     controller.reset_to_home()
 
-    gain = Gain()
+    robot_config = controller.get_robot_config()
+    gain = Gain(robot_config.joint_dof)
     gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
     gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
-    robot_config = controller.get_robot_config()
     gain.gripper_kp = robot_config.default_gripper_kp
     gain.gripper_kd = robot_config.default_gripper_kd
     controller.set_gain(gain)

@@ -9,10 +9,11 @@ namespace arx
 
 Arx5CartesianController::Arx5CartesianController(std::string model, std::string can_name, std::string urdf_path)
     : _can_handle(can_name), _logger(spdlog::stdout_color_mt(model + std::string("_") + can_name)),
-      _ROBOT_CONFIG(RobotConfig(model, _CONTROLLER_DT)), _solver(std::make_shared<Arx5Solver>(urdf_path))
+      _ROBOT_CONFIG(RobotConfig(model, _CONTROLLER_DT))
 {
     _logger->set_pattern("[%H:%M:%S %n %^%l%$] %v");
-
+    _solver = std::make_shared<Arx5Solver>(urdf_path, _ROBOT_CONFIG.joint_dof, _ROBOT_CONFIG.base_link_name,
+                                           _ROBOT_CONFIG.eef_link_name, _ROBOT_CONFIG.gravity_vector);
     _init_robot();
     _background_send_recv_thread = std::thread(&Arx5CartesianController::_background_send_recv, this);
     _logger->info("Background send_recv task is running at ID: {}", syscall(SYS_gettid));

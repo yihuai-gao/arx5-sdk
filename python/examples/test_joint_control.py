@@ -38,7 +38,7 @@ def main(model: str, can_interface: str, urdf_path: str):
     arx5_joint_controller.enable_gravity_compensation(urdf_path)
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
-    gain = arx5.Gain()
+    gain = arx5.Gain(config.joint_dof)
     gain.gripper_kp = 5.0
     gain.gripper_kd = config.default_gripper_kd
 
@@ -47,7 +47,7 @@ def main(model: str, can_interface: str, urdf_path: str):
     arx5_joint_controller.set_gain(gain)
 
     for i in range(step_num):
-        cmd = arx5.JointState()
+        cmd = arx5.JointState(config.joint_dof)
         # i = 0
         cmd.pos()[0:4] = easeInOutQuad(float(i) / step_num) * target_joint_poses[0:4]
         cmd.gripper_pos = easeInOutQuad((i / (step_num - 1))) * 0.08
@@ -63,7 +63,7 @@ def main(model: str, can_interface: str, urdf_path: str):
         # print(f"gripper: {JointState.gripper_pos:.05f}")
 
     for i in range(step_num):
-        cmd = arx5.JointState()
+        cmd = arx5.JointState(config.joint_dof)
         cmd.pos()[0:4] = (
             easeInOutQuad((1 - float(i) / step_num)) * target_joint_poses[0:4]
         )
