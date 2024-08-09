@@ -46,7 +46,9 @@ class Arx5Server:
         self.socket.bind(f"tcp://{zmq_ip}:{zmq_port}")
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
-        self.default_gain = arx5.Gain()
+        self.default_gain = arx5.Gain(
+            self.arx5_cartesian_controller.get_robot_config().joint_dof
+        )
         self.default_gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
         self.default_gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
 

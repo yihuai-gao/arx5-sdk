@@ -145,11 +145,17 @@ struct RobotConfig
     std::array<int, 6> motor_id;
     std::string model;
     std::array<MotorType, 6> motor_type;
-
     int gripper_motor_id;
     MotorType gripper_motor_type;
 
     double controller_dt;
+
+    // Will be used in inverse dynamics calculation.
+    // Please change it to other values if the robot arm is not placed on the ground.
+    Eigen::Vector3d gravity_vector = (Eigen::Vector3d() << 0, 0, -9.807).finished();
+
+    std::string base_link_name = "base_link";
+    std::string eef_link_name = "eef_link";
 
     RobotConfig(std::string model, double controller_dt) : model(model), controller_dt(controller_dt)
     {

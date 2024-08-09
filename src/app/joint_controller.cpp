@@ -655,7 +655,8 @@ void Arx5JointController::enable_gravity_compensation(std::string urdf_path)
 {
     _logger->info("Enable gravity compensation");
     _logger->info("Loading urdf from {}", urdf_path);
-    _solver = std::make_shared<Arx5Solver>(urdf_path);
+    _solver = std::make_shared<Arx5Solver>(urdf_path, _ROBOT_CONFIG.joint_dof, _ROBOT_CONFIG.base_link_name,
+                                           _ROBOT_CONFIG.eef_link_name, _ROBOT_CONFIG.gravity_vector);
     _enable_gravity_compensation = true;
 }
 

@@ -32,7 +32,7 @@ def main():
     arx5_1.enable_gravity_compensation("../models/arx5.urdf")
 
     target_joint_poses = np.array([1.0, 2.0, 2.0, 1.5, 1.5, -1.57])
-    gain = arx5.Gain()
+    gain = arx5.Gain(robot_config.joint_dof)
     gain.gripper_kp = 5.0
     gain.gripper_kd = robot_config.default_gripper_kd
 
@@ -50,7 +50,7 @@ def main():
         arx5_0.disable_background_send_recv()
 
     for i in range(step_num):
-        cmd = arx5.JointState()
+        cmd = arx5.JointState(robot_config.joint_dof)
         # i = 0
         cmd.pos()[0:4] = easeInOutQuad(float(i) / step_num) * target_joint_poses[0:4]
         cmd.gripper_pos = easeInOutQuad((i / (step_num - 1))) * 0.08
@@ -68,7 +68,7 @@ def main():
         time.sleep(robot_config.controller_dt)
 
     for i in range(step_num):
-        cmd = arx5.JointState()
+        cmd = arx5.JointState(robot_config.joint_dof)
         cmd.pos()[0:4] = (
             easeInOutQuad((1 - float(i) / step_num)) * target_joint_poses[0:4]
         )
