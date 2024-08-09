@@ -54,6 +54,33 @@ typedef struct
 
 } OD_Motor_Msg;
 
+typedef struct CanPacket
+{
+    uint16_t StdId;
+    uint8_t ExtId;
+    uint8_t IDE;
+    uint8_t RTR;
+    uint8_t DLC;
+
+    uint8_t Data[8];
+} __attribute__((packed)) CanPacket;
+
+typedef struct EcatTxPacket
+{
+    uint8_t LED;
+    struct CanPacket can[2];
+    uint8_t null;
+} __attribute__((packed)) EcatTxPacket;
+
+/// @brief ecat pdo recive data (slv to master)
+typedef struct EcatRxPacket
+{
+    uint8_t switch_io;
+    uint8_t null[5];
+
+    struct CanPacket can[2];
+} __attribute__((packed)) EcatRxPacket;
+
 void gripper_can_data_repack(uint32_t msgID, uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
 void RV_can_data_repack(uint32_t msgID, uint8_t *Data, int32_t databufferlen, uint8_t comm_mode,
                         std::array<OD_Motor_Msg, 10> &motor_msg);
@@ -86,11 +113,25 @@ class Usb2Can : public CanInterface
   private:
     SocketCAN m_socket_can;
 };
-// class EtherCat2Can : public CanInterface
-// {
-// public:
-//     EtherCat2Can(std::string interface_name);
-// };
+class EtherCat2Can : public CanInterface
+{
+  public:
+    EtherCat2Can(std::string interface_name);
+    ~EtherCat2Can();
+
+    void transmit(can_frame_t &frame) override;
+    const std::array<OD_Motor_Msg, 10> get_motor_msg() override;
+    bool is_open() override;
+
+  private:
+    std::string m_interface_name;
+    char m_IOmap[4096];
+    int m_expected_WKC;
+    volatile int m_WKC;
+    const int SLAVE_ID = 1;
+    const int PDO_OUTPUT_BYTE = 30;
+    const int PDO_INPUT_BYTE = 34;
+};
 class ArxCan
 {
   public:
