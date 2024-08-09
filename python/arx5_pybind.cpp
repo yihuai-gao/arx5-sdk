@@ -9,7 +9,8 @@
 #include <pybind11/stl.h>
 namespace py = pybind11;
 using namespace arx;
-using Vec6d = Eigen::Matrix<double, 6, 1>;
+using Pose6d = Eigen::Matrix<double, 6, 1>;
+using VecDoF = Eigen::VectorXd;
 PYBIND11_MODULE(arx5_interface, m)
 {
     py::enum_<spdlog::level::level_enum>(m, "LogLevel")
@@ -22,8 +23,8 @@ PYBIND11_MODULE(arx5_interface, m)
         .value("OFF", spdlog::level::level_enum::off)
         .export_values();
     py::class_<JointState>(m, "JointState")
-        .def(py::init<>())
-        .def(py::init<Vec6d, Vec6d, Vec6d, double>())
+        .def(py::init<int>())
+        .def(py::init<VecDoF, VecDoF, VecDoF, double>())
         .def_readwrite("timestamp", &JointState::timestamp)
         .def_readwrite("gripper_pos", &JointState::gripper_pos)
         .def_readwrite("gripper_vel", &JointState::gripper_vel)
@@ -35,7 +36,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("torque", &JointState::get_torque_ref, py::return_value_policy::reference);
     py::class_<EEFState>(m, "EEFState")
         .def(py::init<>())
-        .def(py::init<Vec6d, double>())
+        .def(py::init<Pose6d, double>())
         .def_readwrite("timestamp", &EEFState::timestamp)
         .def_readwrite("gripper_pos", &EEFState::gripper_pos)
         .def_readwrite("gripper_vel", &EEFState::gripper_vel)
@@ -44,8 +45,8 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("__mul__", [](const EEFState &self, const float &scalar) { return self * scalar; })
         .def("pose_6d", &EEFState::get_pose_6d_ref, py::return_value_policy::reference);
     py::class_<Gain>(m, "Gain")
-        .def(py::init<>())
-        .def(py::init<Vec6d, Vec6d, double, double>())
+        .def(py::init<int>())
+        .def(py::init<VecDoF, VecDoF, double, double>())
         .def_readwrite("gripper_kp", &Gain::gripper_kp)
         .def_readwrite("gripper_kd", &Gain::gripper_kd)
         .def("__add__", [](const Gain &self, const Gain &other) { return self + other; })
