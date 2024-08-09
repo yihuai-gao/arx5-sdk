@@ -2,6 +2,7 @@
 #define COMMON_H
 
 #include <Eigen/Core>
+#include <Eigen/Dense>
 #include <chrono>
 #include <cmath>
 #include <cstdarg>
@@ -11,28 +12,29 @@
 
 namespace arx
 {
-using Vec6d = Eigen::Matrix<double, 6, 1>;
-
+using Pose6d = Eigen::Matrix<double, 6, 1>;
+using VecDoF = Eigen::VectorXd; // mutable size according to the robot motor number
 enum class MotorType
 {
     EC_A4310,
     DM_J4310,
-    DM_J4340
+    DM_J4340,
+    None, // If any motor is disabled (e.g. gripper motor)
 };
 
 struct JointState
 {
     double timestamp = 0.0f;
-    Vec6d pos;
-    Vec6d vel;
-    Vec6d torque;
+    VecDoF pos;
+    VecDoF vel;
+    VecDoF torque;
     double gripper_pos = 0.0f;    // m; 0 for close, GRIPPER_WIDTH for fully open
     double gripper_vel = 0.0f;    // s^{-1}
     double gripper_torque = 0.0f; // Nm
-    JointState() : pos(Vec6d::Zero()), vel(Vec6d::Zero()), torque(Vec6d::Zero())
+    JointState(int dof) : pos(VecDoF::Zero(dof)), vel(VecDoF::Zero(dof)), torque(VecDoF::Zero(dof))
     {
     }
-    JointState(Vec6d pos, Vec6d vel, Vec6d torque, double gripper_pos)
+    JointState(VecDoF pos, VecDoF vel, VecDoF torque, double gripper_pos)
         : pos(pos), vel(vel), torque(torque), gripper_pos(gripper_pos)
     {
     }
@@ -45,15 +47,15 @@ struct JointState
         return JointState(pos * scalar, vel * scalar, torque * scalar, gripper_pos * scalar);
     }
     // For pybind11 to update values
-    Vec6d &get_pos_ref()
+    VecDoF &get_pos_ref()
     {
         return pos;
     }
-    Vec6d &get_vel_ref()
+    VecDoF &get_vel_ref()
     {
         return vel;
     }
-    Vec6d &get_torque_ref()
+    VecDoF &get_torque_ref()
     {
         return torque;
     }
@@ -61,14 +63,14 @@ struct JointState
 
 struct Gain
 {
-    Vec6d kp;
-    Vec6d kd;
+    VecDoF kp;
+    VecDoF kd;
     float gripper_kp = 0.0f;
     float gripper_kd = 0.0f;
-    Gain() : kp(Vec6d::Zero()), kd(Vec6d::Zero())
+    Gain(int dof) : kp(VecDoF::Zero(dof)), kd(VecDoF::Zero(dof))
     {
     }
-    Gain(Vec6d kp, Vec6d kd, float gripper_kp, float gripper_kd)
+    Gain(VecDoF kp, VecDoF kd, float gripper_kp, float gripper_kd)
         : kp(kp), kd(kd), gripper_kp(gripper_kp), gripper_kd(gripper_kd)
     {
     }
@@ -80,11 +82,11 @@ struct Gain
     {
         return Gain(kp * scalar, kd * scalar, gripper_kp * scalar, gripper_kd * scalar);
     }
-    Vec6d &get_kp_ref()
+    VecDoF &get_kp_ref()
     {
         return kp;
     }
-    Vec6d &get_kd_ref()
+    VecDoF &get_kd_ref()
     {
         return kd;
     }
@@ -93,14 +95,14 @@ struct Gain
 struct EEFState
 {
     double timestamp = 0.0f;
-    Vec6d pose_6d;                // x, y, z, roll, pitch, yaw
+    Pose6d pose_6d;               // x, y, z, roll, pitch, yaw
     double gripper_pos = 0.0f;    // m; 0 for close, GRIPPER_WIDTH for fully open
     double gripper_vel = 0.0f;    // s^{-1}
     double gripper_torque = 0.0f; // Nm
-    EEFState() : pose_6d(Vec6d::Zero())
+    EEFState() : pose_6d(Pose6d::Zero())
     {
     }
-    EEFState(Vec6d pose_6d, double gripper_pos) : pose_6d(pose_6d), gripper_pos(gripper_pos)
+    EEFState(Pose6d pose_6d, double gripper_pos) : pose_6d(pose_6d), gripper_pos(gripper_pos)
     {
     }
     EEFState operator+(const EEFState &other) const
@@ -111,7 +113,7 @@ struct EEFState
     {
         return EEFState(pose_6d * scalar, gripper_pos * scalar);
     }
-    Vec6d &get_pose_6d_ref()
+    Pose6d &get_pose_6d_ref()
     {
         return pose_6d;
     }
@@ -119,20 +121,20 @@ struct EEFState
 
 struct RobotConfig
 {
-    Vec6d joint_pos_min = (Vec6d() << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished();
-    Vec6d joint_pos_max = (Vec6d() << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished();
+    VecDoF joint_pos_min = (VecDoF(6) << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished();
+    VecDoF joint_pos_max = (VecDoF(6) << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished();
 
-    Vec6d joint_vel_max = (Vec6d() << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished();          // rad/s
-    Vec6d joint_torque_max = (Vec6d() << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(); // N*m
-    Vec6d ee_vel_max = (Vec6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished();
+    VecDoF joint_vel_max = (VecDoF(6) << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished();          // rad/s
+    VecDoF joint_torque_max = (VecDoF(6) << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(); // N*m
+    VecDoF ee_vel_max = (VecDoF(6) << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished();
     // end effector speed: m/s for (x, y, z), rad/s for (roll, pitch, yaw)
 
     double gripper_vel_max = 0.1; // m/s
     double gripper_torque_max = 1.5;
     double gripper_width = 0.085; // fully opened: GRIPPER_WIDTH, fully closed: 0
 
-    Vec6d default_kp = (Vec6d() << 80, 80, 80, 50, 40, 20).finished();
-    Vec6d default_kd = (Vec6d() << 1.0, 1.0, 1.0, 1.0, 0.8, 1.0).finished();
+    VecDoF default_kp = (VecDoF(6) << 80, 80, 80, 50, 40, 20).finished();
+    VecDoF default_kd = (VecDoF(6) << 1.0, 1.0, 1.0, 1.0, 0.8, 1.0).finished();
     double default_gripper_kp = 30.0;
     double default_gripper_kd = 0.2;
     int over_current_cnt_max = 20; // 0.1s
@@ -140,9 +142,12 @@ struct RobotConfig
 
     int joint_dof = 6;
 
-    std::array<int, 7> motor_id;
+    std::array<int, 6> motor_id;
     std::string model;
-    std::array<MotorType, 7> motor_type;
+    std::array<MotorType, 6> motor_type;
+
+    int gripper_motor_id;
+    MotorType gripper_motor_type;
 
     double controller_dt;
 
@@ -150,19 +155,23 @@ struct RobotConfig
     {
         if (model == "X5")
         {
-            motor_id = {1, 2, 4, 5, 6, 7, 8};
-            motor_type = {MotorType::EC_A4310, MotorType::EC_A4310, MotorType::EC_A4310, MotorType::DM_J4310,
+            motor_id = {1, 2, 4, 5, 6, 7};
+            motor_type = {MotorType::EC_A4310, MotorType::EC_A4310, MotorType::EC_A4310,
                           MotorType::DM_J4310, MotorType::DM_J4310, MotorType::DM_J4310};
+            gripper_motor_id = 8;
+            gripper_motor_type = MotorType::DM_J4310;
         }
         else if (model == "L5")
         {
-            motor_id = {1, 2, 4, 5, 6, 7, 8};
-            motor_type = {MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4310,
+            motor_id = {1, 2, 4, 5, 6, 7};
+            motor_type = {MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340,
                           MotorType::DM_J4310, MotorType::DM_J4310, MotorType::DM_J4310};
+            gripper_motor_id = 8;
+            gripper_motor_type = MotorType::DM_J4310;
         }
         else
         {
-            throw std::invalid_argument("Robot model not supported: " + model + ". Please use 'X5' or 'L5'.");
+            throw std::invalid_argument("Robot model not supported: " + model + ". Only 'X5' and 'L5' available.");
         }
     }
 };

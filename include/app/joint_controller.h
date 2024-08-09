@@ -32,7 +32,7 @@ class Arx5JointController
     void set_joint_cmd(JointState new_cmd);
     std::tuple<JointState, JointState> get_joint_cmd();
     JointState get_state();
-    Vec6d get_tool_pose();
+    Pose6d get_tool_pose();
 
     void set_gain(Gain new_gain);
     Gain get_gain();
@@ -57,10 +57,10 @@ class Arx5JointController
     void _check_joint_state_sanity();
     void _enter_emergency_state();
     int _over_current_cnt = 0;
-    JointState _output_joint_cmd;
-    JointState _input_joint_cmd;
-    JointState _joint_state;
-    Gain _gain;
+    JointState _output_joint_cmd{_ROBOT_CONFIG.joint_dof};
+    JointState _input_joint_cmd{_ROBOT_CONFIG.joint_dof};
+    JointState _joint_state{_ROBOT_CONFIG.joint_dof};
+    Gain _gain{_ROBOT_CONFIG.joint_dof};
     ArxCan _can_handle;
     std::shared_ptr<spdlog::logger> _logger;
     std::thread _background_send_recv_thread;

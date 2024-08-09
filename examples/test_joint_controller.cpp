@@ -23,7 +23,7 @@ int main()
     while (true)
     {
         JointState state = arx5_joint_controller->get_state();
-        Vec6d pose6 = arx5_joint_controller->get_tool_pose();
+        Pose6d pose6 = arx5_joint_controller->get_tool_pose();
         std::cout << "Gripper: " << state.gripper_pos << ", joint pos: " << state.pos.transpose()
                   << ", Pose: " << pose6.transpose() << std::endl;
         usleep(10000); // 10ms

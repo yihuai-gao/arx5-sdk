@@ -5,26 +5,27 @@
 
 namespace arx
 {
-class MovingAverage6d
+class MovingAverageXd
 {
   public:
-    MovingAverage6d(int window_size);
-    ~MovingAverage6d();
+    MovingAverageXd(int dof, int window_size);
+    ~MovingAverageXd();
 
     void set_window_size(int window_size);
     void reset();
-    Vec6d filter(Vec6d new_data);
+    Eigen::VectorXd filter(Eigen::VectorXd new_data);
 
   private:
+    int _dof;
     int _window_size;
     int _window_index;
-    Vec6d _window_sum;
-    Vec6d *_window;
+    Eigen::VectorXd _window_sum;
+    Eigen::MatrixXd _window;
 };
 
 // std::string vec2str(const Eigen::VectorXd& vec, int precision = 3);
 
 } // namespace arx
-std::string vec2str(const Eigen::Matrix<double, 6, 1> &vec, int precision = 3);
+std::string vec2str(const Eigen::VectorXd &vec, int precision = 3);
 
 #endif

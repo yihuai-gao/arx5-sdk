@@ -19,7 +19,7 @@ int main()
     EEFState cmd;
     Arx5Solver solver("../models/arx5.urdf");
     int loop_cnt = 0;
-    Gain gain = Gain();
+    Gain gain{arx5_cartesian_controller->get_robot_config().joint_dof};
     arx5_cartesian_controller->reset_to_home();
     gain.kd = (arx5_cartesian_controller->get_robot_config()).default_kd / 10;
     std::signal(SIGINT, signal_handler);
@@ -36,10 +36,10 @@ int main()
         // eef_state.gripper_pos); printf("raw joint pos: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
         //        joint_state.pos[0], joint_state.pos[1], joint_state.pos[2],
         //        joint_state.pos[3], joint_state.pos[4], joint_state.pos[5]);
-        std::tuple<bool, Vec6d> result = solver.inverse_kinematics(eef_state.pose_6d, joint_state.pos);
+        std::tuple<bool, VecDoF> result = solver.inverse_kinematics(eef_state.pose_6d, joint_state.pos);
         if (std::get<0>(result))
         {
-            Vec6d ik_joint_pos = std::get<1>(result);
+            VecDoF ik_joint_pos = std::get<1>(result);
             // printf("ik  joint pos: %.2f, %.2f, %.2f, %.2f, %.2f, %.2f\n",
             //        ik_joint_pos[0], ik_joint_pos[1], ik_joint_pos[2], ik_joint_pos[3],
             //        ik_joint_pos[4], ik_joint_pos[5]);

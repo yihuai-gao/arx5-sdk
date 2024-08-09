@@ -26,7 +26,7 @@ class Arx5CartesianController
     RobotConfig get_robot_config();
 
     void reset_to_home();
-    Vec6d get_home_pose();
+    Pose6d get_home_pose();
     void set_to_damping();
 
   private:
@@ -38,10 +38,10 @@ class Arx5CartesianController
     EEFState _input_eef_cmd;
     EEFState _output_eef_cmd;
     EEFState _interp_start_eef_cmd;
-    JointState _input_joint_cmd;
-    JointState _output_joint_cmd;
-    JointState _joint_state;
-    Gain _gain;
+    JointState _input_joint_cmd{_ROBOT_CONFIG.joint_dof};
+    JointState _output_joint_cmd{_ROBOT_CONFIG.joint_dof};
+    JointState _joint_state{_ROBOT_CONFIG.joint_dof};
+    Gain _gain{_ROBOT_CONFIG.joint_dof};
 
     ArxCan _can_handle;
     std::shared_ptr<spdlog::logger> _logger;
@@ -64,8 +64,8 @@ class Arx5CartesianController
     std::mutex _state_mutex;
     int _start_time_us;
 
-    MovingAverage6d _joint_pos_filter{_moving_window_size};
-    MovingAverage6d _joint_torque_filter{_moving_window_size};
+    MovingAverageXd _joint_pos_filter{_ROBOT_CONFIG.joint_dof, _moving_window_size};
+    MovingAverageXd _joint_torque_filter{_ROBOT_CONFIG.joint_dof, _moving_window_size};
 };
 
 } // namespace arx

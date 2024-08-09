@@ -86,7 +86,10 @@
         "source_location": "cpp",
         "hash_map": "cpp",
         "hash_set": "cpp",
-        "slist": "cpp"
+        "slist": "cpp",
+        "eigenvalues": "cpp",
+        "geometry": "cpp",
+        "cholesky": "cpp"
     },
     "python.analysis.extraPaths": [
         "python",
