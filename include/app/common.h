@@ -119,69 +119,6 @@ struct EEFState
     }
 };
 
-struct RobotConfig
-{
-    VecDoF joint_pos_min = (VecDoF(6) << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished();
-    VecDoF joint_pos_max = (VecDoF(6) << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished();
-
-    VecDoF joint_vel_max = (VecDoF(6) << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished();          // rad/s
-    VecDoF joint_torque_max = (VecDoF(6) << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(); // N*m
-    VecDoF ee_vel_max = (VecDoF(6) << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished();
-    // end effector speed: m/s for (x, y, z), rad/s for (roll, pitch, yaw)
-
-    double gripper_vel_max = 0.1; // m/s
-    double gripper_torque_max = 1.5;
-    double gripper_width = 0.085; // fully opened: GRIPPER_WIDTH, fully closed: 0
-
-    VecDoF default_kp = (VecDoF(6) << 80, 80, 80, 50, 40, 20).finished();
-    VecDoF default_kd = (VecDoF(6) << 1.0, 1.0, 1.0, 1.0, 0.8, 1.0).finished();
-    double default_gripper_kp = 30.0;
-    double default_gripper_kd = 0.2;
-    int over_current_cnt_max = 20; // 0.1s
-    double gripper_open_readout = 4.8;
-
-    int joint_dof = 6;
-
-    std::array<int, 6> motor_id;
-    std::string model;
-    std::array<MotorType, 6> motor_type;
-    int gripper_motor_id;
-    MotorType gripper_motor_type;
-
-    double controller_dt;
-
-    // Will be used in inverse dynamics calculation.
-    // Please change it to other values if the robot arm is not placed on the ground.
-    Eigen::Vector3d gravity_vector = (Eigen::Vector3d() << 0, 0, -9.807).finished();
-
-    std::string base_link_name = "base_link";
-    std::string eef_link_name = "eef_link";
-
-    RobotConfig(std::string model, double controller_dt) : model(model), controller_dt(controller_dt)
-    {
-        if (model == "X5")
-        {
-            motor_id = {1, 2, 4, 5, 6, 7};
-            motor_type = {MotorType::EC_A4310, MotorType::EC_A4310, MotorType::EC_A4310,
-                          MotorType::DM_J4310, MotorType::DM_J4310, MotorType::DM_J4310};
-            gripper_motor_id = 8;
-            gripper_motor_type = MotorType::DM_J4310;
-        }
-        else if (model == "L5")
-        {
-            motor_id = {1, 2, 4, 5, 6, 7};
-            motor_type = {MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340,
-                          MotorType::DM_J4310, MotorType::DM_J4310, MotorType::DM_J4310};
-            gripper_motor_id = 8;
-            gripper_motor_type = MotorType::DM_J4310;
-        }
-        else
-        {
-            throw std::invalid_argument("Robot model not supported: " + model + ". Only 'X5' and 'L5' available.");
-        }
-    }
-};
-
 } // namespace arx
 
 #define sleep_ms(x) std::this_thread::sleep_for(std::chrono::milliseconds(x))

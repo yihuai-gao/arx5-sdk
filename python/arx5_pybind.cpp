@@ -1,5 +1,6 @@
 #include "app/cartesian_controller.h"
 #include "app/common.h"
+#include "app/config.h"
 #include "app/joint_controller.h"
 #include "hardware/arx_can.h"
 #include "spdlog/spdlog.h"
@@ -94,28 +95,41 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("forward_kinematics", &Arx5Solver::forward_kinematics)
         .def("inverse_kinematics", &Arx5Solver::inverse_kinematics);
     py::class_<RobotConfig>(m, "RobotConfig")
-        .def(py::init<const std::string &, double>())
+        .def_readwrite("robot_model", &RobotConfig::robot_model)
         .def_readwrite("joint_pos_min", &RobotConfig::joint_pos_min)
         .def_readwrite("joint_pos_max", &RobotConfig::joint_pos_max)
-        .def_readwrite("default_kp", &RobotConfig::default_kp)
-        .def_readwrite("default_kd", &RobotConfig::default_kd)
         .def_readwrite("joint_vel_max", &RobotConfig::joint_vel_max)
         .def_readwrite("joint_torque_max", &RobotConfig::joint_torque_max)
         .def_readwrite("ee_vel_max", &RobotConfig::ee_vel_max)
         .def_readwrite("gripper_vel_max", &RobotConfig::gripper_vel_max)
         .def_readwrite("gripper_torque_max", &RobotConfig::gripper_torque_max)
         .def_readwrite("gripper_width", &RobotConfig::gripper_width)
-        .def_readwrite("default_gripper_kp", &RobotConfig::default_gripper_kp)
-        .def_readwrite("default_gripper_kd", &RobotConfig::default_gripper_kd)
-        .def_readwrite("over_current_cnt_max", &RobotConfig::over_current_cnt_max)
         .def_readwrite("gripper_open_readout", &RobotConfig::gripper_open_readout)
         .def_readwrite("joint_dof", &RobotConfig::joint_dof)
         .def_readwrite("motor_id", &RobotConfig::motor_id)
-        .def_readwrite("model", &RobotConfig::model)
-        .def_readwrite("controller_dt", &RobotConfig::controller_dt)
-        .def_readwrite("motor_type", &RobotConfig::motor_type);
+        .def_readwrite("motor_type", &RobotConfig::motor_type)
+        .def_readwrite("gripper_motor_id", &RobotConfig::gripper_motor_id)
+        .def_readwrite("gripper_motor_type", &RobotConfig::gripper_motor_type)
+        .def_readwrite("gravity_vector", &RobotConfig::gravity_vector)
+        .def_readwrite("base_link_name", &RobotConfig::base_link_name)
+        .def_readwrite("eef_link_name", &RobotConfig::eef_link_name);
+    py::class_<ControllerConfig>(m, "ControllerConfig")
+        .def_readwrite("controller_type", &ControllerConfig::controller_type)
+        .def_readwrite("default_kp", &ControllerConfig::default_kp)
+        .def_readwrite("default_kd", &ControllerConfig::default_kd)
+        .def_readwrite("default_gripper_kp", &ControllerConfig::default_gripper_kp)
+        .def_readwrite("default_gripper_kd", &ControllerConfig::default_gripper_kd)
+        .def_readwrite("over_current_cnt_max", &ControllerConfig::over_current_cnt_max)
+        .def_readwrite("controller_dt", &ControllerConfig::controller_dt);
+    py::class_<RobotConfigFactory>(m, "RobotConfigFactory")
+        .def("get_instance", &RobotConfigFactory::get_instance)
+        .def("get_config", &RobotConfigFactory::get_config);
+    py::class_<ControllerConfigFactory>(m, "ControllerConfigFactory")
+        .def("get_instance", &ControllerConfigFactory::get_instance)
+        .def("get_config", &ControllerConfigFactory::get_config);
     py::enum_<MotorType>(m, "MotorType")
         .value("EC_A4310", MotorType::EC_A4310)
         .value("DM_J4310", MotorType::DM_J4310)
-        .value("DM_J4340", MotorType::DM_J4340);
+        .value("DM_J4340", MotorType::DM_J4340)
+        .value("None", MotorType::None);
 }
