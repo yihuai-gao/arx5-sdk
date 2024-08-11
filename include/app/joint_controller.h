@@ -20,7 +20,8 @@ namespace arx
 class Arx5JointController
 {
   public:
-    Arx5JointController(std::string model, std::string can_name);
+    Arx5JointController(RobotConfig robot_config, ControllerConfig controller_config, std::string interface_name);
+    Arx5JointController(std::string model, std::string interface_name);
     ~Arx5JointController();
 
     void send_recv_once();
@@ -49,8 +50,8 @@ class Arx5JointController
     void set_log_level(spdlog::level::level_enum level);
 
   private:
-    const std::shared_ptr<RobotConfig> _robot_config;
-    const std::shared_ptr<ControllerConfig> _controller_config;
+    RobotConfig _robot_config;
+    ControllerConfig _controller_config;
     void _init_robot();
     void _background_send_recv();
     bool _send_recv();
@@ -58,10 +59,10 @@ class Arx5JointController
     void _check_joint_state_sanity();
     void _enter_emergency_state();
     int _over_current_cnt = 0;
-    JointState _output_joint_cmd{_robot_config->joint_dof};
-    JointState _input_joint_cmd{_robot_config->joint_dof};
-    JointState _joint_state{_robot_config->joint_dof};
-    Gain _gain{_robot_config->joint_dof};
+    JointState _output_joint_cmd{_robot_config.joint_dof};
+    JointState _input_joint_cmd{_robot_config.joint_dof};
+    JointState _joint_state{_robot_config.joint_dof};
+    Gain _gain{_robot_config.joint_dof};
     ArxCan _can_handle;
     std::shared_ptr<spdlog::logger> _logger;
     std::thread _background_send_recv_thread;

@@ -56,6 +56,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("kd", &Gain::get_kd_ref, py::return_value_policy::reference);
     py::class_<Arx5JointController>(m, "Arx5JointController")
         .def(py::init<const std::string &, const std::string &>())
+        .def(py::init<RobotConfig, ControllerConfig, const std::string &>())
         .def("send_recv_once", &Arx5JointController::send_recv_once)
         .def("enable_background_send_recv", &Arx5JointController::enable_background_send_recv)
         .def("disable_background_send_recv", &Arx5JointController::disable_background_send_recv)
@@ -75,6 +76,7 @@ PYBIND11_MODULE(arx5_interface, m)
         .def("calibrate_gripper", &Arx5JointController::calibrate_gripper);
     py::class_<Arx5CartesianController>(m, "Arx5CartesianController")
         .def(py::init<const std::string &, const std::string &, const std::string &>())
+        .def(py::init<RobotConfig, ControllerConfig, const std::string &, const std::string &>())
         .def("set_eef_cmd", &Arx5CartesianController::set_eef_cmd)
         .def("get_eef_cmd", &Arx5CartesianController::get_eef_cmd)
         .def("get_joint_cmd", &Arx5CartesianController::get_joint_cmd)
@@ -122,14 +124,14 @@ PYBIND11_MODULE(arx5_interface, m)
         .def_readwrite("over_current_cnt_max", &ControllerConfig::over_current_cnt_max)
         .def_readwrite("controller_dt", &ControllerConfig::controller_dt);
     py::class_<RobotConfigFactory>(m, "RobotConfigFactory")
-        .def("get_instance", &RobotConfigFactory::get_instance)
+        .def_static("get_instance", &RobotConfigFactory::get_instance, py::return_value_policy::reference)
         .def("get_config", &RobotConfigFactory::get_config);
     py::class_<ControllerConfigFactory>(m, "ControllerConfigFactory")
-        .def("get_instance", &ControllerConfigFactory::get_instance)
+        .def_static("get_instance", &ControllerConfigFactory::get_instance, py::return_value_policy::reference)
         .def("get_config", &ControllerConfigFactory::get_config);
     py::enum_<MotorType>(m, "MotorType")
         .value("EC_A4310", MotorType::EC_A4310)
         .value("DM_J4310", MotorType::DM_J4310)
         .value("DM_J4340", MotorType::DM_J4340)
-        .value("None", MotorType::None);
+        .value("NONE", MotorType::NONE);
 }

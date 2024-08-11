@@ -4,30 +4,48 @@ import numpy.typing as npt
 from enum import Enum
 
 class MotorType:
-    DM: "MotorType"
-    EC: "MotorType"
+    EC_A4310: "MotorType"
+    DM_J4310: "MotorType"
+    DM_J4340: "MotorType"
+    NONE: "MotorType"
 
 class RobotConfig:
-    def __init__(self, model: str, controller_dt: float) -> None: ...
+    """Does not have a constructor, use RobotConfigFactory.get_instance().get_config(...) instead."""
+
+    robot_model: str
     joint_pos_min: np.ndarray
     joint_pos_max: np.ndarray
-    default_kp: np.ndarray
-    default_kd: np.ndarray
     joint_vel_max: np.ndarray
     joint_torque_max: np.ndarray
     ee_vel_max: np.ndarray
     gripper_vel_max: float
     gripper_torque_max: float
     gripper_width: float
-    default_gripper_kp: float
-    default_gripper_kd: float
-    over_current_cnt_max: int
     gripper_open_readout: float
     joint_dof: int
     motor_id: list[int]
-    model: str
     motor_type: list[MotorType]
+
+class ControllerConfig:
+    """Does not have a constructor, use ControllerConfigFactory.get_instance().get_config(...) instead."""
+
+    controller_type: str
+    default_kp: np.ndarray
+    default_kd: np.ndarray
+    default_gripper_kp: float
+    default_gripper_kd: float
+    over_current_cnt_max: int
     controller_dt: float
+
+class RobotConfigFactory:
+    @classmethod
+    def get_instance(cls) -> RobotConfigFactory: ...
+    def get_config(self, robot_model: str) -> RobotConfig: ...
+
+class ControllerConfigFactory:
+    @classmethod
+    def get_instance(cls) -> ControllerConfigFactory: ...
+    def get_config(self, robot_model: str) -> ControllerConfig: ...
 
 class LogLevel:
     TRACE: "LogLevel"
@@ -78,7 +96,15 @@ class JointState:
     def torque(self) -> npt.NDArray[np.float64]: ...
 
 class Arx5JointController:
-    def __init__(self, model: str, can_name: str) -> None: ...
+    @overload
+    def __init__(self, model: str, interface_name: str) -> None: ...
+    @overload
+    def __init__(
+        self,
+        robot_config: RobotConfig,
+        controller_config: ControllerConfig,
+        interface_name: str,
+    ) -> None: ...
     def send_recv_once(self) -> None: ...
     def enable_background_send_recv(self) -> None: ...
     def disable_background_send_recv(self) -> None: ...
@@ -91,7 +117,7 @@ class Arx5JointController:
     def set_gain(self, gain: Gain) -> None: ...
     def get_gain(self) -> Gain: ...
     def get_robot_config(self) -> RobotConfig: ...
-    def get_controller_dt_s(self) -> float: ...
+    def get_controller_config(self) -> ControllerConfig: ...
     def reset_to_home(self) -> None: ...
     def set_to_damping(self) -> None: ...
     def calibrate_gripper(self) -> None: ...
@@ -114,7 +140,16 @@ class EEFState:
     def pose_6d(self) -> npt.NDArray[np.float64]: ...
 
 class Arx5CartesianController:
-    def __init__(self, model: str, can_name: str, urdf_path: str) -> None: ...
+    @overload
+    def __init__(self, model: str, interface_name: str, urdf_path: str) -> None: ...
+    @overload
+    def __init__(
+        self,
+        robot_config: RobotConfig,
+        controller_config: ControllerConfig,
+        interface_name: str,
+        urdf_path: str,
+    ) -> None: ...
     def set_eef_cmd(self, cmd: EEFState) -> None: ...
     def get_eef_cmd(self) -> tuple[EEFState, EEFState]: ...
     def get_joint_cmd(self) -> tuple[JointState, JointState]: ...
@@ -126,6 +161,7 @@ class Arx5CartesianController:
     def get_home_pose(self) -> np.ndarray: ...
     def set_log_level(self, level: LogLevel) -> None: ...
     def get_robot_config(self) -> RobotConfig: ...
+    def get_controller_config(self) -> ControllerConfig: ...
     def reset_to_home(self) -> None: ...
     def set_to_damping(self) -> None: ...
 

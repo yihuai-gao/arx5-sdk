@@ -19,7 +19,7 @@ enum class MotorType
     EC_A4310,
     DM_J4310,
     DM_J4340,
-    None, // If any motor is disabled (e.g. gripper motor)
+    NONE, // If any motor is disabled (e.g. gripper motor)
 };
 
 struct JointState
@@ -73,6 +73,8 @@ struct Gain
     Gain(VecDoF kp, VecDoF kd, float gripper_kp, float gripper_kd)
         : kp(kp), kd(kd), gripper_kp(gripper_kp), gripper_kd(gripper_kd)
     {
+        if (kp.size() != kd.size())
+            throw std::invalid_argument("Length of kp is not equal to kd.");
     }
     Gain operator+(const Gain &other) const
     {
