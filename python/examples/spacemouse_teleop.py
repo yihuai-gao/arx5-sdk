@@ -27,6 +27,7 @@ def start_teleop_recording(controller: Arx5CartesianController):
     window_size = 20
     spacemouse_queue = Queue(window_size)
     robot_config = controller.get_robot_config()
+    controller_config = controller.get_controller_config()
     with SharedMemoryManager() as shm_manager:
         with Spacemouse(shm_manager=shm_manager, deadzone=0.3, max_value=500) as sm:
 
@@ -67,13 +68,6 @@ def start_teleop_recording(controller: Arx5CartesianController):
                 if button_left and button_right:
                     controller.reset_to_home()
                     config = controller.get_robot_config()
-                    gain = Gain(config.joint_dof)
-                    gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-                    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
-                    gain.gripper_kp = robot_config.default_gripper_kp
-                    gain.gripper_kd = robot_config.default_gripper_kd
-
-                    controller.set_gain(gain)
                     target_pose_6d = controller.get_home_pose()
                     target_gripper_pos = 0.0
                     loop_cnt = 0
@@ -86,10 +80,14 @@ def start_teleop_recording(controller: Arx5CartesianController):
                 else:
                     gripper_cmd = 0
 
-                target_pose_6d[:3] += state[:3] * pos_speed * robot_config.controller_dt
-                target_pose_6d[3:] += state[3:] * ori_speed * robot_config.controller_dt
+                target_pose_6d[:3] += (
+                    state[:3] * pos_speed * controller_config.controller_dt
+                )
+                target_pose_6d[3:] += (
+                    state[3:] * ori_speed * controller_config.controller_dt
+                )
                 target_gripper_pos += (
-                    gripper_cmd * gripper_speed * robot_config.controller_dt
+                    gripper_cmd * gripper_speed * controller_config.controller_dt
                 )
                 if target_gripper_pos >= robot_config.gripper_width:
                     target_gripper_pos = robot_config.gripper_width
@@ -98,7 +96,7 @@ def start_teleop_recording(controller: Arx5CartesianController):
                 loop_cnt += 1
                 while (
                     time.monotonic()
-                    < start_time + loop_cnt * robot_config.controller_dt
+                    < start_time + loop_cnt * controller_config.controller_dt
                 ):
                     pass
 
@@ -110,19 +108,14 @@ def start_teleop_recording(controller: Arx5CartesianController):
 
 @click.command()
 @click.argument("model")  # ARX arm model: X5 or L5
-@click.argument("can_interface")  # can bus name (can0 etc.)
+@click.argument("interface")  # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
-def main(model: str, can_interface: str, urdf_path: str):
-    controller = Arx5CartesianController(model, can_interface, urdf_path)
+def main(model: str, interface: str, urdf_path: str):
+    controller = Arx5CartesianController(model, interface, urdf_path)
     controller.reset_to_home()
 
     robot_config = controller.get_robot_config()
     gain = Gain(robot_config.joint_dof)
-    gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
-    gain.gripper_kp = robot_config.default_gripper_kp
-    gain.gripper_kd = robot_config.default_gripper_kd
-    controller.set_gain(gain)
     controller.set_log_level(LogLevel.DEBUG)
     np.set_printoptions(precision=4, suppress=True)
     try:

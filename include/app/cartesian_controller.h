@@ -18,7 +18,9 @@ namespace arx
 class Arx5CartesianController
 {
   public:
-    Arx5CartesianController(std::string model, std::string can_name, std::string urdf_path);
+    Arx5CartesianController(RobotConfig robot_config, ControllerConfig controller_config, std::string interface_name,
+                            std::string urdf_path);
+    Arx5CartesianController(std::string model, std::string interface_name, std::string urdf_path);
     ~Arx5CartesianController();
 
     void set_eef_cmd(EEFState new_cmd);
@@ -38,18 +40,18 @@ class Arx5CartesianController
     void set_to_damping();
 
   private:
-    const std::shared_ptr<RobotConfig> _robot_config;
-    const std::shared_ptr<ControllerConfig> _controller_config;
+    RobotConfig _robot_config;
+    ControllerConfig _controller_config;
     double _clipping_output_threshold = 0.001;
     int _moving_window_size = 1; // 1 for no filtering
 
     EEFState _input_eef_cmd;
     EEFState _output_eef_cmd;
     EEFState _interp_start_eef_cmd;
-    JointState _input_joint_cmd{_robot_config->joint_dof};
-    JointState _output_joint_cmd{_robot_config->joint_dof};
-    JointState _joint_state{_robot_config->joint_dof};
-    Gain _gain{_robot_config->joint_dof};
+    JointState _input_joint_cmd{_robot_config.joint_dof};
+    JointState _output_joint_cmd{_robot_config.joint_dof};
+    JointState _joint_state{_robot_config.joint_dof};
+    Gain _gain{_robot_config.joint_dof};
 
     ArxCan _can_handle;
     std::shared_ptr<spdlog::logger> _logger;
@@ -72,8 +74,8 @@ class Arx5CartesianController
     std::mutex _state_mutex;
     int _start_time_us;
 
-    MovingAverageXd _joint_pos_filter{_robot_config->joint_dof, _moving_window_size};
-    MovingAverageXd _joint_torque_filter{_robot_config->joint_dof, _moving_window_size};
+    MovingAverageXd _joint_pos_filter{_robot_config.joint_dof, _moving_window_size};
+    MovingAverageXd _joint_torque_filter{_robot_config.joint_dof, _moving_window_size};
 };
 
 } // namespace arx

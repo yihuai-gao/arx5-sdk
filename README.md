@@ -102,7 +102,7 @@ sudo systemctl start spacenavd.service
 
 Arguments for `test_joint_control.py`, `keyboard_teleop.py`, `spacemouse_teleop.py` and `teach_replay.py`: 
 - (required) model: `X5` (silver and black) or `L5` (all black with blue or red LED light)
-- (required) can_interface: `can0` etc. (run `ip a` to check your can interface name)
+- (required) interface: `can0` etc. (run `ip a` to check your can interface name)
 - (optional) urdf_path `-u`: by default `../models/arx5.urdf`
 
 ```bash

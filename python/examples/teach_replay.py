@@ -16,7 +16,7 @@ import click
 def start_teaching(controller: Arx5CartesianController, data_file: str):
     controller.reset_to_home()
 
-    config = controller.get_robot_config()
+    controller_config = controller.get_controller_config()
 
     print("Teaching mode ready. Press 't' to start teaching.")
     teaching_started = False
@@ -52,17 +52,15 @@ def start_teaching(controller: Arx5CartesianController, data_file: str):
                         "gripper_pos": state.gripper_pos,
                     }
                 )
-                time.sleep(config.controller_dt)
+                time.sleep(controller_config.controller_dt)
 
 
 def start_high_level_replay(controller: Arx5CartesianController, data_file: str):
     controller.reset_to_home()
 
-    config = controller.get_robot_config()
-    gain = Gain(config.joint_dof)
-    gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-    gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
-    controller.set_gain(gain)
+    robot_config = controller.get_robot_config()
+    controller_config = controller.get_controller_config()
+
     traj = np.load(data_file, allow_pickle=True)
     replay_started = False
     start_time = 0
@@ -101,15 +99,15 @@ def start_high_level_replay(controller: Arx5CartesianController, data_file: str)
                     print(f"\nReplay finished!")
                     controller.reset_to_home()
                     return
-                time.sleep(config.controller_dt)
+                time.sleep(controller_config.controller_dt)
 
 
 @click.command()
 @click.argument("model")  # ARX arm model: X5 or L5
-@click.argument("can_interface")  # can bus name (can0 etc.)
+@click.argument("interface")  # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
-def main(model: str, can_interface: str, urdf_path: str):
-    controller = Arx5CartesianController(model, can_interface, urdf_path)
+def main(model: str, interface: str, urdf_path: str):
+    controller = Arx5CartesianController(model, interface, urdf_path)
 
     np.set_printoptions(precision=4, suppress=True)
     os.makedirs("data", exist_ok=True)

@@ -12,6 +12,7 @@ class RobotConfig
 {
   public:
     std::string robot_model;
+    std::string interface_name;
 
     VecDoF joint_pos_min;
     VecDoF joint_pos_max;
@@ -28,7 +29,7 @@ class RobotConfig
     std::vector<int> motor_id;
     std::vector<MotorType> motor_type;
     int gripper_motor_id;
-    MotorType gripper_motor_type; // Set to MotorType::None if the robot does not have a gripper
+    MotorType gripper_motor_type; // Set to MotorType::NONE if the robot does not have a gripper
 
     // Will be used in inverse dynamics calculation.
     // Please change it to other values if the robot arm is not placed on the ground.
@@ -54,26 +55,6 @@ class RobotConfig
     }
 };
 
-class ControllerConfig
-{
-  public:
-    std::string controller_type;
-    VecDoF default_kp;
-    VecDoF default_kd;
-    double default_gripper_kp;
-    double default_gripper_kd;
-    int over_current_cnt_max;
-    double controller_dt;
-
-    ControllerConfig(std::string controller_type, VecDoF default_kp, VecDoF default_kd, double default_gripper_kp,
-                     double default_gripper_kd, int over_current_cnt_max, double controller_dt)
-        : controller_type(controller_type), default_kp(default_kp), default_kd(default_kd),
-          default_gripper_kp(default_gripper_kp), default_gripper_kd(default_gripper_kd),
-          over_current_cnt_max(over_current_cnt_max), controller_dt(controller_dt)
-    {
-    }
-};
-
 class RobotConfigFactory
 {
   public:
@@ -83,12 +64,12 @@ class RobotConfigFactory
         return instance;
     }
 
-    std::shared_ptr<RobotConfig> get_config(const std::string &robot_model)
+    RobotConfig get_config(const std::string &robot_model)
     {
         auto it = configurations.find(robot_model);
         if (it != configurations.end())
         {
-            return it->second;
+            return *(it->second);
         }
         else
         {
@@ -150,6 +131,26 @@ class RobotConfigFactory
     RobotConfigFactory &operator=(const RobotConfigFactory &) = delete;
 };
 
+class ControllerConfig
+{
+  public:
+    std::string controller_type;
+    VecDoF default_kp;
+    VecDoF default_kd;
+    double default_gripper_kp;
+    double default_gripper_kd;
+    int over_current_cnt_max;
+    double controller_dt;
+
+    ControllerConfig(std::string controller_type, VecDoF default_kp, VecDoF default_kd, double default_gripper_kp,
+                     double default_gripper_kd, int over_current_cnt_max, double controller_dt)
+        : controller_type(controller_type), default_kp(default_kp), default_kd(default_kd),
+          default_gripper_kp(default_gripper_kp), default_gripper_kd(default_gripper_kd),
+          over_current_cnt_max(over_current_cnt_max), controller_dt(controller_dt)
+    {
+    }
+};
+
 class ControllerConfigFactory
 {
   public:
@@ -159,12 +160,12 @@ class ControllerConfigFactory
         return instance;
     }
 
-    std::shared_ptr<ControllerConfig> get_config(const std::string &controller_type)
+    ControllerConfig get_config(const std::string &controller_type)
     {
         auto it = configurations.find(controller_type);
         if (it != configurations.end())
         {
-            return it->second;
+            return *(it->second);
         }
         else
         {
@@ -179,8 +180,8 @@ class ControllerConfigFactory
         configurations["joint_controller"] = std::make_shared<ControllerConfig>(
             "joint_controller",                                           // controller_type
             (VecDoF(6) << 70.0, 70.0, 70.0, 30.0, 30.0, 20.0).finished(), // default_kp
-            (VecDoF(6) << 2.0, 2.0, 2.0, 1.0, 1.0, 1.0).finished(),       // default_kd
-            30.0,                                                         // default_gripper_kp
+            (VecDoF(6) << 2.0, 2.0, 2.0, 1.0, 1.0, 0.7).finished(),       // default_kd
+            5.0,                                                          // default_gripper_kp
             0.2,                                                          // default_gripper_kd
             20,                                                           // over_current_cnt_max
             0.002                                                         // controller_dt
@@ -189,7 +190,7 @@ class ControllerConfigFactory
             "cartesian_controller",                                          // controller_type
             (VecDoF(6) << 150.0, 150.0, 200.0, 60.0, 30.0, 30.0).finished(), // default_kp
             (VecDoF(6) << 5.0, 5.0, 5.0, 1.0, 1.0, 1.0).finished(),          // default_kd
-            30.0,                                                            // default_gripper_kp
+            5.0,                                                             // default_gripper_kp
             0.2,                                                             // default_gripper_kd
             20,                                                              // over_current_cnt_max
             0.005                                                            // controller_dt
