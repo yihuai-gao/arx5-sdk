@@ -37,6 +37,7 @@ ${LIB_DIR}/libsolver.so
     kdl_parser
     orocos-kdl
     pthread
+    soem
 )
 target_include_directories(arx5_interface PUBLIC ${EIGEN3_INCLUDE_DIRS})
 
