@@ -37,6 +37,7 @@ Arx5JointController::~Arx5JointController()
     _logger->info("Set to damping before exit");
     set_gain(damping_gain);
     set_joint_cmd(JointState(_robot_config.joint_dof));
+    _background_send_recv_running = true;
     _enable_gravity_compensation = false;
     sleep_ms(2000);
     _destroy_background_threads = true;
@@ -47,7 +48,7 @@ Arx5JointController::~Arx5JointController()
 void Arx5JointController::_init_robot()
 {
 
-    for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < _robot_config.joint_dof; ++i)
     {
         if (_robot_config.motor_type[i] == MotorType::DM_J4310 || _robot_config.motor_type[i] == MotorType::DM_J4340)
         {
@@ -55,6 +56,11 @@ void Arx5JointController::_init_robot()
             _can_handle.enable_DM_motor(id);
             sleep_us(1000);
         }
+    }
+    if (_robot_config.gripper_motor_type == MotorType::DM_J4310)
+    {
+        _can_handle.enable_DM_motor(_robot_config.gripper_motor_id);
+        sleep_us(1000);
     }
 
     Gain gain{_robot_config.joint_dof};
@@ -517,6 +523,7 @@ void Arx5JointController::reset_to_home()
     }
 
     JointState target_state{_robot_config.joint_dof};
+    _logger->debug("init_state.pos: {}, target_state.pos: {}", vec2str(init_state.pos), vec2str(target_state.pos));
     if (init_state.pos == VecDoF::Zero(_robot_config.joint_dof))
     {
         _logger->error("Motor positions are not initialized. Please check the connection.");
@@ -561,6 +568,7 @@ void Arx5JointController::set_to_damping()
     _logger->info("Start set to damping");
     //  interpolate from current kp kd to default kp kd in 0.5s
     bool prev_running = _background_send_recv_running;
+    _background_send_recv_running = true;
     int step_num = 20; // 0.1s in total
     for (int i = 0; i <= step_num; ++i)
     {
