@@ -284,15 +284,17 @@ bool Arx5JointController::_send_recv()
     }
 
     // Send gripper command (gripper is using DM motor)
-    int start_send_motor_time_us = get_time_us();
+    if (_robot_config.gripper_motor_type == MotorType::DM_J4310)
+    {
+        int start_send_motor_time_us = get_time_us();
 
-    double gripper_motor_pos =
-        _output_joint_cmd.gripper_pos / _robot_config.gripper_width * _robot_config.gripper_open_readout;
-    _can_handle.send_DM_motor_cmd(_robot_config.gripper_motor_id, _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos,
-                                  0, 0);
-    int finish_send_motor_time_us = get_time_us();
-
-    sleep_us(communicate_sleep_us - (finish_send_motor_time_us - start_send_motor_time_us));
+        double gripper_motor_pos =
+            _output_joint_cmd.gripper_pos / _robot_config.gripper_width * _robot_config.gripper_open_readout;
+        _can_handle.send_DM_motor_cmd(_robot_config.gripper_motor_id, _gain.gripper_kp, _gain.gripper_kd,
+                                      gripper_motor_pos, 0, 0);
+        int finish_send_motor_time_us = get_time_us();
+        sleep_us(communicate_sleep_us - (finish_send_motor_time_us - start_send_motor_time_us));
+    }
 
     int start_get_motor_msg_time_us = get_time_us();
     std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();

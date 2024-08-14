@@ -51,7 +51,7 @@ Arx5CartesianController::~Arx5CartesianController()
 
 void Arx5CartesianController::_init_robot()
 {
-    for (int i = 0; i < 7; ++i)
+    for (int i = 0; i < _robot_config.joint_dof; ++i)
     {
         if (_robot_config.motor_type[i] == MotorType::DM_J4310 || _robot_config.motor_type[i] == MotorType::DM_J4340)
         {
@@ -59,6 +59,11 @@ void Arx5CartesianController::_init_robot()
             _can_handle.enable_DM_motor(id);
             sleep_us(1000);
         }
+    }
+    if (_robot_config.gripper_motor_type == MotorType::DM_J4310)
+    {
+        _can_handle.enable_DM_motor(_robot_config.gripper_motor_id);
+        sleep_us(1000);
     }
 
     Gain gain{_robot_config.joint_dof};
@@ -455,11 +460,10 @@ void Arx5CartesianController::_enter_emergency_state()
         sleep_ms(5);
     }
 }
-
 bool Arx5CartesianController::_send_recv()
 {
     // TODO: in the motor documentation, there shouldn't be these torque constants. Torque will go directly into the
-    // motors. The torque constant here may represent some other physical properties.
+    // motors
     const double torque_constant_EC_A4310 = 1.4; // Nm/A
     const double torque_constant_DM_J4310 = 0.424;
     const double torque_constant_DM_J4340 = 1.0;
@@ -469,7 +473,7 @@ bool Arx5CartesianController::_send_recv()
     int update_cmd_time_us = get_time_us();
     int communicate_sleep_us = 150;
 
-    for (int i = 0; i < 6; i++)
+    for (int i = 0; i < _robot_config.joint_dof; i++)
     {
         int start_send_motor_time_us = get_time_us();
         if (_robot_config.motor_type[i] == MotorType::EC_A4310)
@@ -501,15 +505,17 @@ bool Arx5CartesianController::_send_recv()
     }
 
     // Send gripper command (gripper is using DM motor)
-    int start_send_motor_time_us = get_time_us();
+    if (_robot_config.gripper_motor_type == MotorType::DM_J4310)
+    {
+        int start_send_motor_time_us = get_time_us();
 
-    double gripper_motor_pos =
-        _output_joint_cmd.gripper_pos / _robot_config.gripper_width * _robot_config.gripper_open_readout;
-    _can_handle.send_DM_motor_cmd(_robot_config.motor_id[6], _gain.gripper_kp, _gain.gripper_kd, gripper_motor_pos, 0,
-                                  0);
-    int finish_send_motor_time_us = get_time_us();
-
-    sleep_us(communicate_sleep_us - (finish_send_motor_time_us - start_send_motor_time_us));
+        double gripper_motor_pos =
+            _output_joint_cmd.gripper_pos / _robot_config.gripper_width * _robot_config.gripper_open_readout;
+        _can_handle.send_DM_motor_cmd(_robot_config.gripper_motor_id, _gain.gripper_kp, _gain.gripper_kd,
+                                      gripper_motor_pos, 0, 0);
+        int finish_send_motor_time_us = get_time_us();
+        sleep_us(communicate_sleep_us - (finish_send_motor_time_us - start_send_motor_time_us));
+    }
 
     int start_get_motor_msg_time_us = get_time_us();
     std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
@@ -577,6 +583,7 @@ void Arx5CartesianController::_calc_joint_cmd()
         }
         else // Interpolate the current timestamp between _interp_start_eef_cmd and _input_eef_cmd
         {
+            _logger->debug("Received non-zero eef_cmd!");
             double current_timestamp = get_timestamp();
             assert(current_timestamp >= _interp_start_eef_cmd.timestamp);
             assert(_input_eef_cmd.timestamp > _interp_start_eef_cmd.timestamp);
