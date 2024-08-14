@@ -27,9 +27,8 @@ def easeInOutQuad(t):
 def main(model: str, interface: str, urdf_path: str):
 
     # To initialize robot with different configurations,
-    # you can create RobotConfig and ControllerConfig by yourself
-    # and modify based on it
-    robot_config = arx5.RobotConfigFactory.get_instance().get_config("X5")
+    # you can create RobotConfig and ControllerConfig by yourself and modify based on it
+    robot_config = arx5.RobotConfigFactory.get_instance().get_config(model)
     controller_config = arx5.ControllerConfigFactory.get_instance().get_config(
         "joint_controller"
     )
@@ -48,9 +47,12 @@ def main(model: str, interface: str, urdf_path: str):
     robot_config = arx5_joint_controller.get_robot_config()
     controller_config = arx5_joint_controller.get_controller_config()
 
-    step_num = 1500
-    USE_MULTITHREADING = False
+    step_num = 3000
+    USE_MULTITHREADING = True
     if USE_MULTITHREADING:
+        # Will create another thread that communicates with the arm, so each send_recv_once() will take no time
+        # for the main thread to execute. Otherwise (without background send/recv), send_recv_once() will block the
+        # main thread until the arm responds (usually 2ms).
         arx5_joint_controller.enable_background_send_recv()
     arx5_joint_controller.reset_to_home()
     arx5_joint_controller.enable_gravity_compensation(urdf_path)

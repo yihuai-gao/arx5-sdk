@@ -82,6 +82,10 @@ void Arx5CartesianController::_init_robot()
     _input_eef_cmd = get_eef_state();
     _output_eef_cmd = get_eef_state();
     _interp_start_eef_cmd = get_eef_state();
+    _input_eef_cmd.timestamp = 0;
+    _output_eef_cmd.timestamp = 0;
+    _interp_start_eef_cmd.timestamp = 0;
+
     _background_send_recv_running = true;
 }
 
