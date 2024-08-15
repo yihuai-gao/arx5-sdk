@@ -33,7 +33,7 @@ def main(model: str, interface: str, urdf_path: str):
         "joint_controller"
     )
     # Modify the default configuration here
-    # robot_config.controller_dt = 0.01 # etc.
+    # controller_config.controller_dt = 0.01 # etc.
 
     arx5_joint_controller = arx5.Arx5JointController(
         robot_config, controller_config, interface
