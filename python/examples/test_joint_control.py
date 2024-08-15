@@ -47,7 +47,7 @@ def main(model: str, interface: str, urdf_path: str):
     robot_config = arx5_joint_controller.get_robot_config()
     controller_config = arx5_joint_controller.get_controller_config()
 
-    step_num = 3000
+    step_num = 1500
     USE_MULTITHREADING = True
     if USE_MULTITHREADING:
         # Will create another thread that communicates with the arm, so each send_recv_once() will take no time

@@ -93,7 +93,6 @@
     },
     "python.analysis.extraPaths": [
         "python",
-        "/opt/ros/humble/lib/python3.10/site-packages",
     ],
     "cSpell.words": [
         "urdf"
