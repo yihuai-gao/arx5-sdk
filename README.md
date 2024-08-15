@@ -1,8 +1,8 @@
 # C++ && Python SDK for ARX5 robot arm
 
 ## Update (2024.08.15)
-- Support EtherCAT-CAN adapter (just replace `can0` with your ethernet interface and it will work).
-- Support arbitrary DoF robot arm (instead of only 6DoF); other DoF numbers are not tested yet.
+- Support EtherCAT-CAN adapter (follow the instructions in [EtherCAT-CAN setup](README.md#ethercat-can-setup)).
+- Support arbitrary DoF robot arm (not only 6DoF); thoguh other DoF numbers are not tested yet.
 - Allow setting up robot and controller configurations as arguments (see `config.h` and `test_joint_control.py`).
 
 When updating the sdk to your codebase, please first remove the entire `build` folder and run the building process again.
