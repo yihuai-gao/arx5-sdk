@@ -1,7 +1,15 @@
 # C++ && Python SDK for ARX5 robot arm
+
+## Update (2024.08.15)
+- Support EtherCAT-CAN adapter (just replace `can0` with your ethernet interface and it will work).
+- Support arbitrary DoF robot arm (instead of only 6DoF); other DoF numbers are not tested yet.
+- Allow setting up robot and controller configurations as arguments (see `config.h` and `test_joint_control.py`).
+
+When updating the sdk to your codebase, please first remove the entire `build` folder and run the building process again.
+
 ## Features
 - Run without ROS
-- No `sudo` requirement (all dependencies are managed under conda environment, thanks to [Cheng Chi](https://cheng-chi.github.io/))
+- No `sudo` requirement for building the library (all dependencies are managed under conda environment, thanks to [Cheng Chi](https://cheng-chi.github.io/))
 - Simple python interface with complete type hints (see `python/arx5_interface.pyi`)
 - Joint controller runs at 500Hz in the background (motor communication delay ~0.4ms)
 - Cartesian space controller with keyboard and SpaceMouse tele-operation and teach-replay (thanks to [Cheng Chi](https://cheng-chi.github.io/))
@@ -27,7 +35,26 @@ make -j
 make install
 ```
 
-## CAN setup
+## EtherCAT-CAN setup
+
+Use a USB cable to power the EtherCAT-CAN adapter and an ethernet cable to connect it to your computer. After running `ip a` in your terminal, you should find the interface name, usually `eth.` (existing ethernet port) or `en..........` (additional USB-Ethernet adapters).
+
+Then you should enable the ethernet access of your Python interpreter (usually in your `bin` folder). Note that `which python` usually gives you a symbolic link (say `~/miniforge3/envs/arx-py310/bin/python`) and doesn't work in this case. You need to find out the actual file (usually `python3.x`). 
+```sh
+mamba activate arx-py310
+ls -l $(which python)
+sudo setcap "cap_net_admin,cap_net_raw=eip" your/path/to/conda/envs/arx-py310/bin/python3.10
+```
+
+To run C++, you need to enable the executable every time after compiling. You also need to update the C++ scripts with the correct interface.
+```sh
+sudo setcap "cap_net_admin,cap_net_raw=eip" build/test_cartesian_controller
+sudo setcap "cap_net_admin,cap_net_raw=eip" build/test_joint_controller
+```
+
+## USB-CAN setup
+
+You can skip this step if you have already set up the EtherCAT-CAN adapter.
 
 ``` sh
 sudo apt install can-utils
@@ -101,8 +128,8 @@ sudo systemctl start spacenavd.service
 ## Test scripts
 
 Arguments for `test_joint_control.py`, `keyboard_teleop.py`, `spacemouse_teleop.py` and `teach_replay.py`: 
-- (required) model: `X5` (silver and black) or `L5` (all black with blue or red LED light)
-- (required) interface: `can0` etc. (run `ip a` to check your can interface name)
+- (required) model: `X5` (silver and black) or `L5` (all black metal with blue or red LED light). **Choosing the wrong model may lead to dangerous movements!**
+- (required) interface: `can0`, `enx6c1ff70ac436` etc. (run `ip a` to check your interface name)
 - (optional) urdf_path `-u`: by default `../models/arx5.urdf`
 
 ```bash
