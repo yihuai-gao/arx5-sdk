@@ -89,7 +89,11 @@
         "slist": "cpp",
         "eigenvalues": "cpp",
         "geometry": "cpp",
-        "cholesky": "cpp"
+        "cholesky": "cpp",
+        "oshw.h": "c",
+        "time.h": "c",
+        "socket.h": "c",
+        "pthread.h": "c"
     },
     "python.analysis.extraPaths": [
         "python",

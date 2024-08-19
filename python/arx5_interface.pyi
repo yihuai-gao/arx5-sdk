@@ -25,6 +25,11 @@ class RobotConfig:
     joint_dof: int
     motor_id: list[int]
     motor_type: list[MotorType]
+    gripper_motor_id: int
+    gripper_motor_type: MotorType
+    gravity_vector: np.ndarray
+    base_link_name: str
+    eef_link_name: str
 
 class ControllerConfig:
     """Does not have a constructor, use ControllerConfigFactory.get_instance().get_config(...) instead."""

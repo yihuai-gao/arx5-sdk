@@ -44,6 +44,7 @@ target_link_libraries(ArxJointController
     spdlog::spdlog
     kdl_parser
     orocos-kdl
+    soem
 )
 add_library(ArxCartesianController SHARED
     src/app/cartesian_controller.cpp
@@ -57,6 +58,7 @@ target_link_libraries(ArxCartesianController
     spdlog::spdlog
     kdl_parser
     orocos-kdl
+    soem
 )
 
 # Hack for py310 (conda environment is slightly different from other python versions)
@@ -74,6 +76,7 @@ target_link_libraries(test_joint_controller
     spdlog::spdlog
     kdl_parser
     orocos-kdl
+    soem
 )
 
 add_executable(test_cartesian_controller examples/test_cartesian_controller.cpp)
@@ -86,6 +89,7 @@ target_link_libraries(test_cartesian_controller
     Threads::Threads
     kdl_parser
     orocos-kdl
+    soem
 )
 
 add_subdirectory(python)
