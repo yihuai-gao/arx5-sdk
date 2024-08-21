@@ -81,7 +81,6 @@ typedef struct EcatRxPacket
     struct CanPacket can[2];
 } __attribute__((packed)) EcatRxPacket;
 
-void gripper_can_data_repack(uint32_t msgID, uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
 void RV_can_data_repack(uint32_t msgID, uint8_t *Data, int32_t databufferlen, uint8_t comm_mode,
                         std::array<OD_Motor_Msg, 10> &motor_msg);
 void DM_can_data_repack(uint8_t *Data, std::array<OD_Motor_Msg, 10> &motor_msg);
@@ -90,14 +89,9 @@ class CanInterface
 {
   public:
     virtual void transmit(can_frame_t &frame) = 0;
-    virtual const std::array<OD_Motor_Msg, 10> get_motor_msg() = 0;
+    const std::array<OD_Motor_Msg, 10> get_motor_msg();
     virtual bool is_open() = 0;
     void can_receive_frame(can_frame_t *frame);
-
-  protected:
-    std::string m_interface_name;
-    std::array<OD_Motor_Msg, 10> m_motor_msg;
-    std::mutex m_motor_msg_mutex;
 };
 
 class Usb2Can : public CanInterface
@@ -107,11 +101,7 @@ class Usb2Can : public CanInterface
     ~Usb2Can();
 
     void transmit(can_frame_t &frame) override;
-    const std::array<OD_Motor_Msg, 10> get_motor_msg() override;
     bool is_open() override;
-
-  private:
-    SocketCAN m_socket_can;
 };
 class EtherCat2Can : public CanInterface
 {
@@ -120,17 +110,7 @@ class EtherCat2Can : public CanInterface
     ~EtherCat2Can();
 
     void transmit(can_frame_t &frame) override;
-    const std::array<OD_Motor_Msg, 10> get_motor_msg() override;
     bool is_open() override;
-
-  private:
-    std::string m_interface_name;
-    char m_IOmap[4096];
-    int m_expected_WKC;
-    volatile int m_WKC;
-    const int SLAVE_ID = 1;
-    const int PDO_OUTPUT_BYTE = 30;
-    const int PDO_INPUT_BYTE = 34;
 };
 class ArxCan
 {
@@ -149,9 +129,6 @@ class ArxCan
     void clear(uint16_t ID);
 
     const std::array<OD_Motor_Msg, 10> get_motor_msg();
-
-  private:
-    std::shared_ptr<CanInterface> m_interface_ptr;
 };
 
 #endif

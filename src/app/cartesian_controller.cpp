@@ -47,6 +47,8 @@ Arx5CartesianController::~Arx5CartesianController()
     _destroy_background_threads = true;
     _background_send_recv_thread.join();
     _logger->info("background send_recv task joined");
+    _logger.reset();
+    _solver.reset();
 }
 
 void Arx5CartesianController::_init_robot()
