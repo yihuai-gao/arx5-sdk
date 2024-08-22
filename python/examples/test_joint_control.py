@@ -89,5 +89,7 @@ def main(model: str, interface: str, urdf_path: str):
         JointState = arx5_joint_controller.get_state()
         # print(f"gripper: {JointState.gripper_pos:.05f}")
 
+    arx5_joint_controller.reset_to_home()
+
 
 main()

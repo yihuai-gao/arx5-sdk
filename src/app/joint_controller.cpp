@@ -82,6 +82,13 @@ void Arx5JointController::_init_robot()
         throw std::runtime_error(
             "None of the motors are initialized. Please check the connection or power of the arm.");
     }
+    _input_joint_cmd = get_state();
+    _input_joint_cmd.torque = VecDoF::Zero(_robot_config.joint_dof);
+    _input_joint_cmd.vel = VecDoF::Zero(_robot_config.joint_dof);
+    _input_joint_cmd.timestamp = 0;
+    _output_joint_cmd = _input_joint_cmd;
+    _intermediate_joint_cmd = _input_joint_cmd;
+    _interp_start_joint_cmd = _input_joint_cmd;
 }
 
 JointState Arx5JointController::get_state()
@@ -126,8 +133,42 @@ void Arx5JointController::_update_output_cmd()
 
     JointState prev_output_cmd = _output_joint_cmd;
 
-    _output_joint_cmd = _input_joint_cmd;
-
+    // Calculate output joint command (according to the interpolation)
+    if (_input_joint_cmd.timestamp == 0) // No interpolation. Directly update the target
+    {
+        _output_joint_cmd = _input_joint_cmd;
+        _output_joint_cmd.timestamp = get_timestamp();
+    }
+    else // Interpolate the current timestamp between _interp_start_joint_cmd and _input_joint_cmd
+    {
+        double current_timestamp = get_timestamp();
+        assert(current_timestamp >= _interp_start_joint_cmd.timestamp);
+        assert(_input_joint_cmd.timestamp > _interp_start_joint_cmd.timestamp);
+        if (current_timestamp > _input_joint_cmd.timestamp)
+        // Current timestamp has already exceed the interpolation target: hold at this target pose
+        {
+            _output_joint_cmd = _input_joint_cmd;
+            _output_joint_cmd.timestamp = current_timestamp;
+        }
+        else // Apply interpolation
+        {
+            double alpha = (current_timestamp - _interp_start_joint_cmd.timestamp) /
+                           (_input_joint_cmd.timestamp - _interp_start_joint_cmd.timestamp);
+            assert(alpha >= 0 && alpha <= 1);
+            _output_joint_cmd.pos = _interp_start_joint_cmd.pos * (1 - alpha) + _input_joint_cmd.pos * alpha;
+            _output_joint_cmd.vel =
+                _interp_start_joint_cmd.vel + alpha * (_input_joint_cmd.vel - _interp_start_joint_cmd.vel);
+            _output_joint_cmd.torque =
+                _interp_start_joint_cmd.torque + alpha * (_input_joint_cmd.torque - _interp_start_joint_cmd.torque);
+            _output_joint_cmd.gripper_pos =
+                _interp_start_joint_cmd.gripper_pos +
+                alpha * (_input_joint_cmd.gripper_pos - _interp_start_joint_cmd.gripper_pos);
+            _output_joint_cmd.timestamp = current_timestamp;
+            // _logger->debug("alpha: {:.3f}, start_pos[0]: {:.3f}, cmd_pos[0]: {:.3f}, output_pos[0]: {:.3f}", alpha,
+            //                _interp_start_joint_cmd.pos[0], _input_joint_cmd.pos[0], _output_joint_cmd.pos[0]);
+        }
+    }
+    _intermediate_joint_cmd = _output_joint_cmd;
     if (_enable_gravity_compensation && _solver != nullptr)
     {
         VecDoF gravity_torque = _solver->inverse_dynamics(_joint_state.pos, VecDoF::Zero(_robot_config.joint_dof),
@@ -142,13 +183,13 @@ void Arx5JointController::_update_output_cmd()
         if (_gain.kp[i] > 0)
         {
 
-            double delta_pos = _input_joint_cmd.pos[i] - prev_output_cmd.pos[i];
+            double delta_pos = _output_joint_cmd.pos[i] - prev_output_cmd.pos[i];
             double max_vel = _robot_config.joint_vel_max[i];
             if (std::abs(delta_pos) > max_vel * dt)
             {
                 _output_joint_cmd.pos[i] = prev_output_cmd.pos[i] + max_vel * dt * delta_pos / std::abs(delta_pos);
                 _logger->debug("Joint {} pos {:.3f} pos cmd clipped: {:.3f} to {:.3f}", i, _joint_state.pos[i],
-                               _input_joint_cmd.pos[i], _output_joint_cmd.pos[i]);
+                               _output_joint_cmd.pos[i], _output_joint_cmd.pos[i]);
             }
         }
         else
@@ -159,14 +200,14 @@ void Arx5JointController::_update_output_cmd()
         // Gripper pos clipping
         if (_gain.gripper_kp > 0)
         {
-            double gripper_delta_pos = _input_joint_cmd.gripper_pos - prev_output_cmd.gripper_pos;
+            double gripper_delta_pos = _output_joint_cmd.gripper_pos - prev_output_cmd.gripper_pos;
             if (std::abs(gripper_delta_pos) / dt > _robot_config.gripper_vel_max)
             {
                 _output_joint_cmd.gripper_pos = prev_output_cmd.gripper_pos + _robot_config.gripper_vel_max * dt *
                                                                                   gripper_delta_pos /
                                                                                   std::abs(gripper_delta_pos);
-                if (std::abs(_input_joint_cmd.gripper_pos - _output_joint_cmd.gripper_pos) >= 0.001)
-                    _logger->debug("Gripper pos cmd clipped: {:.3f} to {:.3f}", _input_joint_cmd.gripper_pos,
+                if (std::abs(_output_joint_cmd.gripper_pos - _output_joint_cmd.gripper_pos) >= 0.001)
+                    _logger->debug("Gripper pos cmd clipped: {:.3f} to {:.3f}", _output_joint_cmd.gripper_pos,
                                    _output_joint_cmd.gripper_pos);
             }
         }
@@ -472,7 +513,17 @@ void Arx5JointController::set_joint_cmd(JointState new_cmd)
         new_cmd.gripper_vel = 0;
         new_cmd.gripper_torque = 0;
     }
+    if (new_cmd.timestamp != 0 && new_cmd.timestamp < get_timestamp())
+    {
+        _logger->warn("Joint command timestamp ({:.4f}s) is not 0 but in the past (current timestamp: {:.4f}s). New "
+                      "joint command "
+                      "is ignored.",
+                      new_cmd.timestamp, get_timestamp());
+        return;
+    }
     _input_joint_cmd = new_cmd;
+    _interp_start_joint_cmd = _intermediate_joint_cmd;
+    _interp_start_joint_cmd.torque = VecDoF::Zero(_robot_config.joint_dof);
 }
 
 std::tuple<JointState, JointState> Arx5JointController::get_joint_cmd()
@@ -550,6 +601,9 @@ void Arx5JointController::reset_to_home()
         double alpha = double(i) / step_num;
         gain = init_gain * (1 - alpha) + target_gain * alpha;
         cmd = init_state * (1 - alpha) + target_state * alpha;
+        cmd.vel = VecDoF::Zero(_robot_config.joint_dof);
+        cmd.torque = VecDoF::Zero(_robot_config.joint_dof);
+        cmd.timestamp = 0;
         set_joint_cmd(cmd);
         sleep_ms(5);
         set_gain(gain);

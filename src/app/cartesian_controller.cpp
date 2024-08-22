@@ -107,9 +107,9 @@ void Arx5CartesianController::set_eef_cmd(EEFState new_cmd)
     }
     if (new_cmd.timestamp != 0 && new_cmd.timestamp < get_timestamp())
     {
-        _logger->warn(
-            "EEF command timestamp is not 0 and in the past (current timestamp: {:.3f}s). New EEF command is Ignored.",
-            get_timestamp());
+        _logger->warn("EEF command timestamp ({:.4f}s) is not 0 but in the past (current timestamp: {:.4f}s). New EEF "
+                      "command is ignored.",
+                      new_cmd.timestamp, get_timestamp());
         return;
     }
     _input_eef_cmd = new_cmd;
@@ -585,7 +585,7 @@ void Arx5CartesianController::_calc_joint_cmd()
         }
         else // Interpolate the current timestamp between _interp_start_eef_cmd and _input_eef_cmd
         {
-            _logger->debug("Received non-zero eef_cmd!");
+            // _logger->debug("Received non-zero eef_cmd!");
             double current_timestamp = get_timestamp();
             assert(current_timestamp >= _interp_start_eef_cmd.timestamp);
             assert(_input_eef_cmd.timestamp > _interp_start_eef_cmd.timestamp);

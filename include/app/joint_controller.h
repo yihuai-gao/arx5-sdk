@@ -60,7 +60,9 @@ class Arx5JointController
     void _enter_emergency_state();
     int _over_current_cnt = 0;
     JointState _output_joint_cmd{_robot_config.joint_dof};
+    JointState _intermediate_joint_cmd{_robot_config.joint_dof}; // _output_joint_cmd without gravity compensation
     JointState _input_joint_cmd{_robot_config.joint_dof};
+    JointState _interp_start_joint_cmd{_robot_config.joint_dof};
     JointState _joint_state{_robot_config.joint_dof};
     Gain _gain{_robot_config.joint_dof};
     ArxCan _can_handle;

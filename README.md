@@ -1,6 +1,7 @@
 # C++ && Python SDK for ARX5 robot arm
 
-## Update (2024.08.15)
+## Update (2024.08.22)
+- Enable one-step waypoint scheduling (see `python/examples`).
 - Support EtherCAT-CAN adapter (follow the instructions in [EtherCAT-CAN setup](README.md#ethercat-can-setup)).
 - Support arbitrary DoF robot arm (not only 6DoF); thoguh other DoF numbers are not tested yet.
 - Allow setting up robot and controller configurations as arguments (see `config.h` and `test_joint_control.py`).
