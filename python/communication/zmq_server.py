@@ -46,11 +46,6 @@ class Arx5Server:
         self.socket.bind(f"tcp://{zmq_ip}:{zmq_port}")
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
-        self.default_gain = arx5.Gain(
-            self.arx5_cartesian_controller.get_robot_config().joint_dof
-        )
-        self.default_gain.kp()[:] = np.array([150.0, 150.0, 200.0, 60.0, 30.0, 30.0])
-        self.default_gain.kd()[:] = np.array([5.0, 5.0, 5.0, 1.0, 1.0, 1.0])
 
         self.zmq_ip = zmq_ip
         self.zmq_port = zmq_port
@@ -126,7 +121,13 @@ class Arx5Server:
                             self.arx5_cartesian_controller.get_eef_state().gripper_pos
                         )
                     if self.is_reset_to_home:
-                        if np.linalg.norm(target_ee_pose) > 0.1:
+                        if (
+                            np.linalg.norm(
+                                target_ee_pose
+                                - self.arx5_cartesian_controller.get_home_pose()
+                            )
+                            > 0.1
+                        ):
                             error_str = f"Error: Cannot set EE pose far away from home: {target_ee_pose} after RESET_TO_HOME. Please check the input."
                             print(error_str)
                             self.socket.send_pyobj(
@@ -160,7 +161,6 @@ class Arx5Server:
                 elif msg["cmd"] == "RESET_TO_HOME":
                     print(f"Received RESET_TO_HOME message")
                     self.arx5_cartesian_controller.reset_to_home()
-                    self.arx5_cartesian_controller.set_gain(self.default_gain)
                     reply_msg = {
                         "cmd": "RESET_TO_HOME",
                         "data": "OK",
