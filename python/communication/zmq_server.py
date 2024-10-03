@@ -224,8 +224,8 @@ class Arx5Server:
 
 
 @click.command()
-@click.option("--model", "-m", required=True, help="ARX5 model name: X5 or L5")
-@click.option("--interface", "-i", required=True, help="can bus name (can0 etc.)")
+@click.argument("model")  # ARX arm model: X5 or L5
+@click.argument("interface")  # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
 def main(model: str, interface: str, urdf_path: str):
     server = Arx5Server(

@@ -47,6 +47,7 @@ Arx5CartesianController::~Arx5CartesianController()
     _destroy_background_threads = true;
     _background_send_recv_thread.join();
     _logger->info("background send_recv task joined");
+    spdlog::drop(_logger->name());
     _logger.reset();
     _solver.reset();
 }

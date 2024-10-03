@@ -43,6 +43,7 @@ Arx5JointController::~Arx5JointController()
     _destroy_background_threads = true;
     _background_send_recv_thread.join();
     _logger->info("background send_recv task joined");
+    spdlog::drop(_logger->name());
     _logger.reset();
     _solver.reset();
 }
@@ -678,7 +679,7 @@ void Arx5JointController::calibrate_gripper()
     }
     std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
     std::cout << "Fully-open joint position readout: " << motor_msg[7].angle_actual_rad << std::endl;
-    std::cout << "  Please update the _robot_config.gripper_open_readout value in joint_controller.h to finish gripper "
+    std::cout << "  Please update the _robot_config.gripper_open_readout value in config.h to finish gripper "
                  "calibration."
               << std::endl;
     if (prev_running)

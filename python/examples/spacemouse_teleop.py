@@ -17,19 +17,20 @@ import click
 
 def start_teleop_recording(controller: Arx5CartesianController):
 
-    ori_speed = 0.8
-    pos_speed = 0.3
+    ori_speed = 1.5
+    pos_speed = 0.6
     gripper_speed = 0.04
     target_pose_6d = controller.get_home_pose()
 
     target_gripper_pos = 0.0
 
-    window_size = 20
+    window_size = 5
     spacemouse_queue = Queue(window_size)
     robot_config = controller.get_robot_config()
     controller_config = controller.get_controller_config()
+    
     with SharedMemoryManager() as shm_manager:
-        with Spacemouse(shm_manager=shm_manager, deadzone=0.3, max_value=500) as sm:
+        with Spacemouse(shm_manager=shm_manager, deadzone=0.1, max_value=500) as sm:
 
             def get_filtered_spacemouse_output(sm: Spacemouse):
                 state = sm.get_motion_state_transformed()

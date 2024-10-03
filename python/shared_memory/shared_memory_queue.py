@@ -1,15 +1,9 @@
-import numbers
-from multiprocessing.managers import SharedMemoryManager
-from queue import Empty, Full
 from typing import Dict, List, Union
-
+import numbers
+from queue import (Empty, Full)
+from multiprocessing.managers import SharedMemoryManager
 import numpy as np
-
-from shared_memory.shared_memory_util import (
-    ArraySpec,
-    SharedAtomicCounter,
-    SharedCounter,
-)
+from shared_memory.shared_memory_util import ArraySpec, SharedAtomicCounter
 from shared_memory.shared_ndarray import SharedNDArray
 
 
@@ -18,6 +12,18 @@ class SharedMemoryQueue:
     A Lock-Free FIFO Shared Memory Data Structure.
     Stores a sequence of dict of numpy arrays.
     """
+    class CallbackGuard:
+        def __init__(self, callback, data):
+            self.callback = callback
+            self.data = data
+        
+        def __enter__(self):
+            return self.data
+        
+        def __exit__(self, type, value, traceback):
+            self.callback()
+            del self.data
+            del self.callback
 
     def __init__(
         self,
@@ -43,10 +49,9 @@ class SharedMemoryQueue:
             array = SharedNDArray.create_from_shape(
                 mem_mgr=shm_manager,
                 shape=(buffer_size,) + tuple(spec.shape),
-                dtype=spec.dtype,
-            )
+                dtype=spec.dtype)
             shared_arrays[key] = array
-
+        
         self.buffer_size = buffer_size
         self.array_specs = array_specs
         self.write_counter = write_counter
@@ -68,14 +73,18 @@ class SharedMemoryQueue:
             if isinstance(value, np.ndarray):
                 shape = value.shape
                 dtype = value.dtype
-                assert dtype != np.dtype("O")
+                assert dtype != np.dtype('O')
             elif isinstance(value, numbers.Number):
                 shape = tuple()
                 dtype = np.dtype(type(value))
             else:
-                raise TypeError(f"Unsupported type {type(value)}")
+                raise TypeError(f'Unsupported type {type(value)}')
 
-            spec = ArraySpec(name=key, shape=shape, dtype=dtype)  # type: ignore
+            spec = ArraySpec(
+                name=key,
+                shape=shape,
+                dtype=dtype
+            )
             specs.append(spec)
 
         obj = cls(
@@ -85,17 +94,17 @@ class SharedMemoryQueue:
             use_atomic_counter=use_atomic_counter,
         )
         return obj
-
+    
     def qsize(self):
         read_count = self.read_counter.load()
         write_count = self.write_counter.load()
         n_data = write_count - read_count
         return n_data
-
+    
     def empty(self):
         n_data = self.qsize()
         return n_data <= 0
-
+    
     def clear(self):
         self.read_counter.store(self.write_counter.load())
 
@@ -105,7 +114,7 @@ class SharedMemoryQueue:
         n_data = write_count - read_count
         if n_data >= self.buffer_size:
             raise Full()
-
+        
         next_idx = write_count % self.buffer_size
 
         # write to shared memory
@@ -152,10 +161,72 @@ class SharedMemoryQueue:
         for key, value in self.shared_arrays.items():
             arr = value.get()
             np.copyto(out[key], arr[next_idx])
-
+        
         # update idx
         self.read_counter.add(1)
         return out
+    
+    def get_next_view(self) -> Dict[str, np.ndarray]:
+        """
+        Get reference to the next element to write
+        for zero-copy writing
+        """
+        read_count = self.read_counter.load()
+        write_count = self.write_counter.load()
+        n_data = write_count - read_count
+        if n_data >= self.buffer_size:
+            raise Full()
+        
+        next_idx = write_count % self.buffer_size
+        out = dict()
+        for key, value in self.shared_arrays.items():
+            arr = value.get()
+            out[key] = arr[next_idx]
+
+        return out
+
+    def put_next_view(self, data: Dict[str, Union[np.ndarray, numbers.Number]]):
+        """
+        Used in conjunction with get_next_view
+        for zero-copy writing
+        """
+        read_count = self.read_counter.load()
+        write_count = self.write_counter.load()
+        n_data = write_count - read_count
+        if n_data >= self.buffer_size:
+            raise Full()
+        
+        next_idx = write_count % self.buffer_size
+        # write to shared memory
+        for key, value in data.items():
+            arr: np.ndarray
+            arr = self.shared_arrays[key].get()
+            if isinstance(value, np.ndarray):
+                # assumed already written to the array
+                pass
+            else:
+                arr[next_idx] = np.array(value, dtype=arr.dtype)
+
+        # update idx
+        self.write_counter.add(1)
+
+    
+    def get_view(self) -> CallbackGuard:
+        write_count = self.write_counter.load()
+        read_count = self.read_counter.load()
+        n_data = write_count - read_count
+        if n_data <= 0:
+            raise Empty()
+        
+        next_idx = read_count % self.buffer_size
+        data = dict()
+        for key, value in self.shared_arrays.items():
+            arr = value.get()
+            data[key] = arr[next_idx]
+        
+        return self.CallbackGuard(
+            callback=lambda: self.read_counter.add(1),
+            data=data)
 
     def get_k(self, k, out=None) -> Dict[str, np.ndarray]:
         write_count = self.write_counter.load()

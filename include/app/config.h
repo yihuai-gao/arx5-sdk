@@ -90,7 +90,7 @@ class RobotConfigFactory
             0.1,                                                           // gripper_vel_max
             1.5,                                                           // gripper_torque_max
             0.085,                                                         // gripper_width
-            4.8,                                                           // gripper_open_readout
+            5.0,                                                           // gripper_open_readout
             6,                                                             // joint_dof
             std::vector<int>{1, 2, 4, 5, 6, 7},                            // motor_id
             std::vector<MotorType>{MotorType::EC_A4310, MotorType::EC_A4310, MotorType::EC_A4310, MotorType::DM_J4310,
@@ -111,7 +111,7 @@ class RobotConfigFactory
             0.1,                                                           // gripper_vel_max
             1.5,                                                           // gripper_torque_max
             0.085,                                                         // gripper_width
-            4.8,                                                           // gripper_open_readout
+            5.0,                                                           // gripper_open_readout
             6,                                                             // joint_dof
             std::vector<int>{1, 2, 4, 5, 6, 7},                            // motor_id
             std::vector<MotorType>{MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4310,
@@ -188,7 +188,7 @@ class ControllerConfigFactory
         );
         configurations["cartesian_controller"] = std::make_shared<ControllerConfig>(
             "cartesian_controller",                                          // controller_type
-            (VecDoF(6) << 150.0, 150.0, 200.0, 60.0, 30.0, 30.0).finished(), // default_kp
+            (VecDoF(6) << 300.0, 300.0, 300.0, 80.0, 50.0, 40.0).finished(), // default_kp
             (VecDoF(6) << 5.0, 5.0, 5.0, 1.0, 1.0, 1.0).finished(),          // default_kd
             5.0,                                                             // default_gripper_kp
             0.2,                                                             // default_gripper_kd
