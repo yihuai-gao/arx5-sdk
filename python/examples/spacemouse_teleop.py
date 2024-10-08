@@ -51,7 +51,6 @@ def start_teleop_recording(controller: Arx5CartesianController):
                 if state.any() or button_left or button_right:
                     print(f"Start tracking!")
                     break
-            directions = np.zeros(6, dtype=np.float64)
             start_time = time.monotonic()
             loop_cnt = 0
             while True:
@@ -61,8 +60,6 @@ def start_teleop_recording(controller: Arx5CartesianController):
                     end="\r",
                 )
                 # Spacemouse state is in the format of (x y z roll pitch yaw)
-                prev_directions = directions
-                directions = np.zeros(7, dtype=np.float64)
                 state = get_filtered_spacemouse_output(sm)
                 button_left = sm.is_button_pressed(0)
                 button_right = sm.is_button_pressed(1)

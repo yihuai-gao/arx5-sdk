@@ -18,7 +18,7 @@ class RobotConfig
     VecDoF joint_pos_max;
     VecDoF joint_vel_max;    // rad/s
     VecDoF joint_torque_max; // N*m
-    VecDoF ee_vel_max;
+    Pose6d ee_vel_max;       // Currently not in used
     // end effector speed: m/s for (x, y, z), rad/s for (roll, pitch, yaw)
 
     double gripper_vel_max; // m/s
@@ -41,7 +41,7 @@ class RobotConfig
     std::string eef_link_name;
 
     RobotConfig(std::string robot_model, VecDoF joint_pos_min, VecDoF joint_pos_max, VecDoF joint_vel_max,
-                VecDoF joint_torque_max, VecDoF ee_vel_max, double gripper_vel_max, double gripper_torque_max,
+                VecDoF joint_torque_max, Pose6d ee_vel_max, double gripper_vel_max, double gripper_torque_max,
                 double gripper_width, double gripper_open_readout, int joint_dof, std::vector<int> motor_id,
                 std::vector<MotorType> motor_type, int gripper_motor_id, MotorType gripper_motor_type,
                 Eigen::Vector3d gravity_vector, std::string base_link_name, std::string eef_link_name)
@@ -73,7 +73,7 @@ class RobotConfigFactory
         }
         else
         {
-            throw std::runtime_error("Unknown robot model. Currently available: X5, L5");
+            throw std::runtime_error("Unknown robot model. Currently available: X5, L5, X7Left, X7Right");
         }
     }
 
@@ -86,7 +86,7 @@ class RobotConfigFactory
             (VecDoF(6) << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished(),    // joint_pos_max
             (VecDoF(6) << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),        // joint_vel_max
             (VecDoF(6) << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),  // joint_torque_max
-            (VecDoF(6) << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),        // ee_vel_max
+            (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),         // ee_vel_max
             0.1,                                                           // gripper_vel_max
             1.5,                                                           // gripper_torque_max
             0.085,                                                         // gripper_width
@@ -107,7 +107,7 @@ class RobotConfigFactory
             (VecDoF(6) << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished(),    // joint_pos_max
             (VecDoF(6) << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),        // joint_vel_max
             (VecDoF(6) << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),  // joint_torque_max
-            (VecDoF(6) << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),        // ee_vel_max
+            (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),         // ee_vel_max
             0.1,                                                           // gripper_vel_max
             1.5,                                                           // gripper_torque_max
             0.085,                                                         // gripper_width
@@ -121,6 +121,48 @@ class RobotConfigFactory
             (Eigen::Vector3d() << 0, 0, -9.807).finished(),                   // gravity_vector
             "base_link",                                                      // base_link_name
             "eef_link"                                                        // eef_link_name
+        );
+        configurations["X7Left"] = std::make_shared<RobotConfig>(
+            "X7Left",                                                                  // robot_model
+            (VecDoF(7) << -2.09439, -1.5, -1.5, -1.5, -1.2, -0.3, -0.7854).finished(), // joint_pos_min
+            (VecDoF(7) << 2.09439, 0.3, 1.5, 0.3, 1.2, 0.7854, 0.7854).finished(),     // joint_pos_max
+            (VecDoF(7) << 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),               // joint_vel_max
+            (VecDoF(7) << 30.0, 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),        // joint_torque_max
+            (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),                     // ee_vel_max
+            0.1,                                                                       // gripper_vel_max
+            1.5,                                                                       // gripper_torque_max
+            0.085,                                                                     // gripper_width
+            5.0,                                                                       // gripper_open_readout
+            7,                                                                         // joint_dof
+            std::vector<int>{1, 2, 3, 4, 5, 6, 7},                                     // motor_id
+            std::vector<MotorType>{MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340,
+                                   MotorType::DM_J4310, MotorType::DM_J4310, MotorType::DM_J4310}, // motor_type
+            8,                                                                                     // gripper_motor_id
+            MotorType::DM_J4310,                                                                   // gripper_motor_type
+            (Eigen::Vector3d() << 0, 0, -9.807).finished(),                                        // gravity_vector
+            "base_link",                                                                           // base_link_name
+            "eef_link"                                                                             // eef_link_name
+        );
+        configurations["X7Right"] = std::make_shared<RobotConfig>(
+            "X7Right",                                                                    // robot_model
+            (VecDoF(7) << -2.09439, -0.3, -1.5, -0.3, -1.2, -0.7854, -0.7854).finished(), // joint_pos_min
+            (VecDoF(7) << 2.09439, 1.5, 1.5, 1.5, 1.2, 0.3, 0.7854).finished(),           // joint_pos_max
+            (VecDoF(7) << 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),                  // joint_vel_max
+            (VecDoF(7) << 30.0, 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),           // joint_torque_max
+            (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),                        // ee_vel_max
+            0.1,                                                                          // gripper_vel_max
+            1.5,                                                                          // gripper_torque_max
+            0.085,                                                                        // gripper_width
+            5.0,                                                                          // gripper_open_readout
+            7,                                                                            // joint_dof
+            std::vector<int>{1, 2, 3, 4, 5, 6, 7},                                        // motor_id
+            std::vector<MotorType>{MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340,
+                                   MotorType::DM_J4310, MotorType::DM_J4310, MotorType::DM_J4310}, // motor_type
+            8,                                                                                     // gripper_motor_id
+            MotorType::DM_J4310,                                                                   // gripper_motor_type
+            (Eigen::Vector3d() << 0, 0, -9.807).finished(),                                        // gravity_vector
+            "base_link",                                                                           // base_link_name
+            "eef_link"                                                                             // eef_link_name
         );
     }
 
@@ -160,9 +202,10 @@ class ControllerConfigFactory
         return instance;
     }
 
-    ControllerConfig get_config(const std::string &controller_type)
+    ControllerConfig get_config(const std::string &controller_type, const int joint_dof)
     {
-        auto it = configurations.find(controller_type);
+
+        auto it = configurations.find(controller_type + "_" + std::to_string(joint_dof));
         if (it != configurations.end())
         {
             return *(it->second);
@@ -177,16 +220,34 @@ class ControllerConfigFactory
   private:
     ControllerConfigFactory()
     {
-        configurations["joint_controller"] = std::make_shared<ControllerConfig>(
+        configurations["joint_controller_7"] = std::make_shared<ControllerConfig>(
+            "joint_controller",                                                 // controller_type
+            (VecDoF(7) << 80.0, 70.0, 70.0, 70.0, 30.0, 30.0, 20.0).finished(), // default_kp
+            (VecDoF(7) << 2.0, 2.0, 2.0, 2.0, 1.0, 1.0, 0.7).finished(),        // default_kd
+            5.0,                                                                // default_gripper_kp
+            0.2,                                                                // default_gripper_kd
+            20,                                                                 // over_current_cnt_max
+            0.002                                                               // controller_dt
+        );
+        configurations["joint_controller_6"] = std::make_shared<ControllerConfig>(
             "joint_controller",                                           // controller_type
-            (VecDoF(6) << 70.0, 70.0, 70.0, 30.0, 30.0, 20.0).finished(), // default_kp
+            (VecDoF(6) << 80.0, 70.0, 70.0, 30.0, 30.0, 20.0).finished(), // default_kp
             (VecDoF(6) << 2.0, 2.0, 2.0, 1.0, 1.0, 0.7).finished(),       // default_kd
             5.0,                                                          // default_gripper_kp
             0.2,                                                          // default_gripper_kd
             20,                                                           // over_current_cnt_max
             0.002                                                         // controller_dt
         );
-        configurations["cartesian_controller"] = std::make_shared<ControllerConfig>(
+        configurations["cartesian_controller_7"] = std::make_shared<ControllerConfig>(
+            "cartesian_controller",                                                 // controller_type
+            (VecDoF(7) << 300.0, 300.0, 300.0, 300.0, 80.0, 50.0, 40.0).finished(), // default_kp
+            (VecDoF(7) << 5.0, 5.0, 5.0, 5.0, 1.0, 1.0, 1.0).finished(),            // default_kd
+            5.0,                                                                    // default_gripper_kp
+            0.2,                                                                    // default_gripper_kd
+            20,                                                                     // over_current_cnt_max
+            0.005                                                                   // controller_dt
+        );
+        configurations["cartesian_controller_6"] = std::make_shared<ControllerConfig>(
             "cartesian_controller",                                          // controller_type
             (VecDoF(6) << 300.0, 300.0, 300.0, 80.0, 50.0, 40.0).finished(), // default_kp
             (VecDoF(6) << 5.0, 5.0, 5.0, 1.0, 1.0, 1.0).finished(),          // default_kd

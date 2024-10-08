@@ -3,22 +3,22 @@
      Commit Version: 1.6.0-4-g7f85cfe  Build Version: 1.6.7995.38578
      For more information, please see http://wiki.ros.org/sw_urdf_exporter -->
 <robot
-  name="X7LEFT2">
+  name="ultron2_urdf_g">
   <link
     name="base_link">
     <inertial>
       <origin
-        xyz="1.2504E-08 0.028534 0.00042549"
+        xyz="-3.3324E-05 0.029642 0.0004387"
         rpy="0 0 0" />
       <mass
-        value="0.41722" />
+        value="0.44235" />
       <inertia
-        ixx="0.00019"
+        ixx="0.00017"
         ixy="0.00000"
         ixz="0.00000"
-        iyy="0.00020"
+        iyy="0.00016"
         iyz="0.00000"
-        izz="0.00019" />
+        izz="0.00017" />
     </inertial>
     <visual>
       <origin
@@ -26,7 +26,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/base_link.STL" />
+          filename="package://ultron2_urdf_g/meshes/base_link.STL" />
       </geometry>
       <material
         name="">
@@ -40,7 +40,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/base_link.STL" />
+          filename="package://ultron2_urdf_g/meshes/base_link.STL" />
       </geometry>
     </collision>
   </link>
@@ -48,17 +48,17 @@
     name="link1">
     <inertial>
       <origin
-        xyz="0.020311877665791 0.0282074621926083 -0.000172803675324382"
+        xyz="0.025289 0.030544 -0.00031892"
         rpy="0 0 0" />
       <mass
-        value="0.131891884746085" />
+        value="0.085583" />
       <inertia
-        ixx="0.00012"
-        ixy="0.00004"
+        ixx="0.00009"
+        ixy="0.00002"
         ixz="0.00000"
-        iyy="0.00009"
+        iyy="0.00006"
         iyz="0.00000"
-        izz="0.00014" />
+        izz="0.00009" />
     </inertial>
     <visual>
       <origin
@@ -66,12 +66,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link1.STL" />
+          filename="package://ultron2_urdf_g/meshes/link1.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+          rgba="0.89804 0.91765 0.92941 1" />
       </material>
     </visual>
     <collision>
@@ -80,7 +80,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link1.STL" />
+          filename="package://ultron2_urdf_g/meshes/link1.STL" />
       </geometry>
     </collision>
   </link>
@@ -88,7 +88,7 @@
     name="joint1"
     type="revolute">
     <origin
-      xyz="0 0.05325 0"
+      xyz="0 0.0605 0"
       rpy="0 0 0" />
     <parent
       link="base_link" />
@@ -106,17 +106,17 @@
     name="link2">
     <inertial>
       <origin
-        xyz="0.0247335917011989 -0.00274560185380493 -0.027134395786836"
+        xyz="0.0297671674158853 -0.00253752324572726 -0.0263773476771438"
         rpy="0 0 0" />
       <mass
-        value="0.971762138327377" />
+        value="1.02244259916853" />
       <inertia
-        ixx="0.00153"
+        ixx="0.00146"
         ixy="0.00002"
-        ixz="-0.00007"
-        iyy="0.00153"
+        ixz="-0.00004"
+        iyy="0.00147"
         iyz="-0.00002"
-        izz="0.00074" />
+        izz="0.00069" />
     </inertial>
     <visual>
       <origin
@@ -124,12 +124,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link2.STL" />
+          filename="package://ultron2_urdf_g/meshes/link2.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="1 1 1 1" />
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
       </material>
     </visual>
     <collision>
@@ -138,7 +138,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link2.STL" />
+          filename="package://ultron2_urdf_g/meshes/link2.STL" />
       </geometry>
     </collision>
   </link>
@@ -146,7 +146,7 @@
     name="joint2"
     type="revolute">
     <origin
-      xyz="0.02725 0.063 0"
+      xyz="0.03125 0.059 0"
       rpy="0 0 3.1416" />
     <parent
       link="link1" />
@@ -164,17 +164,17 @@
     name="link3">
     <inertial>
       <origin
-        xyz="-0.000221571129409293 0.000554010477288147 0.156388906739316"
+        xyz="0.000478740262498357 0.000178057733353387 0.153883622457826"
         rpy="0 0 0" />
       <mass
-        value="0.868202345580011" />
+        value="0.84083747270065" />
       <inertia
-        ixx="0.00529"
-        ixy="-0.00001"
-        ixz="-0.00005"
-        iyy="0.00553"
-        iyz="0.00003"
-        izz="0.00078" />
+        ixx="0.00485"
+        ixy="0.00000"
+        ixz="-0.00006"
+        iyy="0.00491"
+        iyz="0.00001"
+        izz="0.00066" />
     </inertial>
     <visual>
       <origin
@@ -182,12 +182,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link3.STL" />
+          filename="package://ultron2_urdf_g/meshes/link3.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="1 1 1 1" />
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
       </material>
     </visual>
     <collision>
@@ -196,7 +196,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link3.STL" />
+          filename="package://ultron2_urdf_g/meshes/link3.STL" />
       </geometry>
     </collision>
   </link>
@@ -204,8 +204,8 @@
     name="joint3"
     type="revolute">
     <origin
-      xyz="0.02725 0 -0.0865"
-      rpy="-3.1416 0 -3.1416" />
+      xyz="0.03125 0 -0.0905"
+      rpy="3.1416 0 3.1416" />
     <parent
       link="link2" />
     <child
@@ -222,17 +222,17 @@
     name="link4">
     <inertial>
       <origin
-        xyz="0.0609931749498278 -0.0253615233623464 3.2063140489702E-05"
+        xyz="0.0645117152208708 -0.0253183694781211 -9.47713628285385E-06"
         rpy="0 0 0" />
       <mass
-        value="0.483750765199191" />
+        value="0.43314458599201" />
       <inertia
-        ixx="0.00037"
-        ixy="-0.00001"
+        ixx="0.00027"
+        ixy="-0.00008"
         ixz="0.00000"
-        iyy="0.00043"
+        iyy="0.00028"
         iyz="0.00000"
-        izz="0.00058" />
+        izz="0.00036" />
     </inertial>
     <visual>
       <origin
@@ -240,12 +240,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link4.STL" />
+          filename="package://ultron2_urdf_g/meshes/link4.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
     <collision>
@@ -254,7 +254,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link4.STL" />
+          filename="package://ultron2_urdf_g/meshes/link4.STL" />
       </geometry>
     </collision>
   </link>
@@ -262,7 +262,7 @@
     name="joint4"
     type="revolute">
     <origin
-      xyz="0 0.02725 0.2165"
+      xyz="0 0.03125 0.2125"
       rpy="0 0 0" />
     <parent
       link="link3" />
@@ -280,17 +280,17 @@
     name="link5">
     <inertial>
       <origin
-        xyz="0.053656 -0.0089407 -2.8958E-05"
+        xyz="0.0529216791044983 -0.00827331453644387 -6.09364502447973E-05"
         rpy="0 0 0" />
       <mass
-        value="0.59058" />
+        value="0.552346497691693" />
       <inertia
-        ixx="0.00058"
-        ixy="0.00005"
+        ixx="0.00049"
+        ixy="-0.00002"
         ixz="0.00000"
-        iyy="0.00099"
+        iyy="0.00091"
         iyz="0.00000"
-        izz="0.00114" />
+        izz="0.00098" />
     </inertial>
     <visual>
       <origin
@@ -298,12 +298,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link5.STL" />
+          filename="package://ultron2_urdf_g/meshes/link5.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="1 1 1 1" />
+          rgba="0.898039215686275 0.917647058823529 0.929411764705882 1" />
       </material>
     </visual>
     <collision>
@@ -312,7 +312,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link5.STL" />
+          filename="package://ultron2_urdf_g/meshes/link5.STL" />
       </geometry>
     </collision>
   </link>
@@ -320,8 +320,8 @@
     name="joint5"
     type="revolute">
     <origin
-      xyz="0.0935 -0.02725 0"
-      rpy="-3.1416 0 0" />
+      xyz="0.0935 -0.03125 0"
+      rpy="3.1416 0 0" />
     <parent
       link="link4" />
     <child
@@ -338,17 +338,17 @@
     name="link6">
     <inertial>
       <origin
-        xyz="-4.6345E-05 -0.03982 0.0011411"
+        xyz="1.10949256227344E-05 -0.033640150156021 -0.000878339013793139"
         rpy="0 0 0" />
       <mass
-        value="0.33468" />
+        value="0.369986281234796" />
       <inertia
-        ixx="0.00013"
+        ixx="0.00015"
         ixy="0.00000"
         ixz="0.00000"
-        iyy="0.00012"
+        iyy="0.00013"
         iyz="0.00000"
-        izz="0.00015" />
+        izz="0.00018" />
     </inertial>
     <visual>
       <origin
@@ -356,12 +356,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link6.STL" />
+          filename="package://ultron2_urdf_g/meshes/link6.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="0.79216 0.81961 0.93333 1" />
+          rgba="0.752941176470588 0.752941176470588 0.752941176470588 1" />
       </material>
     </visual>
     <collision>
@@ -370,7 +370,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link6.STL" />
+          filename="package://ultron2_urdf_g/meshes/link6.STL" />
       </geometry>
     </collision>
   </link>
@@ -378,7 +378,7 @@
     name="joint6"
     type="revolute">
     <origin
-      xyz="0.1615 -0.04025 0"
+      xyz="0.1615 -0.03425 0"
       rpy="-3.1416 0 0" />
     <parent
       link="link5" />
@@ -396,17 +396,17 @@
     name="link7">
     <inertial>
       <origin
-        xyz="0.090438 -4.593E-05 0.020328"
+        xyz="0.028887 -3.3704E-11 0.0059479"
         rpy="0 0 0" />
       <mass
-        value="0.60047" />
+        value="0.66" />
       <inertia
-        ixx="0.00049"
+        ixx="0.00003"
         ixy="0.00000"
-        ixz="0.00008"
-        iyy="0.00078"
+        ixz="0.00002"
+        iyy="0.00005"
         iyz="0.00000"
-        izz="0.00102" />
+        izz="0.00004" />
     </inertial>
     <visual>
       <origin
@@ -414,12 +414,12 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link7.STL" />
+          filename="package://ultron2_urdf_g/meshes/link7.STL" />
       </geometry>
       <material
         name="">
         <color
-          rgba="0.79216 0.81961 0.93333 1" />
+          rgba="0.89804 0.91765 0.92941 1" />
       </material>
     </visual>
     <collision>
@@ -428,7 +428,7 @@
         rpy="0 0 0" />
       <geometry>
         <mesh
-          filename="package://X7LEFT2/meshes/link7.STL" />
+          filename="package://ultron2_urdf_g/meshes/link7.STL" />
       </geometry>
     </collision>
   </link>
@@ -436,8 +436,8 @@
     name="joint7"
     type="revolute">
     <origin
-      xyz="0 -0.04025 0.022"
-      rpy="3.1416 0 0" />
+      xyz="0 -0.03425 0.022"
+      rpy="-3.1416 0 0" />
     <parent
       link="link6" />
     <child
@@ -450,4 +450,17 @@
       effort="100"
       velocity="1000" />
   </joint>
+   <link name="eef_link">
+    <inertial>
+        <mass value="0.0"/>
+        <origin xyz="0.0 0.0 0.0"  rpy="0 0 0"/>
+        <inertia ixx="0.0" ixy="0.0" ixz="0.0" iyy="0.0" iyz="0.0" izz="0.0"/>
+    </inertial>
+    </link>
+
+    <joint name="gripper_fixed_joint" type="fixed">
+        <origin xyz="0.145 0.0 0.0" rpy="0 0 0"/>
+        <parent link="link7"/>
+        <child link="eef_link"/>
+    </joint>
 </robot>

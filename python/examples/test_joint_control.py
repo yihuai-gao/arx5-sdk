@@ -30,7 +30,7 @@ def main(model: str, interface: str, urdf_path: str):
     # you can create RobotConfig and ControllerConfig by yourself and modify based on it
     robot_config = arx5.RobotConfigFactory.get_instance().get_config(model)
     controller_config = arx5.ControllerConfigFactory.get_instance().get_config(
-        "joint_controller"
+        "joint_controller", robot_config.joint_dof
     )
     # Modify the default configuration here
     # controller_config.controller_dt = 0.01 # etc.

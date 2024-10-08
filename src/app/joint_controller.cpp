@@ -19,9 +19,11 @@ Arx5JointController::Arx5JointController(RobotConfig robot_config, ControllerCon
 }
 
 Arx5JointController::Arx5JointController(std::string model, std::string interface_name)
-    : Arx5JointController::Arx5JointController(RobotConfigFactory::get_instance().get_config(model),
-                                               ControllerConfigFactory::get_instance().get_config("joint_controller"),
-                                               interface_name)
+    : Arx5JointController::Arx5JointController(
+          RobotConfigFactory::get_instance().get_config(model),
+          ControllerConfigFactory::get_instance().get_config(
+              "joint_controller", RobotConfigFactory::get_instance().get_config(model).joint_dof),
+          interface_name)
 
 {
 }
@@ -30,10 +32,10 @@ Arx5JointController::~Arx5JointController()
 {
     Gain damping_gain{_robot_config.joint_dof};
     damping_gain.kd = _controller_config.default_kd;
-    damping_gain.kd[0] *= 3;
-    damping_gain.kd[1] *= 3;
-    damping_gain.kd[2] *= 3;
-    damping_gain.kd[3] *= 1.5;
+    // damping_gain.kd[0] *= 3;
+    // damping_gain.kd[1] *= 3;
+    // damping_gain.kd[2] *= 3;
+    // damping_gain.kd[3] *= 1.5;
     _logger->info("Set to damping before exit");
     set_gain(damping_gain);
     set_joint_cmd(JointState(_robot_config.joint_dof));
@@ -545,12 +547,15 @@ void Arx5JointController::set_gain(Gain new_gain)
     if (_gain.kp.isZero() && !new_gain.kp.isZero())
     {
         double max_pos_error = (_joint_state.pos - _output_joint_cmd.pos).cwiseAbs().maxCoeff();
-        double error_threshold = 0.2;
-        if (max_pos_error > error_threshold)
+        double pos_error_threshold = 0.2;
+        double kp_threshold = 1;
+        if (max_pos_error > pos_error_threshold && new_gain.kp.maxCoeff() > kp_threshold)
         {
-            _logger->error("Cannot set kp to non-zero when the joint pos cmd is far from current pos.");
-            _logger->error("Current pos: {}, cmd pos: {}, threshold: {}", vec2str(_joint_state.pos),
-                           vec2str(_output_joint_cmd.pos), error_threshold);
+            _logger->error("Cannot set kp too large when the joint pos cmd is far from current pos.");
+            _logger->error(
+                "Target max kp: {}, kp threshold: {}. Current pos: {}, cmd pos: {}, position error threshold: {}",
+                new_gain.kp.maxCoeff(), kp_threshold, vec2str(_joint_state.pos), vec2str(_output_joint_cmd.pos),
+                pos_error_threshold);
             _background_send_recv_running = false;
             throw std::runtime_error("Cannot set kp to non-zero when the joint pos cmd is far from current pos.");
         }

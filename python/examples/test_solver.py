@@ -9,9 +9,10 @@ import arx5_interface as arx5
 import numpy as np
 
 
-joint_dof = 6
+joint_dof = 7
 solver = arx5.Arx5Solver(
-    "../models/arx5_gopro.urdf",
+    # "../models/arx5_gopro.urdf",
+    "../models/arx7_left.urdf",
     joint_dof,
     "base_link",
     "eef_link",

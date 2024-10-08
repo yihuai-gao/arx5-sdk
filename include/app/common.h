@@ -19,6 +19,7 @@ enum class MotorType
     EC_A4310,
     DM_J4310,
     DM_J4340,
+    DM_J8009,
     NONE, // If any motor is disabled (e.g. gripper motor)
 };
 
