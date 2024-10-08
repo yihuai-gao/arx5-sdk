@@ -579,7 +579,7 @@ void Arx5CartesianController::_calc_joint_cmd()
 {
     JointState joint_cmd{_robot_config.joint_dof};
     JointState joint_state = get_joint_state();
-    std::tuple<bool, Pose6d> ik_results;
+    std::tuple<bool, VecDoF> ik_results;
 
     {
         std::lock_guard<std::mutex> guard_cmd(_cmd_mutex);
