@@ -659,17 +659,17 @@ void Arx5JointController::calibrate_gripper()
     sleep_us(1000);
     for (int i = 0; i < 10; ++i)
     {
-        _can_handle.send_DM_motor_cmd(8, 0, 0, 0, 0, 0);
+        _can_handle.send_DM_motor_cmd(_robot_config.gripper_motor_id, 0, 0, 0, 0, 0);
         usleep(400);
     }
     _logger->info("Start calibrating gripper. Please fully close the gripper and press "
                   "enter to continue");
     std::cin.get();
-    _can_handle.reset_zero_readout(0x08);
+    _can_handle.reset_zero_readout(_robot_config.gripper_motor_id);
     usleep(400);
     for (int i = 0; i < 10; ++i)
     {
-        _can_handle.send_DM_motor_cmd(8, 0, 0, 0, 0, 0);
+        _can_handle.send_DM_motor_cmd(_robot_config.gripper_motor_id, 0, 0, 0, 0, 0);
         usleep(400);
     }
     usleep(400);
@@ -679,11 +679,12 @@ void Arx5JointController::calibrate_gripper()
 
     for (int i = 0; i < 10; ++i)
     {
-        _can_handle.send_DM_motor_cmd(8, 0, 0, 0, 0, 0);
+        _can_handle.send_DM_motor_cmd(_robot_config.gripper_motor_id, 0, 0, 0, 0, 0);
         usleep(400);
     }
     std::array<OD_Motor_Msg, 10> motor_msg = _can_handle.get_motor_msg();
-    std::cout << "Fully-open joint position readout: " << motor_msg[7].angle_actual_rad << std::endl;
+    std::cout << "Fully-open joint position readout: " << motor_msg[_robot_config.gripper_motor_id].angle_actual_rad
+              << std::endl;
     std::cout << "  Please update the _robot_config.gripper_open_readout value in config.h to finish gripper "
                  "calibration."
               << std::endl;

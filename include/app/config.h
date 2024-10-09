@@ -23,8 +23,8 @@ class RobotConfig
 
     double gripper_vel_max; // m/s
     double gripper_torque_max;
-    double gripper_width; // fully opened: GRIPPER_WIDTH, fully closed: 0
-    double gripper_open_readout;
+    double gripper_width;        // m, fully opened: GRIPPER_WIDTH, fully closed: 0
+    double gripper_open_readout; // fully-opened gripper motor readout
     int joint_dof;
     std::vector<int> motor_id;
     std::vector<MotorType> motor_type;
@@ -89,8 +89,8 @@ class RobotConfigFactory
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),         // ee_vel_max
             0.1,                                                           // gripper_vel_max
             1.5,                                                           // gripper_torque_max
-            0.085,                                                         // gripper_width
-            5.0,                                                           // gripper_open_readout
+            0.088,                                                         // gripper_width
+            5.03,                                                          // gripper_open_readout
             6,                                                             // joint_dof
             std::vector<int>{1, 2, 4, 5, 6, 7},                            // motor_id
             std::vector<MotorType>{MotorType::EC_A4310, MotorType::EC_A4310, MotorType::EC_A4310, MotorType::DM_J4310,
@@ -110,8 +110,8 @@ class RobotConfigFactory
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),         // ee_vel_max
             0.1,                                                           // gripper_vel_max
             1.5,                                                           // gripper_torque_max
-            0.085,                                                         // gripper_width
-            5.0,                                                           // gripper_open_readout
+            0.088,                                                         // gripper_width
+            5.03,                                                          // gripper_open_readout
             6,                                                             // joint_dof
             std::vector<int>{1, 2, 4, 5, 6, 7},                            // motor_id
             std::vector<MotorType>{MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4310,
@@ -131,8 +131,8 @@ class RobotConfigFactory
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),                     // ee_vel_max
             0.1,                                                                       // gripper_vel_max
             1.5,                                                                       // gripper_torque_max
-            0.085,                                                                     // gripper_width
-            5.0,                                                                       // gripper_open_readout
+            0.088,                                                                     // gripper_width
+            5.03,                                                                      // gripper_open_readout
             7,                                                                         // joint_dof
             std::vector<int>{1, 2, 3, 4, 5, 6, 7},                                     // motor_id
             std::vector<MotorType>{MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340,
@@ -152,8 +152,8 @@ class RobotConfigFactory
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),                        // ee_vel_max
             0.1,                                                                          // gripper_vel_max
             1.5,                                                                          // gripper_torque_max
-            0.085,                                                                        // gripper_width
-            5.0,                                                                          // gripper_open_readout
+            0.088,                                                                        // gripper_width
+            5.03,                                                                         // gripper_open_readout
             7,                                                                            // joint_dof
             std::vector<int>{1, 2, 3, 4, 5, 6, 7},                                        // motor_id
             std::vector<MotorType>{MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340, MotorType::DM_J4340,
