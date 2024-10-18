@@ -34,6 +34,7 @@ include_directories(
 
 add_library(ArxJointController SHARED
     src/app/joint_controller.cpp
+    src/app/controller_base.cpp
     src/utils.cpp
 )
 target_link_libraries(ArxJointController
@@ -48,6 +49,7 @@ target_link_libraries(ArxJointController
 )
 add_library(ArxCartesianController SHARED
     src/app/cartesian_controller.cpp
+    src/app/controller_base.cpp
     src/utils.cpp
 )
 target_link_libraries(ArxCartesianController

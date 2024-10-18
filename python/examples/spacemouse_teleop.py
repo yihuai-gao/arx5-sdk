@@ -7,7 +7,15 @@ import numpy as np
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(ROOT_DIR)
 os.chdir(ROOT_DIR)
-from arx5_interface import Arx5CartesianController, EEFState, Gain, LogLevel
+from arx5_interface import (
+    Arx5CartesianController,
+    ControllerConfig,
+    ControllerConfigFactory,
+    EEFState,
+    Gain,
+    LogLevel,
+    RobotConfigFactory,
+)
 from peripherals.spacemouse_shared_memory import Spacemouse
 from multiprocessing.managers import SharedMemoryManager
 
@@ -18,22 +26,37 @@ import click
 def start_teleop_recording(controller: Arx5CartesianController):
 
     ori_speed = 1.5
-    pos_speed = 0.6
+    pos_speed = 0.8
     gripper_speed = 0.04
+    deadzone_threshold = 0.2
     target_pose_6d = controller.get_home_pose()
 
     target_gripper_pos = 0.0
 
-    window_size = 5
+    window_size = 3
+    cmd_dt = 0.01
+    preview_time = 0.1
     spacemouse_queue = Queue(window_size)
     robot_config = controller.get_robot_config()
     controller_config = controller.get_controller_config()
-    
+
     with SharedMemoryManager() as shm_manager:
-        with Spacemouse(shm_manager=shm_manager, deadzone=0.1, max_value=500) as sm:
+        with Spacemouse(
+            shm_manager=shm_manager, deadzone=deadzone_threshold, max_value=500
+        ) as sm:
 
             def get_filtered_spacemouse_output(sm: Spacemouse):
                 state = sm.get_motion_state_transformed()
+                # Remove the deadzone and normalize the output
+                positive_idx = state >= deadzone_threshold
+                negative_idx = state <= -deadzone_threshold
+                state[positive_idx] = (state[positive_idx] - deadzone_threshold) / (
+                    1 - deadzone_threshold
+                )
+                state[negative_idx] = (state[negative_idx] + deadzone_threshold) / (
+                    1 - deadzone_threshold
+                )
+
                 if (
                     spacemouse_queue.maxsize > 0
                     and spacemouse_queue._qsize() == spacemouse_queue.maxsize
@@ -77,30 +100,24 @@ def start_teleop_recording(controller: Arx5CartesianController):
                     gripper_cmd = -1
                 else:
                     gripper_cmd = 0
-
-                target_pose_6d[:3] += (
-                    state[:3] * pos_speed * controller_config.controller_dt
-                )
-                target_pose_6d[3:] += (
-                    state[3:] * ori_speed * controller_config.controller_dt
-                )
-                target_gripper_pos += (
-                    gripper_cmd * gripper_speed * controller_config.controller_dt
-                )
+                # print(state, target_gripper_pos)
+                target_pose_6d[:3] += state[:3] * pos_speed * cmd_dt
+                target_pose_6d[3:] += state[3:] * ori_speed * cmd_dt
+                target_gripper_pos += gripper_cmd * gripper_speed * cmd_dt
                 if target_gripper_pos >= robot_config.gripper_width:
                     target_gripper_pos = robot_config.gripper_width
                 elif target_gripper_pos <= 0:
                     target_gripper_pos = 0
                 loop_cnt += 1
-                while (
-                    time.monotonic()
-                    < start_time + loop_cnt * controller_config.controller_dt
-                ):
+                while time.monotonic() < start_time + loop_cnt * cmd_dt:
                     pass
-
+                current_timestamp = controller.get_timestamp()
                 eef_cmd = EEFState()
                 eef_cmd.pose_6d()[:] = target_pose_6d
                 eef_cmd.gripper_pos = target_gripper_pos
+                # If you are using controller_config.default_preview_time,
+                # directly use eef_cmd.timestamp=0 will have the same effect
+                # eef_cmd.timestamp = current_timestamp + preview_time
                 controller.set_eef_cmd(eef_cmd)
 
 
@@ -109,7 +126,15 @@ def start_teleop_recording(controller: Arx5CartesianController):
 @click.argument("interface")  # can bus name (can0 etc.)
 @click.option("--urdf_path", "-u", default="../models/arx5.urdf", help="URDF file path")
 def main(model: str, interface: str, urdf_path: str):
-    controller = Arx5CartesianController(model, interface, urdf_path)
+
+    robot_config = RobotConfigFactory.get_instance().get_config(model)
+    controller_config = ControllerConfigFactory.get_instance().get_config(
+        "cartesian_controller", robot_config.joint_dof
+    )
+    # controller_config.interpolation_method = "cubic"
+    controller = Arx5CartesianController(
+        robot_config, controller_config, interface, urdf_path
+    )
     controller.reset_to_home()
 
     robot_config = controller.get_robot_config()
