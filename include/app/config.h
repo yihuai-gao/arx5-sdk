@@ -84,7 +84,7 @@ class RobotConfigFactory
             "X5",                                                          // robot_model
             (VecDoF(6) << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished(), // joint_pos_min
             (VecDoF(6) << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished(),    // joint_pos_max
-            (VecDoF(6) << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),        // joint_vel_max
+            (VecDoF(6) << 5.0, 5.0, 5.5, 5.5, 5.0, 5.0).finished(),        // joint_vel_max
             (VecDoF(6) << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),  // joint_torque_max
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),         // ee_vel_max
             0.1,                                                           // gripper_vel_max
@@ -105,7 +105,7 @@ class RobotConfigFactory
             "L5",                                                          // robot_model
             (VecDoF(6) << -3.14, -0.05, -0.1, -1.6, -1.57, -2).finished(), // joint_pos_min
             (VecDoF(6) << 2.618, 3.14, 3.24, 1.55, 1.57, 2).finished(),    // joint_pos_max
-            (VecDoF(6) << 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),        // joint_vel_max
+            (VecDoF(6) << 5.0, 5.0, 5.5, 5.5, 5.0, 5.0).finished(),        // joint_vel_max
             (VecDoF(6) << 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),  // joint_torque_max
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),         // ee_vel_max
             0.1,                                                           // gripper_vel_max
@@ -126,7 +126,7 @@ class RobotConfigFactory
             "X7Left",                                                                  // robot_model
             (VecDoF(7) << -2.09439, -1.5, -1.5, -1.5, -1.2, -0.3, -0.7854).finished(), // joint_pos_min
             (VecDoF(7) << 2.09439, 0.3, 1.5, 0.3, 1.2, 0.7854, 0.7854).finished(),     // joint_pos_max
-            (VecDoF(7) << 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),               // joint_vel_max
+            (VecDoF(7) << 3.0, 5.0, 5.0, 5.5, 5.5, 5.0, 5.0).finished(),               // joint_vel_max
             (VecDoF(7) << 30.0, 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),        // joint_torque_max
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),                     // ee_vel_max
             0.1,                                                                       // gripper_vel_max
@@ -147,7 +147,7 @@ class RobotConfigFactory
             "X7Right",                                                                    // robot_model
             (VecDoF(7) << -2.09439, -0.3, -1.5, -0.3, -1.2, -0.7854, -0.7854).finished(), // joint_pos_min
             (VecDoF(7) << 2.09439, 1.5, 1.5, 1.5, 1.2, 0.3, 0.7854).finished(),           // joint_pos_max
-            (VecDoF(7) << 2.0, 3.0, 2.0, 2.0, 2.0, 3.0, 3.0).finished(),                  // joint_vel_max
+            (VecDoF(7) << 3.0, 5.0, 5.0, 5.5, 5.5, 5.0, 5.0).finished(),                  // joint_vel_max
             (VecDoF(7) << 30.0, 30.0, 40.0, 30.0, 15.0, 10.0, 10.0).finished(),           // joint_torque_max
             (Pose6d() << 0.6, 0.6, 0.6, 1.8, 1.8, 1.8).finished(),                        // ee_vel_max
             0.1,                                                                          // gripper_vel_max
@@ -183,12 +183,26 @@ class ControllerConfig
     double default_gripper_kd;
     int over_current_cnt_max;
     double controller_dt;
+    bool gravity_compensation;
+    bool background_send_recv;
+    bool shutdown_to_passive;
+    // true: will set the arm to damping then passive mode when pressing `ctrl-C`. (recommended);
+    //       pressing `ctrl-\` will directly kill the program so this process will be skipped
+    // false: will keep the arm in the air when shutting down the controller (both `ctrl-\` and `ctrl-C`).
+    //       X5 cannot be kept in the air.
+    std::string interpolation_method; // "linear" or "cubic" (cubic is not well supported yet)
+    double default_preview_time;      // The default value for preview time if the command has 0 timestamp
 
     ControllerConfig(std::string controller_type, VecDoF default_kp, VecDoF default_kd, double default_gripper_kp,
-                     double default_gripper_kd, int over_current_cnt_max, double controller_dt)
+                     double default_gripper_kd, int over_current_cnt_max, double controller_dt,
+                     bool gravity_compensation, bool background_send_recv, bool shutdown_to_passive,
+                     std::string interpolation_method, double default_preview_time)
         : controller_type(controller_type), default_kp(default_kp), default_kd(default_kd),
           default_gripper_kp(default_gripper_kp), default_gripper_kd(default_gripper_kd),
-          over_current_cnt_max(over_current_cnt_max), controller_dt(controller_dt)
+          over_current_cnt_max(over_current_cnt_max), controller_dt(controller_dt),
+          gravity_compensation(gravity_compensation), background_send_recv(background_send_recv),
+          shutdown_to_passive(shutdown_to_passive), interpolation_method(interpolation_method),
+          default_preview_time(default_preview_time)
     {
     }
 };
@@ -227,7 +241,12 @@ class ControllerConfigFactory
             5.0,                                                                // default_gripper_kp
             0.2,                                                                // default_gripper_kd
             20,                                                                 // over_current_cnt_max
-            0.002                                                               // controller_dt
+            0.002,                                                              // controller_dt
+            true,                                                               // gravity_compensation
+            true,                                                               // background_send_recv
+            true,                                                               // shutdown_to_passive
+            "linear",                                                           // interpolation_method
+            0.0                                                                 // default_preview_time
         );
         configurations["joint_controller_6"] = std::make_shared<ControllerConfig>(
             "joint_controller",                                           // controller_type
@@ -236,7 +255,12 @@ class ControllerConfigFactory
             5.0,                                                          // default_gripper_kp
             0.2,                                                          // default_gripper_kd
             20,                                                           // over_current_cnt_max
-            0.002                                                         // controller_dt
+            0.002,                                                        // controller_dt
+            true,                                                         // gravity_compensation
+            true,                                                         // background_send_recv
+            true,                                                         // shutdown_to_passive
+            "linear",                                                     // interpolation_method
+            0.0                                                           // default_preview_time
         );
         configurations["cartesian_controller_7"] = std::make_shared<ControllerConfig>(
             "cartesian_controller",                                                 // controller_type
@@ -245,16 +269,26 @@ class ControllerConfigFactory
             5.0,                                                                    // default_gripper_kp
             0.2,                                                                    // default_gripper_kd
             20,                                                                     // over_current_cnt_max
-            0.005                                                                   // controller_dt
+            0.002,                                                                  // controller_dt
+            true,                                                                   // gravity_compensation
+            true,                                                                   // background_send_recv
+            true,                                                                   // shutdown_to_passive
+            "linear",                                                               // interpolation_method
+            0.1                                                                     // default_preview_time
         );
         configurations["cartesian_controller_6"] = std::make_shared<ControllerConfig>(
-            "cartesian_controller",                                          // controller_type
-            (VecDoF(6) << 300.0, 300.0, 300.0, 80.0, 50.0, 40.0).finished(), // default_kp
-            (VecDoF(6) << 5.0, 5.0, 5.0, 1.0, 1.0, 1.0).finished(),          // default_kd
-            5.0,                                                             // default_gripper_kp
-            0.2,                                                             // default_gripper_kd
-            20,                                                              // over_current_cnt_max
-            0.005                                                            // controller_dt
+            "cartesian_controller",                                           // controller_type
+            (VecDoF(6) << 200.0, 200.0, 200.0, 120.0, 80.0, 60.0).finished(), // default_kp
+            (VecDoF(6) << 5.0, 5.0, 5.0, 1.0, 1.0, 1.0).finished(),           // default_kd
+            5.0,                                                              // default_gripper_kp
+            0.2,                                                              // default_gripper_kd
+            20,                                                               // over_current_cnt_max
+            0.002,                                                            // controller_dt
+            true,                                                             // gravity_compensation
+            true,                                                             // background_send_recv
+            true,                                                             // shutdown_to_passive
+            "linear",                                                         // interpolation_method
+            0.1                                                               // default_preview_time
         );
     }
     std::unordered_map<std::string, std::shared_ptr<ControllerConfig>> configurations;
