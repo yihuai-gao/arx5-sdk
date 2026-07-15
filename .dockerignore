@@ -1,0 +1,6 @@
+# Locally built pybind extensions must never enter the wheel build context:
+# they are compiled against the host toolchain and make auditwheel reject the
+# wheel (too-recent glibc/libstdc++ symbols). The Docker build compiles its own.
+python/*.so
+build/
+wheels/wheelhouse/
