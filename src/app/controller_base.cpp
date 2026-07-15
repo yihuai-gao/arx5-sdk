@@ -529,7 +529,9 @@ void Arx5ControllerBase::update_output_cmd_()
     }
     if (std::abs(joint_state_.gripper_torque) > robot_config_.gripper_torque_max / 2)
     {
-        double sign = joint_state_.gripper_torque > 0 ? 1 : -1; // -1 for closing blocked, 1 for opening blocked
+        // 1 for opening blocked, -1 for closing blocked. The gripper motor readout (thus torque reading) can be
+        // reversed (gripper_open_readout < 0) on some grippers, e.g. the 2025 X5 AC one gripper.
+        double sign = joint_state_.gripper_torque * robot_config_.gripper_open_readout > 0 ? 1 : -1;
         double delta_pos =
             output_joint_cmd_.gripper_pos - prev_output_cmd.gripper_pos; // negative for closing, positive for opening
         if (delta_pos * sign > 0)
